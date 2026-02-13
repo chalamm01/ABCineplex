@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 function Register() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[url('/public/assets/bg.png')] bg-cover bg-center">
+    <div className="min-h-screen flex items-center justify-center bg-[url('/public/assets/background/bg.png')] bg-cover bg-center">
         <div className="flex min-h-screen min-w-screen items-center justify-center bg-white/70 backdrop-blur-md">
           <div className="w-full max-w-sm bg-white bg-white p-8 rounded-xl shadow-lg">
             <h2 className="mb-6 text-center text-2xl font-semibold text-black">
