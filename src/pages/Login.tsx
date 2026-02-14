@@ -22,7 +22,7 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[url('/public/assets/background/bg.png')] bg-cover bg-center">
+    <div className="flex items-center min-h-screen justify-center bg-[url('/public/assets/background/bg.png')] bg-cover bg-center">
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="flex min-h-screen min-w-screen items-center justify-center bg-white/70 backdrop-blur-md"
