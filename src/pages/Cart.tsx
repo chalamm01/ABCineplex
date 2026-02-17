@@ -12,17 +12,15 @@ function Cart() {
 
   const total = cart.reduce(
     (sum, item) => sum + item.price * (item.quantity || 1),
-    0
+    0,
   );
 
   return (
-    <div className="relative min-h-screen bg-[url('/assets/background/bg_snackpage.png')] bg-cover pt-20 px-20">
-      
+    <div className="relative min-h-screen bg-[url('/assets/background/bg_snackpage.png')] bg-cover pt-20 bg-fixed">
       {/* Overlay */}
       <div className="absolute inset-0 bg-white/70 backdrop-blur-xs"></div>
 
       <div className="relative flex gap-16">
-
         {/* LEFT SIDE */}
         <div className="flex-1">
           <h1 className="text-3xl font-bold mb-8">YOUR CART</h1>
@@ -63,7 +61,12 @@ function Cart() {
                 {item.price * (item.quantity || 1)} THB
               </div>
 
-              <button onClick={() => {removeFromCart(i)}} className="bg-red-700 hover:bg-red-700/70 px-4 py-2 rounded-lg text-white ">
+              <button
+                onClick={() => {
+                  removeFromCart(i);
+                }}
+                className="bg-red-700 hover:bg-red-700/70 px-4 py-2 rounded-lg text-white "
+              >
                 Delete
               </button>
             </div>
