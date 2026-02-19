@@ -9,8 +9,9 @@ import Movies from "./pages/Movies.tsx";
 import LandingPage from "./pages/LandingPage.tsx";
 function App() {
   return (
-    <>
-      <div className="static">
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <div className="flex-1">
         <Routes>
           <Route path="/" element={<LandingPage/>}/>
           <Route path="/login" element={<Login />} />
@@ -19,11 +20,8 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/movies" element={<Movies />} />
         </Routes>
-        {/* <div className="absolute top-0 w-full">
-          <Navbar />
-        </div> */}
       </div>
-    </>
+    </div>
   );
 }
 

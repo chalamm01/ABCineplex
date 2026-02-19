@@ -55,7 +55,7 @@ const defaultProviders: SocialProvider[] = [
   }
 ];
 
-export function SocialLogin({
+export function Login({
   title = 'Be new cinephine member',
   description = 'Choose your preferred sign up method',
   providers = defaultProviders,
@@ -239,4 +239,4 @@ export function SocialLogin({
   );
 }
 
-export default SocialLogin;
+export default Login;

@@ -36,7 +36,7 @@ function Navbar() {
 
   return (
     <>
-      <nav className="bg-white shadow">
+      <nav className="sticky top-0 z-50 bg-white shadow">
         <div className="flex justify-center items-center h-16">
           {/* Left */}
           <Link
