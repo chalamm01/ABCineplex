@@ -66,11 +66,11 @@ function Snacks() {
                 />
                 {snack.name}
                 <br />
-                <div className="text-violet-900 mt-2">
+                <div className="grid grid-cols-2 gap-5 text-violet-900 mt-2 items-center mx-auto">
                   {snack.price} THB
                   <button
                     onClick={() => addToCart(snack)}
-                    className="ml-14 bg-violet-900 hover:bg-violet-900/70 text-white  rounded-xl w-12 h-7"
+                    className="bg-violet-900 hover:bg-violet-900/70 text-white rounded-xl w-12 h-7 mx-auto"
                   >
                     Add
                   </button>
@@ -85,23 +85,23 @@ function Snacks() {
         {/*beverages*/}
         <div className="flex justify-center mt-10 bg-[url('/public/assets/background/bg_snackbar.png')] bg-cover mx-40 rounded-xl shadow-lg h-96">
           <div className="flex justify-center items-center gap-8 mt-10 mb-10">
-            {beverages.map((beverag) => (
+            {beverages.map((beverage) => (
               <div
-                key={beverag.name}
+                key={beverage.name}
                 className="m-4 p-4 rounded-4xl shadow-lg w-50 bg-white font-semibold text-center"
               >
                 <img
-                  src={beverag.image}
-                  alt={beverag.name}
+                  src={beverage.image}
+                  alt={beverage.name}
                   className="h-40 object-cover mb-4 rounded mx-auto"
                 />
-                {beverag.name}
+                {beverage.name}
                 <br />
-                <div className="text-violet-900 mt-2">
-                  {beverag.price} THB
+                <div className="grid grid-cols-2 gap-5 text-violet-900 mt-2 items-center mx-auto">
+                  {beverage.price} THB
                   <button
-                    onClick={() => addToCart(beverag)}
-                    className="ml-14 bg-violet-900 hover:bg-violet-900/70 text-white rounded-xl w-12 h-7"
+                    onClick={() => addToCart(beverage)}
+                    className="bg-violet-900 hover:bg-violet-900/70 text-white rounded-xl w-12 h-7 mx-auto"
                   >
                     Add
                   </button>
