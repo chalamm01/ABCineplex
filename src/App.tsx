@@ -6,23 +6,22 @@ import Register from "./pages/Register.tsx";
 import Snacks from "./pages/Snacks.tsx";
 import Cart from "./pages/Cart.tsx";
 import Movies from "./pages/Movies.tsx";
-
+import Home from "./pages/Home.tsx";
 function App() {
   return (
-    <>
-      <div className="static">
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <div className="flex-1">
         <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/snacks" element={<Snacks />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/movies" element={<Movies />} />
+          <Route path="/" element={<Home/>}/>
+          <Route path="/login" element={<Login/>} />
+          <Route path="/register" element={<Register/>} />
+          <Route path="/snacks" element={<Snacks/>} />
+          <Route path="/cart" element={<Cart/>} />
+          <Route path="/movies" element={<Movies/>} />
         </Routes>
-        <div className="absolute top-0 w-full">
-          <Navbar />
-        </div>
       </div>
-    </>
+    </div>
   );
 }
 

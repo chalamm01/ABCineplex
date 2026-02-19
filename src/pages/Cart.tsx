@@ -16,10 +16,8 @@ function Cart() {
   );
 
   return (
-    <div className="relative min-h-screen bg-[url('/assets/background/bg_snackpage.png')] bg-cover pt-20 bg-fixed">
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-white/70 backdrop-blur-xs"></div>
-
+    <div className="bg-[url('/public/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
       <div className="relative flex gap-16">
         {/* LEFT SIDE */}
         <div className="flex-1">
@@ -74,7 +72,7 @@ function Cart() {
         </div>
 
         {/* RIGHT SIDE - SUMMARY */}
-        <div className="w-80 bg-white p-6 shadow-md rounded-lg h-fit">
+        <div className="w-80 bg-white p-6 shadow-md rounded-lg h-fit mt-17">
           <h2 className="text-xl font-bold mb-6">SUMMARY</h2>
 
           {cart.map((item) => (
@@ -98,6 +96,7 @@ function Cart() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
