@@ -9,12 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { signUp, signInWithGoogle } from '@/services/auth';
 
 export interface SocialProvider {
   id: string;
   name: string;
   icon: React.ReactNode;
-  onClick: () => void;
+  onClick: () => void | Promise<void>;
 }
 
 export interface SocialLoginProps {
@@ -51,7 +52,7 @@ const defaultProviders: SocialProvider[] = [
         />
       </svg>
     ),
-    onClick: () => console.log('Google login')
+    onClick: () => {} // replaced at runtime
   }
 ];
 
@@ -59,27 +60,56 @@ export function Login({
   title = 'Be new cinephine member',
   description = 'Choose your preferred sign up method',
   providers = defaultProviders,
-  onEmailLogin,
-  onSignUp,
-  isLoading = false,
   className
-}: SocialLoginProps) {
+}: Readonly<SocialLoginProps>) {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSignUp = () => {
-    if (onSignUp) {
-      onSignUp();
-    } else {
-      navigate('/register');
+    navigate('/login');
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      await signInWithGoogle();
+      // OAuth will redirect — no need to navigate manually
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed');
+      setLoading(false);
     }
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  // Build providers with real handlers
+  const activeProviders = providers.map((p) =>
+    p.id === 'google' ? { ...p, onClick: handleGoogleLogin } : p
+  );
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onEmailLogin?.({ email, password });
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    try {
+      setError(null);
+      setLoading(true);
+      await signUp(email, password, {
+        user_name: email.split('@')[0],
+        full_name: '',
+      });
+      navigate('/');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -96,17 +126,24 @@ export function Login({
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Error Message */}
+          {error && (
+            <div className="text-sm text-red-600 text-center bg-red-50 rounded-md p-2">
+              {error}
+            </div>
+          )}
+
           {/* Social Login Buttons */}
-          {providers.length > 0 && (
+          {activeProviders.length > 0 && (
             <div className="space-y-3">
-              {providers.map((provider) => (
+              {activeProviders.map((provider) => (
                 <Button
                   key={provider.id}
                   type="button"
                   variant="outline"
                   onClick={provider.onClick}
                   className="w-full justify-center gap-3 border-border/50 hover:bg-muted/50 transition-colors"
-                  disabled={isLoading}
+                  disabled={loading}
                 >
                   {provider.icon}
                   {provider.name}
@@ -115,7 +152,7 @@ export function Login({
             </div>
           )}
 
-          {providers.length > 0 && (
+          {activeProviders.length > 0 && (
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <Separator className="w-full" />
@@ -187,11 +224,11 @@ export function Login({
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="password"
+                  id="confirm-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Re-enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-10 pr-10 border-border/50 focus:border-primary/50 transition-colors"
                   required
                 />
@@ -214,9 +251,9 @@ export function Login({
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !email || !password}
+              disabled={loading || !email || !password || !confirmPassword}
             >
-              {isLoading ? 'Signing up...' : 'Sign up with email'}
+              {loading ? 'Signing up...' : 'Sign up with email'}
             </Button>
           </form>
 
@@ -225,7 +262,7 @@ export function Login({
                 Already have an account?{' '}
                 <button
                   type="button"
-                  onClick={onSignUp}
+                  onClick={handleSignUp}
                   className="text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   Sign in

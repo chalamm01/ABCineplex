@@ -10,11 +10,12 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   email: string;
   user_name?: string;
   full_name?: string;
+  avatar_url?: string;
 }
 
 interface AuthContextType {
@@ -32,6 +33,7 @@ function mapUser(user: User): AuthUser {
     email: user.email ?? '',
     user_name: user.user_metadata?.user_name,
     full_name: user.user_metadata?.full_name,
+    avatar_url: user.user_metadata?.avatar_url,
   };
 }
 
@@ -99,3 +101,4 @@ export function useAuth() {
   }
   return context;
 }
+

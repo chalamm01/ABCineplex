@@ -46,8 +46,8 @@ export function RegisterForm() {
       });
 
       if (session) {
-        // Auto-confirmed — redirect to homepage
-        navigate('/homepage');
+        // Auto-confirmed — redirect to home
+        navigate('/');
       } else {
         // Email confirmation required
         setSuccess(true);
@@ -62,7 +62,7 @@ export function RegisterForm() {
 
   if (success) {
     return (
-      <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
+      <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4 text-sm text-green-400">
         <p className="font-medium">Check your email!</p>
         <p>We&apos;ve sent a confirmation link to your email address. Please verify to continue.</p>
       </div>
@@ -73,7 +73,7 @@ export function RegisterForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {error && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+          <div className="rounded-md bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
             {error}
           </div>
         )}
@@ -82,11 +82,12 @@ export function RegisterForm() {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel className="text-gray-200">Username</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="martysupreme"
+                  placeholder="your_username"
                   disabled={loading}
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
                   {...field}
                 />
               </FormControl>
@@ -99,12 +100,13 @@ export function RegisterForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="text-gray-200">Email</FormLabel>
               <FormControl>
                 <Input
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="your@email.com"
                   disabled={loading}
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
                   {...field}
                 />
               </FormControl>
@@ -117,12 +119,13 @@ export function RegisterForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel className="text-gray-200">Password</FormLabel>
               <FormControl>
                 <Input
                   type="password"
                   placeholder="••••••••"
                   disabled={loading}
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
                   {...field}
                 />
               </FormControl>
@@ -135,12 +138,13 @@ export function RegisterForm() {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
+              <FormLabel className="text-gray-200">Confirm Password</FormLabel>
               <FormControl>
                 <Input
                   type="password"
                   placeholder="••••••••"
                   disabled={loading}
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
                   {...field}
                 />
               </FormControl>
@@ -148,7 +152,7 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
           {loading ? 'Creating account...' : 'Create account'}
         </Button>
       </form>

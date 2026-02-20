@@ -1,11 +1,12 @@
 import { createClient } from '@/lib/supabase/client';
-import type { Session, User } from '@supabase/supabase-js';
+import type { Session, User, Provider } from '@supabase/supabase-js';
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   email: string;
   user_name?: string;
   full_name?: string;
+  avatar_url?: string;
 }
 
 function mapUser(user: User): AuthUser {
@@ -14,6 +15,7 @@ function mapUser(user: User): AuthUser {
     email: user.email ?? '',
     user_name: user.user_metadata?.user_name,
     full_name: user.user_metadata?.full_name,
+    avatar_url: user.user_metadata?.avatar_url,
   };
 }
 
@@ -40,6 +42,7 @@ export async function signUp(
     password,
     options: {
       data: metadata,
+      emailRedirectTo: `${window.location.origin}/auth/callback`,
     },
   });
 
@@ -49,17 +52,32 @@ export async function signUp(
   return { user: mapUser(data.user), session: data.session };
 }
 
-/** Sign in with Google OAuth */
-export async function signInWithGoogle() {
+/** Sign in with OAuth provider */
+export async function signInWithOAuth(provider: Provider) {
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
+    provider,
     options: {
-      redirectTo: `${globalThis.location.origin}/auth/callback`,
+      redirectTo: `${window.location.origin}/auth/callback`,
     },
   });
 
   if (error) throw error;
+}
+
+/** Sign in with Google OAuth */
+export async function signInWithGoogle() {
+  return signInWithOAuth('google');
+}
+
+/** Sign in with GitHub OAuth */
+export async function signInWithGitHub() {
+  return signInWithOAuth('github');
+}
+
+/** Sign in with Discord OAuth */
+export async function signInWithDiscord() {
+  return signInWithOAuth('discord');
 }
 
 /** Sign out */

@@ -9,12 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { signIn, signInWithGoogle } from '@/services/auth';
 
 export interface SocialProvider {
   id: string;
   name: string;
   icon: React.ReactNode;
-  onClick: () => void;
+  onClick: () => void | Promise<void>;
 }
 
 export interface SocialLoginProps {
@@ -51,7 +52,7 @@ const defaultProviders: SocialProvider[] = [
         />
       </svg>
     ),
-    onClick: () => console.log('Google login')
+    onClick: () => {} // replaced at runtime
   }
 ];
 
@@ -59,27 +60,48 @@ export function SocialLogin({
   title = 'Welcome back',
   description = 'Choose your preferred sign in method',
   providers = defaultProviders,
-  onEmailLogin,
-  onSignUp,
-  isLoading = false,
   className
-}: SocialLoginProps) {
+}: Readonly<SocialLoginProps>) {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSignUp = () => {
-    if (onSignUp) {
-      onSignUp();
-    } else {
-      navigate('/register');
+    navigate('/register');
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      await signInWithGoogle();
+      // OAuth will redirect — no need to navigate manually
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed');
+      setLoading(false);
     }
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  // Build providers with real handlers
+  const activeProviders = providers.map((p) =>
+    p.id === 'google' ? { ...p, onClick: handleGoogleLogin } : p
+  );
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onEmailLogin?.({ email, password });
+    try {
+      setError(null);
+      setLoading(true);
+      await signIn(email, password);
+      navigate('/');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -96,17 +118,24 @@ export function SocialLogin({
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Error Message */}
+          {error && (
+            <div className="text-sm text-red-600 text-center bg-red-50 rounded-md p-2">
+              {error}
+            </div>
+          )}
+
           {/* Social Login Buttons */}
-          {providers.length > 0 && (
+          {activeProviders.length > 0 && (
             <div className="space-y-3">
-              {providers.map((provider) => (
+              {activeProviders.map((provider) => (
                 <Button
                   key={provider.id}
                   type="button"
                   variant="outline"
                   onClick={provider.onClick}
                   className="w-full justify-center gap-3 border-border/50 hover:bg-muted/50 transition-colors"
-                  disabled={isLoading}
+                  disabled={loading}
                 >
                   {provider.icon}
                   {provider.name}
@@ -115,7 +144,7 @@ export function SocialLogin({
             </div>
           )}
 
-          {providers.length > 0 && (
+          {activeProviders.length > 0 && (
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <Separator className="w-full" />
@@ -157,7 +186,7 @@ export function SocialLogin({
               </Label>
                 <button
                   type="button"
-                  onClick={onSignUp}
+                  onClick={() => navigate('/register')}
                   className="text-muted-foreground hover:text-primary/80 transition-colors font-medium text-xs"
                 >
                   Forgot your password?
@@ -191,9 +220,9 @@ export function SocialLogin({
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !email || !password}
+              disabled={loading || !email || !password}
             >
-              {isLoading ? 'Signing in...' : 'Sign in with email'}
+              {loading ? 'Signing in...' : 'Sign in with email'}
             </Button>
           </form>
 
@@ -202,7 +231,7 @@ export function SocialLogin({
                 Don't have an account?{' '}
                 <button
                   type="button"
-                  onClick={onSignUp}
+                  onClick={handleSignUp}
                   className="text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   Sign up
