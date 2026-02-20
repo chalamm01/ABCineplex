@@ -90,7 +90,7 @@ function Snacks() {
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-full h-40 object-cover mb-4 rounded"
+                      className="w-full h-40 object-contain mb-4 rounded "
                     />
                     {item.name}
                     <br />
