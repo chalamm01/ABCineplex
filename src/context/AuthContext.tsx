@@ -1,6 +1,4 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useState,
   useCallback,
@@ -9,6 +7,7 @@ import {
 } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import { AuthContext } from '@/context/AuthContextDef';
 
 export interface AuthUser {
   id: string;
@@ -18,7 +17,7 @@ export interface AuthUser {
   avatar_url?: string;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: AuthUser | null;
   session: Session | null;
   loading: boolean;
@@ -36,8 +35,6 @@ function mapUser(user: User): AuthUser {
     avatar_url: user.user_metadata?.avatar_url,
   };
 }
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -94,11 +91,4 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-
+// useAuth hook moved to @/context/useAuth.ts for react-refresh compatibility

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { CartContext } from "../context/CartContext";
+import { CartContext } from "../context/CartContextDef";
 import { useNavigate } from "react-router-dom";
 
 interface SnackItem {

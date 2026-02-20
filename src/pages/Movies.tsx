@@ -1,6 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Movie {
@@ -12,7 +11,7 @@ interface Movie {
 
 function Movies() {
   const [activeTab, setActiveTab] = useState<'now' | 'coming'>('now');
-  const [movies, setMovies] = useState<Movie[]>([
+  const [movies] = useState<Movie[]>([
     {
       id: 1,
       title: 'Inception',
