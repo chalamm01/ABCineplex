@@ -16,7 +16,7 @@ function Cart() {
   );
 
   return (
-    <div className="bg-[url('/public/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
       <div className="relative flex gap-16">
         {/* LEFT SIDE */}

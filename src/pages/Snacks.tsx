@@ -42,7 +42,7 @@ function Snacks() {
     }));
 
   return (
-    <div className="bg-[url('/public/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
 
         {loading && (
@@ -62,7 +62,7 @@ function Snacks() {
             <h2 className="text-3xl font-bold text-violet-900 mb-5">
               {category.name}
             </h2>
-            <div className="flex justify-center mb-16 bg-[url('/public/assets/background/bg_snackbar.png')] bg-cover rounded-xl shadow-lg p-10">
+            <div className="flex justify-center mb-16 bg-[url('/assets/background/bg_snackbar.png')] bg-cover rounded-xl shadow-lg p-10">
               <div className="flex flex-wrap justify-center items-center gap-8">
                 {items.map((item) => (
                   <div
