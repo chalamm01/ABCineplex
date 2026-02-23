@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -105,7 +103,7 @@ export function SocialLogin({
   };
 
   return (
-    <div className={cn("bg-[url('/public/assets/background/bg.png')] bg-cover bg-center", className)}>
+    <div className={cn("bg-[url('/assets/background/bg.png')] bg-cover bg-center", className)}>
       <div className="flex items-center justify-center min-h-screen p-6  bg-white/70 backdrop-blur-md">
       <Card className="w-full max-w-sm border border-border/50 shadow-sm bg-card backdrop-blur-sm">
         <CardHeader className="text-center space-y-2">

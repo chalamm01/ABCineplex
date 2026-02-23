@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Home,
   Film,
@@ -10,7 +11,7 @@ import {
   UserPlus,
   Ticket,
 } from 'lucide-react';
-import { useAuth } from '@/context/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
   readonly activeNav?: string;
@@ -20,6 +21,7 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
   const { user, isAuthenticated, signOut } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const navItems = [
     { id: 'homepage', label: 'Home', icon: Home },
     { id: 'movies', label: 'Movies', icon: Film },
@@ -43,22 +45,22 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
   }, []);
 
   const handleSignIn = () => {
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   const handleRegister = () => {
-    window.location.href = '/register';
+    navigate('/register');
   };
 
   const handleSignOut = async () => {
     await signOut();
     setIsDropdownOpen(false);
-    window.location.href = '/homepage';
+    navigate('/');
   };
 
   const handleMyBookings = () => {
     setIsDropdownOpen(false);
-    window.location.href = '/bookings';
+    navigate('/bookings');
   };
 
   // Get user initials for avatar
@@ -84,24 +86,23 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
           </div>
 
           {/* Main Navigation */}
-          <div className="flex items-center gap-8 no-underline! decoration-none">
+          <div className="flex items-center gap-8">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeNav === item.id;
               return (
-                <a
-                    style={{ textDecoration: 'none' }}
+                <Link
                   key={item.id}
-                  href={`/${item.id}`}
-                  className={`flex items-center gap-2 transition-colors no-underline! decoration-none ${
+                  to={`/${item.id}`}
+                  className={`flex items-center gap-2 transition-colors no-underline ${
                     isActive
                       ? 'text-black'
                       : 'text-neutral-500 hover:text-black'
-                  } `}
+                  }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span className="text-sm tracking-wide font-medium no-underline! decoration-none">{item.label}</span>
-                </a>
+                  <span className="text-sm tracking-wide font-medium">{item.label}</span>
+                </Link>
               );
             })}
           </div>
