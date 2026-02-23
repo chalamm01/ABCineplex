@@ -1,53 +1,30 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { CartContext } from "../context/CartContextDef";
 import { useNavigate } from "react-router-dom";
-
-interface SnackItem {
-  name: string;
-  price: number;
-  image: string;
-  type: string;
-}
-
-const items: SnackItem[] = [
-  {
-    name: "Caramel Popcorn",
-    price: 180,
-    image: "/assets/images/caramel_popcorn.png",
-    type: "snack",
-  },
-  {
-    name: "Cheese Popcorn",
-    price: 180,
-    image: "/assets/images/cheese_popcorn.png",
-    type: "snack",
-  },
-  {
-    name: "Chocolate Popcorn",
-    price: 180,
-    image: "/assets/images/chocolate_popcorn.png",
-    type: "snack",
-  },
-  {
-    name: "Plain Popcorn",
-    price: 180,
-    image: "/assets/images/plain_popcorn.png",
-    type: "snack",
-  },
-  { name: "Coke", price: 40, image: "/assets/images/coke.png", type: "beverage" },
-  {
-    name: "Coke Zero",
-    price: 40,
-    image: "/assets/images/coke_zero.png",
-    type: "beverage",
-  },
-  { name: "Sprite", price: 40, image: "/assets/images/sprite.png", type: "beverage" },
-  { name: "Fanta", price: 40, image: "/assets/images/fanta.png", type: "beverage" },
-];
+import { productsApi } from "@/services/api";
+import type { Product, Category } from "@/services/api";
 
 function Snacks() {
   const context = useContext(CartContext);
   const navigate = useNavigate();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      productsApi.getProducts(0, 100),
+      productsApi.getCategories(),
+    ])
+      .then(([prods, cats]) => {
+        setProducts(prods.filter((p) => p.in_stock));
+        setCategories(cats);
+      })
+      .catch(() => setError('Failed to load snacks.'))
+      .finally(() => setLoading(false));
+  }, []);
 
   if (!context) {
     throw new Error("CartContext must be used inside CartProvider");
@@ -55,49 +32,64 @@ function Snacks() {
 
   const { addToCart } = context;
 
-  // Group items by type dynamically
-  const groupedByType = items.reduce(
-    (acc, item) => {
-      if (!acc[item.type]) {
-        acc[item.type] = [];
-      }
-      acc[item.type].push(item);
-      return acc;
-    },
-    {} as Record<string, SnackItem[]>
-  );
-
-  // Format type name (capitalize first letter)
-  const formatTypeName = (type: string) => {
-    return type.charAt(0).toUpperCase() + type.slice(1);
-  };
+  // Group products by category
+  const grouped = categories
+    .filter((cat) => products.some((p) => p.category_id === cat.id))
+    .sort((a, b) => a.display_order - b.display_order)
+    .map((cat) => ({
+      category: cat,
+      items: products.filter((p) => p.category_id === cat.id),
+    }));
 
   return (
     <div className="bg-[url('/public/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
-        {Object.entries(groupedByType).map(([type, typeItems]) => (
-          <div key={type}>
+
+        {loading && (
+          <div className="flex justify-center py-20">
+            <p className="text-xl text-primary/60">Loading snacks…</p>
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="flex justify-center py-20">
+            <p className="text-xl text-red-500">{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && grouped.map(({ category, items }) => (
+          <div key={category.id}>
             <h2 className="text-3xl font-bold text-violet-900 mb-5">
-              {formatTypeName(type)}
+              {category.name}
             </h2>
             <div className="flex justify-center mb-16 bg-[url('/public/assets/background/bg_snackbar.png')] bg-cover rounded-xl shadow-lg p-10">
               <div className="flex flex-wrap justify-center items-center gap-8">
-                {typeItems.map((item) => (
+                {items.map((item) => (
                   <div
-                    key={item.name}
+                    key={item.id}
                     className="m-4 p-4 rounded-4xl shadow-lg w-50 bg-white font-semibold text-center"
                   >
                     <img
-                      src={item.image}
+                      src={item.image_url ?? '/assets/images/placeholder.png'}
                       alt={item.name}
-                      className="w-full h-40 object-contain mb-4 rounded "
+                      className="w-full h-40 object-contain mb-4 rounded"
                     />
                     {item.name}
+                    {item.description && (
+                      <p className="text-xs text-gray-400 font-normal mt-1 line-clamp-2">{item.description}</p>
+                    )}
                     <br />
                     <div className="grid grid-cols-2 gap-5 text-violet-900 mt-2 items-center mx-auto">
-                      {item.price} THB
+                      {Number(item.price)} THB
                       <button
-                        onClick={() => addToCart(item)}
+                        onClick={() =>
+                          addToCart({
+                            id: item.id,
+                            name: item.name,
+                            price: Number(item.price),
+                            image: item.image_url ?? '/assets/images/placeholder.png',
+                          })
+                        }
                         className="bg-violet-900 hover:bg-violet-900/70 text-white rounded-xl w-12 h-7 mx-auto"
                       >
                         Add
