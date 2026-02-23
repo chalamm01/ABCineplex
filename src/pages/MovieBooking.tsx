@@ -275,26 +275,31 @@ export default function MovieBooking() {
 
   if (movieLoading) {
     return (
-      <div className="min-h-screen bg-[#e8e8e8]">
+      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
         <div className="flex justify-center items-center py-20">
           <p className="text-lg text-neutral-600">Loading movie details...</p>
         </div>
+      </div>
       </div>
     );
   }
 
   if (movieError || !movie) {
     return (
-      <div className="min-h-screen bg-[#e8e8e8]">
+      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
         <div className="flex justify-center items-center py-20">
           <p className="text-lg text-red-600">{movieError || 'Movie not found'}</p>
         </div>
+      </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#e8e8e8]">
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
       {/* Hero Section - Movie Info */}
       <section className="pt-16 sm:pt-20 lg:pt-24 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
@@ -352,6 +357,7 @@ export default function MovieBooking() {
           </div>
         </div>
       </section>
+      </div>
     </div>
   );
 }

@@ -12,9 +12,9 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   ];
 
   return (
-    <div className="bg-white border-b border-neutral-200">
+    <div className="">
       <div className="max-w-[1600px] mx-auto px-8 py-8">
-        <div className="flex justify-center items-center gap-12">
+        <div className="flex justify-start items-center gap-12">
           {tabs.map((tab) => (
             <button
               key={tab.id}

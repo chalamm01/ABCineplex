@@ -57,7 +57,8 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
       {loading && (
         <div className="flex justify-center items-center py-20">
           <p className="text-lg text-white">Loading...</p>
@@ -82,6 +83,7 @@ export default function Home() {
           <PromotionalSection events={promotions} />
         </main>
       )}
+      </div>
     </div>
   );
 }

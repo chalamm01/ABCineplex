@@ -33,7 +33,8 @@ function Movies() {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-[#e8e8e8]">
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
       <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
       {loading && (
@@ -57,6 +58,7 @@ function Movies() {
           <p className="text-lg text-neutral-600">No movies available</p>
         </div>
       )}
+    </div>
     </div>
   );
 }
