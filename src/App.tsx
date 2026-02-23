@@ -8,6 +8,7 @@ import Snacks from "./pages/Snacks.tsx";
 import Cart from "./pages/Cart.tsx";
 import Movies from "./pages/Movies.tsx";
 import MovieBooking from "./pages/MovieBooking.tsx";
+import Payment from "./pages/Payment.tsx";
 import Home from "./pages/Home.tsx";
 import Admin from "./pages/Admin.tsx";
 
@@ -26,6 +27,7 @@ function App() {
           <Route path="/cart" element={<Cart/>} />
           <Route path="/movies" element={<Movies/>} />
           <Route path="/movie/:id" element={<MovieBooking/>} />
+          <Route path="/payment" element={<Payment/>} />
           <Route path="/admin" element={<Admin/>} />
         </Routes>
       </div>
