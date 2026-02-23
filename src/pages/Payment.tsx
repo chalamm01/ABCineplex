@@ -7,10 +7,10 @@ import {
   CardPaymentForm,
   PromptPayForm,
   BookingSummary,
-  useCountdown,
   type PaymentMethod,
   type BookingDetails,
 } from '@/components/payment';
+import { useCountdown } from '@/hooks/useCountdown';
 import { bookingsApi, moviesApi, showtimesApi } from '@/services/api';
 import { Zap, CheckCircle } from 'lucide-react';
 

@@ -11,7 +11,7 @@ import {
   UserPlus,
   Ticket,
 } from 'lucide-react';
-import { useAuth } from '@/context/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
   readonly activeNav?: string;

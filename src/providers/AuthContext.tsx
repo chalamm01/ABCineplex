@@ -7,7 +7,7 @@ import {
 } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
-import { AuthContext } from '@/context/AuthContextDef';
+import { AuthContext } from '@/providers/AuthContextDef';
 
 export interface AuthUser {
   id: string;

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { CartContext } from '@/context/CartContextDef';
+import { CartContext } from '@/providers/CartContextDef';
 
 export interface CartItem {
   id?: string;

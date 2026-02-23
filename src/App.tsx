@@ -2,7 +2,7 @@ import "./App.css";
 import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
-import Navbar from "./components/Navbar.tsx";
+import Navbar from "./components/layout/Navbar.tsx";
 import Register from "./pages/Register.tsx";
 import Snacks from "./pages/Snacks.tsx";
 import Cart from "./pages/Cart.tsx";

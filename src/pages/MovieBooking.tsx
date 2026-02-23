@@ -5,7 +5,7 @@ import { DateTimeSelection } from '@/components/movies/date-time-selection';
 import { SeatMap } from '@/components/movies/seat-map';
 import { TicketSummary } from '@/components/movies/ticket-summary';
 import { moviesApi, showtimesApi, bookingsApi } from '@/services/api';
-import { useAuth } from '@/context/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import type { Movie } from '@/types/api';
 import type { BookingDate } from '@/lib/constants/movies';
 
