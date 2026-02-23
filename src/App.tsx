@@ -8,6 +8,7 @@ import Snacks from "./pages/Snacks.tsx";
 import Cart from "./pages/Cart.tsx";
 import Movies from "./pages/Movies.tsx";
 import Home from "./pages/Home.tsx";
+import Admin from "./pages/Admin.tsx";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/snacks" element={<Snacks/>} />
           <Route path="/cart" element={<Cart/>} />
           <Route path="/movies" element={<Movies/>} />
+          <Route path="/admin" element={<Admin/>} />
         </Routes>
       </div>
     </div>

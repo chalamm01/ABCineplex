@@ -1,10 +1,34 @@
-import type { Movie } from '@/types/api';
+import type { Movie, HeroCarouselItem, PromoEvent } from '@/types/api';
 import { createClient } from '@/lib/supabase/client';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Admin CRUD types
+export interface MovieCreate {
+  title: string;
+  release_date: string;
+  imdb_score?: number;
+  duration_minutes: number;
+  content_rating: string;
+  director?: string;
+  starring?: string[];
+  synopsis?: string;
+  poster_url: string;
+  banner_url: string;
+  trailer_url?: string;
+  audio_languages?: string[];
+  subtitle_languages?: string[];
+  tag_event?: string;
+  release_status: string;
+  genres?: string[];
+}
 
-// Showtime type
-interface Showtime {
+export interface ShowtimeCreate {
+  movie_id: number;
+  screen_id: number;
+  start_time: string;
+  base_price: number;
+}
+
+export interface Showtime {
   id: number;
   movie_id: number;
   screen_id: number;
@@ -12,6 +36,40 @@ interface Showtime {
   base_price: number;
   created_at: string;
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  display_order: number;
+  is_active: boolean;
+}
+
+export interface CategoryCreate {
+  name: string;
+  display_order: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  category_id: string;
+  price: string;
+  description?: string;
+  image_url?: string;
+  in_stock: boolean;
+  created_at: string;
+}
+
+export interface ProductCreate {
+  name: string;
+  category_id: string;
+  price: number;
+  description?: string;
+  image_url?: string;
+  in_stock: boolean;
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Seat type from API
 interface APISeat {
@@ -73,6 +131,24 @@ export const moviesApi = {
   // Get single movie by ID
   getMovieById: (movieId: number) =>
     apiCall<Movie>(`/api/movies/${movieId}`),
+
+  // Admin: Create movie
+  createMovie: (movie: MovieCreate) =>
+    apiCall<Movie>(`/api/movies`, {
+      method: 'POST',
+      body: JSON.stringify(movie),
+    }),
+
+  // Admin: Update movie
+  updateMovie: (movieId: number, movie: Partial<MovieCreate>) =>
+    apiCall<Movie>(`/api/movies/${movieId}`, {
+      method: 'PUT',
+      body: JSON.stringify(movie),
+    }),
+
+  // Admin: Delete movie
+  deleteMovie: (movieId: number) =>
+    apiCall(`/api/movies/${movieId}`, { method: 'DELETE' }),
 };
 
 // Showtimes API
@@ -88,17 +164,94 @@ export const showtimesApi = {
   // Get showtime details
   getShowtime: (showtimeId: number) =>
     apiCall<Showtime>(`/api/showtimes/${showtimeId}`),
+
+  // Admin: Create showtime
+  createShowtime: (showtime: ShowtimeCreate) =>
+    apiCall<Showtime>(`/api/showtimes`, {
+      method: 'POST',
+      body: JSON.stringify(showtime),
+    }),
+
+  // Admin: Update showtime
+  updateShowtime: (showtimeId: number, showtime: Partial<ShowtimeCreate>) =>
+    apiCall<Showtime>(`/api/showtimes/${showtimeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(showtime),
+    }),
+
+  // Admin: Delete showtime
+  deleteShowtime: (showtimeId: number) =>
+    apiCall(`/api/showtimes/${showtimeId}`, { method: 'DELETE' }),
 };
 
 // Public API (Hero carousel, promo events)
 export const publicApi = {
   // Get hero carousel slides
   getHeroCarousel: () =>
-    apiCall(`/api/hero-carousel`),
+    apiCall<HeroCarouselItem[]>(`/api/hero-carousel`),
 
   // Get promo events
   getPromoEvents: () =>
-    apiCall(`/api/promo-events`),
+    apiCall<PromoEvent[]>(`/api/promo-events`),
+
+  // Admin: Hero carousel CRUD
+  createHeroSlide: (data: object) =>
+    apiCall<HeroCarouselItem>(`/api/hero-carousel`, { method: 'POST', body: JSON.stringify(data) }),
+  updateHeroSlide: (id: string, data: object) =>
+    apiCall<HeroCarouselItem>(`/api/hero-carousel/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteHeroSlide: (id: string) =>
+    apiCall(`/api/hero-carousel/${id}`, { method: 'DELETE' }),
+
+  // Admin: Promo events CRUD
+  createPromoEvent: (data: object) =>
+    apiCall<PromoEvent>(`/api/promo-events`, { method: 'POST', body: JSON.stringify(data) }),
+  updatePromoEvent: (id: string, data: object) =>
+    apiCall<PromoEvent>(`/api/promo-events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePromoEvent: (id: string) =>
+    apiCall(`/api/promo-events/${id}`, { method: 'DELETE' }),
+};
+
+// Products & Categories Admin API
+export const productsApi = {
+  getProducts: (skip = 0, limit = 50) =>
+    apiCall<Product[]>(`/api/products/?skip=${skip}&limit=${limit}&in_stock=false`),
+
+  createProduct: (product: ProductCreate) =>
+    apiCall<Product>(`/api/products/`, {
+      method: 'POST',
+      body: JSON.stringify(product),
+      authenticated: true,
+    }),
+
+  updateProduct: (productId: string, product: Partial<ProductCreate>) =>
+    apiCall<Product>(`/api/products/${productId}`, {
+      method: 'PUT',
+      body: JSON.stringify(product),
+      authenticated: true,
+    }),
+
+  deleteProduct: (productId: string) =>
+    apiCall(`/api/products/${productId}`, { method: 'DELETE', authenticated: true }),
+
+  getCategories: () =>
+    apiCall<Category[]>(`/api/products/categories`),
+
+  createCategory: (category: CategoryCreate) =>
+    apiCall<Category>(`/api/products/categories`, {
+      method: 'POST',
+      body: JSON.stringify(category),
+      authenticated: true,
+    }),
+
+  updateCategory: (categoryId: string, category: Partial<CategoryCreate>) =>
+    apiCall<Category>(`/api/products/categories/${categoryId}`, {
+      method: 'PUT',
+      body: JSON.stringify(category),
+      authenticated: true,
+    }),
+
+  deleteCategory: (categoryId: string) =>
+    apiCall(`/api/products/categories/${categoryId}`, { method: 'DELETE', authenticated: true }),
 };
 
 // Bookings API - Two-step booking flow
