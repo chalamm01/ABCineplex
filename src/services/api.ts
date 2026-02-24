@@ -344,3 +344,53 @@ export const bookingsApi = {
     return apiCall(`/api/bookings/user/${userId}/bookings${params}`);
   },
 };
+
+// user API
+export interface UserProfile {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  user_name?: string | null;
+  phone?: string | null;
+  loyalty_points: number;
+  is_admin?: boolean;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProfileUpdateData {
+  full_name?: string;
+  user_name?: string;
+  phone?: string;
+}
+
+export const usersApi = {
+  // Get current user profile
+  getCurrentUser: (): Promise<UserProfile> =>
+    apiCall<UserProfile>(`/api/users/me`),
+
+  // Get user by ID (alias for consistency)
+  getProfile: (userId: string): Promise<UserProfile> =>
+    apiCall<UserProfile>(`/api/users/${userId}`),
+
+  // Update user (alias for consistency)
+  updateProfile: (userId: string, data: ProfileUpdateData): Promise<UserProfile> =>
+    apiCall<UserProfile>(`/api/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // Get all users (admin only)
+  getAllUsers: (skip = 0, limit = 20): Promise<UserProfile[]> =>
+    apiCall<UserProfile[]>(`/api/users?skip=${skip}&limit=${limit}`),
+
+  // Delete/deactivate user
+  deleteUser: (userId: string): Promise<{ message: string }> =>
+    apiCall<{ message: string }>(`/api/users/${userId}`, {
+      method: 'DELETE',
+    }),
+};
+
+// Keep profilesApi as an alias for backward compatibility
+export const profilesApi = usersApi;

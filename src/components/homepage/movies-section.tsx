@@ -104,13 +104,13 @@ export function MoviesSection({
 
   return (
     <section className="mt-6 px-6 bg-white/40 py-6 rounded-2xl">
-      <div className="max-w-400 mx-auto px-6">
+      <div className="max-w-400 mx-auto p-6">
         <div className="mb-12">
         <p className="text-xs tracking-widest text-neutral-500 uppercase mb-4">
           Featured
         </p>
         <div className="flex gap-8 border-b border-neutral-200">
-          {(['news', 'promo'] as const).map((tab) => (
+          {(['now', 'soon'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -120,9 +120,9 @@ export function MoviesSection({
                   : 'text-neutral-400 border-transparent hover:text-neutral-600'
               }`}
               aria-pressed={activeTab === tab}
-              aria-label={`Show ${tab === 'news' ? 'news' : 'promotions'}`}
+              aria-label={`Show ${tab === 'now' ? 'now' : 'soons'}`}
             >
-              {tab === 'news' ? 'News' : 'Promotional'}
+              {tab === 'now' ? 'Now Showing' : 'Coming Soons'}
             </button>
           ))}
         </div>
