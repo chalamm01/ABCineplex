@@ -11,6 +11,8 @@ import MovieBooking from "./pages/MovieBooking.tsx";
 import Payment from "./pages/Payment.tsx";
 import Home from "./pages/Home.tsx";
 import Admin from "./pages/Admin.tsx";
+import { Profiler } from "react";
+import Profile from "./pages/Profile.tsx";
 
 function App() {
   return (
@@ -29,6 +31,7 @@ function App() {
           <Route path="/movie/:id" element={<MovieBooking/>} />
           <Route path="/payment" element={<Payment/>} />
           <Route path="/admin" element={<Admin/>} />
+          <Route path="/profile" element={<Profile/>} />
         </Routes>
       </div>
     </div>
