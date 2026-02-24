@@ -98,9 +98,11 @@ async function apiCall<T>(
       const { data } = await supabase.auth.getSession();
       if (data.session?.access_token) {
         headers['Authorization'] = `Bearer ${data.session.access_token}`;
+      } else {
+        console.warn('No auth session found');
       }
-    } catch {
-      // Silently continue without auth if session retrieval fails
+    } catch (error) {
+      console.error('Failed to get auth session:', error);
     }
   }
 
@@ -110,7 +112,9 @@ async function apiCall<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    const errorText = await response.text();
+    console.error(`API Error: ${response.status} ${response.statusText}`, errorText);
+    throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   return response.json();

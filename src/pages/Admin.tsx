@@ -860,6 +860,7 @@ export default function Admin() {
           {tab === 'promos' && <PromoEventsSection />}
         </div>
       </div>
+      )}
     </div>
   );
 }

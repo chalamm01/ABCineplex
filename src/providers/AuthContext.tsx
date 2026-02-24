@@ -47,15 +47,53 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
   const refreshUser = useCallback(async () => {
     const { data } = await supabase.auth.getUser();
-    setUser(data.user ? mapUser(data.user) : null);
-  }, [supabase]);
+    if (data.user) {
+      const mappedUser = mapUser(data.user);
+      // Fetch admin status from backend
+      if (data.user.email && session?.access_token) {
+        try {
+          const response = await fetch('http://localhost:8000/api/users/me', {
+            headers: { Authorization: `Bearer ${session.access_token}` }
+          });
+          const dbUser = await response.json();
+          if (dbUser.is_admin) {
+            mappedUser.is_admin = true;
+          }
+        } catch {
+          // Silently fail, use metadata admin status
+        }
+      }
+      setUser(mappedUser);
+    } else {
+      setUser(null);
+    }
+  }, [supabase, session]);
 
   useEffect(() => {
     // Get initial session
     const initAuth = async () => {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
-      setUser(currentSession?.user ? mapUser(currentSession.user) : null);
+      if (currentSession?.user) {
+        const mappedUser = mapUser(currentSession.user);
+        // Fetch admin status from backend
+        if (currentSession.user.email && currentSession.access_token) {
+          try {
+            const response = await fetch('http://localhost:8000/api/users/me', {
+              headers: { Authorization: `Bearer ${currentSession.access_token}` }
+            });
+            const dbUser = await response.json();
+            if (dbUser.is_admin) {
+              mappedUser.is_admin = true;
+            }
+          } catch {
+            // Silently fail, use metadata admin status
+          }
+        }
+        setUser(mappedUser);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     };
 
@@ -63,9 +101,30 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
     // Listen for auth state changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      async (_event, newSession) => {
         setSession(newSession);
-        setUser(newSession?.user ? mapUser(newSession.user) : null);
+
+        if (newSession?.user) {
+          const mappedUser = mapUser(newSession.user);
+          // Fetch admin status from backend
+          if (newSession.user.email && newSession.access_token) {
+            try {
+              const response = await fetch('http://localhost:8000/api/users/me', {
+                headers: { Authorization: `Bearer ${newSession.access_token}` }
+              });
+              const dbUser = await response.json();
+              if (dbUser.is_admin) {
+                mappedUser.is_admin = true;
+              }
+            } catch {
+              // Silently fail, use metadata admin status
+            }
+          }
+          setUser(mappedUser);
+        } else {
+          setUser(null);
+        }
+
         setLoading(false);
       }
     );
