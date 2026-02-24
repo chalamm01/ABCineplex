@@ -58,6 +58,11 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
     navigate('/');
   };
 
+  const handleProfile = () => {
+    setIsDropdownOpen(false);
+    navigate('/profile');
+  }
+
   const handleMyBookings = () => {
     setIsDropdownOpen(false);
     navigate('/bookings');
@@ -136,6 +141,17 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
                       </p>
                       <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
                     </div>
+                    {/* Profile */}
+                    <button 
+                      onClick={handleProfile}
+                      className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 transition-colors text-neutral-700 hover:text-black border-b border-neutral-100"
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="text-sm font-medium">My Profile</span>
+                    </button>
+
+
+
                     {/* My Bookings */}
                     <button
                       onClick={handleMyBookings}
