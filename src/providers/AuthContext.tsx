@@ -15,6 +15,7 @@ export interface AuthUser {
   user_name?: string;
   full_name?: string;
   avatar_url?: string;
+  is_admin?: boolean;
 }
 
 export interface AuthContextType {
@@ -33,6 +34,7 @@ function mapUser(user: User): AuthUser {
     user_name: user.user_metadata?.user_name,
     full_name: user.user_metadata?.full_name,
     avatar_url: user.user_metadata?.avatar_url,
+    is_admin: user.user_metadata?.is_admin ?? false,
   };
 }
 

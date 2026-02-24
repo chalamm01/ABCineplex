@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import {
   moviesApi, showtimesApi, productsApi, publicApi,
   type MovieCreate, type ShowtimeCreate, type ProductCreate,
@@ -812,9 +814,22 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>('movies');
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && (!user || !user.is_admin)) {
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
+      {loading ? (
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-xl text-zinc-400">Loading...</div>
+        </div>
+      ) : (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-white mb-6">Admin Panel</h1>
 
