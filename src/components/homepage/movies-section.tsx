@@ -15,27 +15,52 @@ export function MoviesSection({
   comingSoon,
 }: MoviesSectionProps) {
   const [activeTab, setActiveTab] = useState<TabType>('now');
+  const [hasOverflow, setHasOverflow] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false);
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const displayMovies =
     activeTab === 'now' ? nowScreening : comingSoon;
 
-  // Triple the movies for smooth infinite scroll
-  const infiniteMovies = [
-    ...displayMovies,
-    ...displayMovies,
-    ...displayMovies,
-  ];
+  // Only triple the movies for infinite scroll if overflow occurs
+  const infiniteMovies = hasOverflow
+    ? [
+        ...displayMovies,
+        ...displayMovies,
+        ...displayMovies,
+      ]
+    : displayMovies;
+
+  const resetScrollingFlag = () => {
+    isScrollingRef.current = false;
+  };
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Start at the middle set of movies
+    // Check if content overflows
+    const hasScroll = container.scrollWidth > container.clientWidth;
+    setHasOverflow(hasScroll);
+
+    if (!hasScroll) return;
+
+    // Start at the middle set of movies (only if overflow)
     const initialScroll = container.scrollWidth / 3;
     container.scrollLeft = initialScroll;
+
+    const handleAutoScroll = (scrollLeft: number, sectionWidth: number, container: HTMLDivElement) => {
+      if (scrollLeft < sectionWidth * 0.5) {
+        isScrollingRef.current = true;
+        container.scrollLeft = scrollLeft + sectionWidth;
+        setTimeout(resetScrollingFlag, 50);
+      } else if (scrollLeft > sectionWidth * 2.5) {
+        isScrollingRef.current = true;
+        container.scrollLeft = scrollLeft - sectionWidth;
+        setTimeout(resetScrollingFlag, 50);
+      }
+    };
 
     const handleScroll = () => {
       if (isScrollingRef.current) return;
@@ -49,19 +74,7 @@ export function MoviesSection({
       }
 
       scrollTimeoutRef.current = setTimeout(() => {
-        if (scrollLeft < sectionWidth * 0.5) {
-          isScrollingRef.current = true;
-          container.scrollLeft = scrollLeft + sectionWidth;
-          setTimeout(() => {
-            isScrollingRef.current = false;
-          }, 50);
-        } else if (scrollLeft > sectionWidth * 2.5) {
-          isScrollingRef.current = true;
-          container.scrollLeft = scrollLeft - sectionWidth;
-          setTimeout(() => {
-            isScrollingRef.current = false;
-          }, 50);
-        }
+        handleAutoScroll(scrollLeft, sectionWidth, container);
       }, 150);
     };
 
@@ -72,7 +85,7 @@ export function MoviesSection({
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [displayMovies]);
+  }, [activeTab]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (containerRef.current) {

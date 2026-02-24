@@ -64,9 +64,9 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
 
       {/* Indicators */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        {movies.map((_, index) => (
+        {movies.map((movie, index) => (
           <button
-            key={index}
+            key={movie.id}
             onClick={() => setCurrentIndex(index)}
             className={`w-2 h-2 rounded-full transition-all ${
               index === currentIndex
