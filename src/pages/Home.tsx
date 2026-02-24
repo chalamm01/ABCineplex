@@ -6,11 +6,19 @@ import { moviesApi, publicApi } from '@/services/api';
 import { transformCarouselItem } from '@/types/api';
 import type { HeroCarouselItem, Movie } from '@/types/api';
 
+interface PromoEvent {
+  id: string | number;
+  image_url: string;
+  title: string;
+  promo_type: string;
+  is_active: boolean;
+}
+
 export default function Home() {
-  const [slides, setSlides] = useState<any[]>([]);
+  const [slides, setSlides] = useState<HeroCarouselItem[]>([]);
   const [nowScreeningData, setNowScreeningData] = useState<Movie[]>([]);
   const [comingSoonData, setComingSoonData] = useState<Movie[]>([]);
-  const [promotions, setPromotions] = useState<any[]>([]);
+  const [promotions, setPromotions] = useState<PromoEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +35,7 @@ export default function Home() {
           publicApi.getPromoEvents(),
         ]);
 
-        const transformedSlides = (heroData as HeroCarouselItem[])
+        const transformedSlides = heroData
           .filter((item) => item.is_active)
           .sort((a, b) => a.display_order - b.display_order)
           .map(transformCarouselItem);
@@ -37,8 +45,8 @@ export default function Home() {
         setComingSoonData(comingSoon);
 
         const activePromotions = promoData
-          .filter((item: any) => item.is_active)
-          .map((item: any) => ({
+          .filter((item: PromoEvent) => item.is_active)
+          .map((item: PromoEvent) => ({
             id: item.id,
             image: item.image_url,
             title: item.title,
