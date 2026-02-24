@@ -105,28 +105,28 @@ export function MoviesSection({
   return (
     <section className="mt-6 px-6 bg-white/40 py-6 rounded-2xl">
       <div className="max-w-400 mx-auto px-6">
-                <p className="text-xs tracking-widest text-neutral-500 uppercase mb-4">
+        <div className="mb-12">
+        <p className="text-xs tracking-widest text-neutral-500 uppercase mb-4">
           Featured
         </p>
-        {/* Tab Navigation */}
-        <div className="flex justify-start items-center gap-12 mb-8">
-          {(['now', 'soon'] as const).map((tab) => (
+        <div className="flex gap-8 border-b border-neutral-200">
+          {(['news', 'promo'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`text-2xl font-semibold tracking-tight transition-all ${
+              className={`pb-4 text-3xl font-semibold tracking-tight border-b-2 -mb-0.5 transition-all ${
                 activeTab === tab
-                  ? 'text-black border-b-4 border-black pb-2'
-                  : 'text-neutral-400 hover:text-neutral-600'
+                  ? 'text-black border-black'
+                  : 'text-neutral-400 border-transparent hover:text-neutral-600'
               }`}
               aria-pressed={activeTab === tab}
-              aria-label={`Show ${tab === 'now' ? 'now screening' : 'coming soon'}`}
+              aria-label={`Show ${tab === 'news' ? 'news' : 'promotions'}`}
             >
-              {tab === 'now' ? 'NOW SCREENING' : 'COMING SOON'}
+              {tab === 'news' ? 'News' : 'Promotional'}
             </button>
           ))}
         </div>
-
+      </div>
         {/* Movies Container */}
         <div className="relative min-h-96">
           <div
