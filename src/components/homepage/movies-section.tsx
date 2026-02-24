@@ -90,10 +90,13 @@ export function MoviesSection({
   };
 
   return (
-    <div className="bg-white py-12">
+    <section className="mt-6 px-6 bg-white/40 py-6 rounded-2xl">
       <div className="max-w-400 mx-auto px-6">
+                <p className="text-xs tracking-widest text-neutral-500 uppercase mb-4">
+          Featured
+        </p>
         {/* Tab Navigation */}
-        <div className="flex justify-center items-center gap-12 mb-8">
+        <div className="flex justify-start items-center gap-12 mb-8">
           {(['now', 'soon'] as const).map((tab) => (
             <button
               key={tab}
@@ -112,13 +115,13 @@ export function MoviesSection({
         </div>
 
         {/* Movies Container */}
-        <div className="relative">
+        <div className="relative min-h-96">
           <div
             ref={containerRef}
             className="flex gap-6 py-6 overflow-x-auto snap-x snap-mandatory scrollbar-hidden"
           >
             {infiniteMovies.map((movie, index) => (
-              <div key={`${movie.id}-${index}`} className="flex-shrink-0 w-80">
+              <div key={`${movie.id}-${index}`} className="shrink-0 w-80">
                 <HomepageMovieCard movie={movie} />
               </div>
             ))}
@@ -141,6 +144,6 @@ export function MoviesSection({
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

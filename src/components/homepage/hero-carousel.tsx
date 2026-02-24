@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { HeroSlide } from '@/types/api';
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { HeroSlide } from "@/types/api";
 
 interface HeroCarouselProps {
   readonly slides: readonly HeroSlide[];
@@ -12,25 +12,21 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
   const movies = slides || [];
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) =>
-      prev === 0 ? movies.length - 1 : prev - 1
-    );
+    setCurrentIndex((prev) => (prev === 0 ? movies.length - 1 : prev - 1));
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) =>
-      prev === movies.length - 1 ? 0 : prev + 1
-    );
+    setCurrentIndex((prev) => (prev === movies.length - 1 ? 0 : prev + 1));
   };
 
   return (
-    <div className="relative h-100 overflow-hidden bg-neutral-900 group">
+    <div className="relative h-100 overflow-hidden bg-neutral-900 group rounded-2xl">
       <div className="flex h-full transition-transform duration-500 ease-out">
         {movies.map((movie, index) => (
           <div
             key={movie.id}
             className={`relative shrink-0 transition-all duration-500 ${
-              index === currentIndex ? 'w-1/2 md:w-3/5' : 'w-1/6 md:w-[15%]'
+              index === currentIndex ? "w-1/2 md:w-3/5" : "w-1/6 md:w-[15%]"
             }`}
           >
             <img
@@ -38,10 +34,12 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
               alt={movie.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
             {index === currentIndex && (
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h2 className="text-3xl font-light tracking-wide">{movie.title}</h2>
+                <h2 className="text-3xl font-light tracking-wide">
+                  {movie.title}
+                </h2>
               </div>
             )}
           </div>
@@ -72,8 +70,8 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
             onClick={() => setCurrentIndex(index)}
             className={`w-2 h-2 rounded-full transition-all ${
               index === currentIndex
-                ? 'bg-white w-8'
-                : 'bg-white/50 hover:bg-white/75'
+                ? "bg-white w-8"
+                : "bg-white/50 hover:bg-white/75"
             }`}
             aria-label={`Go to slide ${index + 1}`}
             aria-pressed={index === currentIndex}
