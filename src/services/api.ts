@@ -261,7 +261,7 @@ export const productsApi = {
 // Bookings API - Two-step booking flow
 interface ReserveSeatRequest {
   user_id: string;
-  screen_id: number;
+  showtime_id: number;
   seat_ids: number[];
   price_per_seat: number;
 }
@@ -295,6 +295,7 @@ export interface BookingDetailResponse {
   total_amount: number;
   payment_deadline: string;
   created_at: string;
+  showtime_id: number;
   screen_name: string;
   seats: string[];
   movie_id?: number;
@@ -302,7 +303,6 @@ export interface BookingDetailResponse {
   poster_url?: string;
   showtime_start?: string;
   showtime_end?: string;
-  showtime_id?: number;
 }
 
 export const bookingsApi = {
