@@ -10,6 +10,7 @@ interface BookingCardData {
   showTime: string;
   transactionNo: string;
   posterUrl: string;
+  seats: string;
 }
 
 export default function BookingHistoryPage() {
@@ -36,6 +37,7 @@ export default function BookingHistoryPage() {
             : "-",
           transactionNo: booking.booking_id.toString(),
           posterUrl: booking.poster_url || "/posters/default.jpg",
+          seats: Array.isArray(booking.seats) ? booking.seats.join(", ") : String(booking.seats || "-"),
         }));
         setBookings(mapped);
       } catch (err: any) {
@@ -48,7 +50,7 @@ export default function BookingHistoryPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-50 px-6 py-10 md:px-12 lg:px-20">
+    <main className="min-h-screen bg-gray-50 px-32 py-6 md:px-12 lg:px-20">
       <h1 className="mb-8 border-b-2 border-black pb-2 text-3xl font-extrabold uppercase tracking-tight text-black">
         Booking History
       </h1>
