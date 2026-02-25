@@ -105,8 +105,8 @@ export default function ProfilePage() {
   const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="bg-muted/40 flex justify-center p-6">
-      <Card className="w-full max-w-3xl">
+    <div className="bg-muted/40 flex justify-center p-6 bg-cover bg-center min-h-screen">
+      <Card className="w-full max-w-3xl max-h-[45vh] overflow-y-auto">
         {/* Header Section */}
         <CardHeader className="flex flex-row items-center gap-6">
           <Avatar className="h-20 w-20">
@@ -170,7 +170,7 @@ export default function ProfilePage() {
             </Button>
           </div>
 
-          <div className="flex justify-end gap-4">
+          <div className="flex justify-end gap-4 pt-4">
             <Button
               variant="outline"
               onClick={handleCancel}
