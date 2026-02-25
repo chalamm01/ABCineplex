@@ -15,27 +15,52 @@ export function MoviesSection({
   comingSoon,
 }: MoviesSectionProps) {
   const [activeTab, setActiveTab] = useState<TabType>('now');
+  const [hasOverflow, setHasOverflow] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false);
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const displayMovies =
     activeTab === 'now' ? nowScreening : comingSoon;
 
-  // Triple the movies for smooth infinite scroll
-  const infiniteMovies = [
-    ...displayMovies,
-    ...displayMovies,
-    ...displayMovies,
-  ];
+  // Only triple the movies for infinite scroll if overflow occurs
+  const infiniteMovies = hasOverflow
+    ? [
+        ...displayMovies,
+        ...displayMovies,
+        ...displayMovies,
+      ]
+    : displayMovies;
+
+  const resetScrollingFlag = () => {
+    isScrollingRef.current = false;
+  };
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Start at the middle set of movies
+    // Check if content overflows
+    const hasScroll = container.scrollWidth > container.clientWidth;
+    setHasOverflow(hasScroll);
+
+    if (!hasScroll) return;
+
+    // Start at the middle set of movies (only if overflow)
     const initialScroll = container.scrollWidth / 3;
     container.scrollLeft = initialScroll;
+
+    const handleAutoScroll = (scrollLeft: number, sectionWidth: number, container: HTMLDivElement) => {
+      if (scrollLeft < sectionWidth * 0.5) {
+        isScrollingRef.current = true;
+        container.scrollLeft = scrollLeft + sectionWidth;
+        setTimeout(resetScrollingFlag, 50);
+      } else if (scrollLeft > sectionWidth * 2.5) {
+        isScrollingRef.current = true;
+        container.scrollLeft = scrollLeft - sectionWidth;
+        setTimeout(resetScrollingFlag, 50);
+      }
+    };
 
     const handleScroll = () => {
       if (isScrollingRef.current) return;
@@ -49,19 +74,7 @@ export function MoviesSection({
       }
 
       scrollTimeoutRef.current = setTimeout(() => {
-        if (scrollLeft < sectionWidth * 0.5) {
-          isScrollingRef.current = true;
-          container.scrollLeft = scrollLeft + sectionWidth;
-          setTimeout(() => {
-            isScrollingRef.current = false;
-          }, 50);
-        } else if (scrollLeft > sectionWidth * 2.5) {
-          isScrollingRef.current = true;
-          container.scrollLeft = scrollLeft - sectionWidth;
-          setTimeout(() => {
-            isScrollingRef.current = false;
-          }, 50);
-        }
+        handleAutoScroll(scrollLeft, sectionWidth, container);
       }, 150);
     };
 
@@ -72,7 +85,7 @@ export function MoviesSection({
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [displayMovies]);
+  }, [activeTab]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (containerRef.current) {
@@ -90,35 +103,38 @@ export function MoviesSection({
   };
 
   return (
-    <div className="bg-white py-12">
-      <div className="max-w-400 mx-auto px-6">
-        {/* Tab Navigation */}
-        <div className="flex justify-center items-center gap-12 mb-8">
+    <section className="mt-6 px-6 bg-white/40 py-6 rounded-2xl">
+      <div className="max-w-400 mx-auto p-6">
+        <div className="mb-12">
+        <p className="text-xs tracking-widest text-neutral-500 uppercase mb-4">
+          Featured
+        </p>
+        <div className="flex gap-8 border-b border-neutral-200">
           {(['now', 'soon'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`text-2xl font-semibold tracking-tight transition-all ${
+              className={`pb-4 text-3xl font-semibold tracking-tight border-b-2 -mb-0.5 transition-all ${
                 activeTab === tab
-                  ? 'text-black border-b-4 border-black pb-2'
-                  : 'text-neutral-400 hover:text-neutral-600'
+                  ? 'text-black border-black'
+                  : 'text-neutral-400 border-transparent hover:text-neutral-600'
               }`}
               aria-pressed={activeTab === tab}
-              aria-label={`Show ${tab === 'now' ? 'now screening' : 'coming soon'}`}
+              aria-label={`Show ${tab === 'now' ? 'now' : 'soons'}`}
             >
-              {tab === 'now' ? 'NOW SCREENING' : 'COMING SOON'}
+              {tab === 'now' ? 'Now Showing' : 'Coming Soons'}
             </button>
           ))}
         </div>
-
+      </div>
         {/* Movies Container */}
-        <div className="relative">
+        <div className="relative min-h-96">
           <div
             ref={containerRef}
             className="flex gap-6 py-6 overflow-x-auto snap-x snap-mandatory scrollbar-hidden"
           >
             {infiniteMovies.map((movie, index) => (
-              <div key={`${movie.id}-${index}`} className="flex-shrink-0 w-80">
+              <div key={`${movie.id}-${index}`} className="shrink-0 w-80">
                 <HomepageMovieCard movie={movie} />
               </div>
             ))}
@@ -141,6 +157,6 @@ export function MoviesSection({
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
