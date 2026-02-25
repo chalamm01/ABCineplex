@@ -324,7 +324,7 @@ export default function MovieBooking() {
       </section>
 
       {/* Booking Section */}
-      <section className="py-8 sm:py-12 px-4 sm:px-6 bg-gradient-to-b from-[#e8e8e8] to-neutral-200">
+      <section className="py-8 sm:py-12 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           {/* Date & Time Selection */}
           <DateTimeSelection
