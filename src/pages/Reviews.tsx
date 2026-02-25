@@ -4,35 +4,41 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Heart, Star} from "lucide-react"
-const reviewData = {
-  total: 2,
-  items: [
-    {
-      id: 1,
-      movie_id: 10,
-      booking_id: 20,
-      user_id: "123",
-      username: "JohnDoe",
-      review_text: "Amazing movie! The storyline was incredible.",
-      rating: 4,
-      like_count: 12,
-      created_at: "2026-02-25T08:43:56.458Z",
-      updated_at: "2026-02-25T08:43:56.458Z"
-    },
-    {
-      id: 2,
-      movie_id: 10,
-      booking_id: 21,
-      user_id: "124",
-      username: "JaneSmith",
-      review_text: "It was okay, but a bit long.",
-      rating: 3,
-      like_count: 4,
-      created_at: "2026-02-25T08:43:56.458Z",
-      updated_at: "2026-02-25T08:43:56.458Z"
-    }
-  ]
-}
+import { useEffect, useState } from "react"
+import { reviewsApi, type Review } from "@/services/api"
+
+
+// const reviewData = {
+//   total: 2,
+//   items: [
+//     {
+//       id: 1,
+//       movie_id: 10,
+//       booking_id: 20,
+//       user_id: "123",
+//       username: "JohnDoe",
+//       review_text: "Amazing movie! The storyline was incredible.",
+//       rating: 4,
+//       like_count: 12,
+//       created_at: "2026-02-25T08:43:56.458Z",
+//       updated_at: "2026-02-25T08:43:56.458Z"
+//     },
+//     {
+//       id: 2,
+//       movie_id: 10,
+//       booking_id: 21,
+//       user_id: "124",
+//       username: "JaneSmith",
+//       review_text: "It was okay, but a bit long.",
+//       rating: 3,
+//       like_count: 4,
+//       created_at: "2026-02-25T08:43:56.458Z",
+//       updated_at: "2026-02-25T08:43:56.458Z"
+//     }
+//   ]
+// }
+
+
 
 function RatingStars({ rating }: { rating: number }) {
   return (
@@ -52,7 +58,52 @@ function RatingStars({ rating }: { rating: number }) {
 }
 
 export default function ReviewPage() {
-  const { items, total } = reviewData
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const items = reviews
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const data = await reviewsApi.getReviewsByMovie(10)
+        setReviews(data.items)
+        setTotal(data.total)
+
+      } catch (err) {
+        console.error(err)
+        setError("Failed to load reviews.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+  fetchReviews()
+  }, [])
+
+
+  if (loading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      Loading...
+    </div>
+  )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-destructive/10 text-destructive px-4 py-2 rounded">
+          {error}
+        </div>
+      </div>
+    )
+  }
+
 
   return (
     <div className="min-h-screen bg-muted/40 p-6 flex justify-center">
