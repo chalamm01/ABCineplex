@@ -224,7 +224,7 @@ export default function MovieBooking() {
 
       const reserveResult = await bookingsApi.reserveSeats({
         user_id: user.id,
-        screen_id: screenId,
+        showtime_id: currentShowtimeId,
         seat_ids: selectedSeatIds,
         price_per_seat: pricePerSeat,
       });
