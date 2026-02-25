@@ -50,7 +50,7 @@ export default function BookingHistoryPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-50 px-32 py-6 md:px-12 lg:px-20">
+    <main className="min-h-screen bg-gray-50 px-32 py-6">
       <h1 className="mb-8 border-b-2 border-black pb-2 text-3xl font-extrabold uppercase tracking-tight text-black">
         Booking History
       </h1>

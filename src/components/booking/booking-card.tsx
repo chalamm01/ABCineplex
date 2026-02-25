@@ -24,7 +24,7 @@ export function BookingCard({
   seats,
 }: BookingCardProps) {
   return (
-    <Card className="flexwrap overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <Card className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
       <CardContent className="flex gap-4 content-between">
         {/* Poster */}
         <div className="relative aspect-2/3 max-h-75 max-w-50 shrink-0 overflow-hidden rounded-xl">
@@ -38,9 +38,9 @@ export function BookingCard({
           />
         </div>
 
-        <div className="flex flex-col content-between">
+        <div className="flex flex-col content-between w-full">
           <div>
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-gray-900">
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-gray-900 truncate">
               {title}
             </h1>
             <p className="mt-0.5 text-lg font-medium text-gray-400">{cinema}</p>
