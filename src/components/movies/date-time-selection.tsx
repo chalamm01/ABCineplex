@@ -43,9 +43,9 @@ export function DateTimeSelection({
 
   return (
     <div className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 mb-8">
-      <h3 className="text-black font-bold text-2xl sm:text-3xl uppercase tracking-wider mb-8">
+      {/* <h3 className="text-black font-bold text-2xl sm:text-3xl uppercase tracking-wider mb-8">
         SELECT DATE & TIME
-      </h3>
+      </h3> */}
 
       {/* Vertical Chronological Layout */}
       <div className="space-y-8">

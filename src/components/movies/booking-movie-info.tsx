@@ -12,7 +12,7 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
     <div className="space-y-6">
       <div>
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black mb-4 tracking-tight">
-          {movie.title} ({formatYear(movie.release_date)})
+          {movie.title} <span className='text-xl font-normal'>({formatYear(movie.release_date)})</span>
         </h1>
         <div className="flex items-center gap-2 flex-wrap">
           {movie.genres?.map((genre) => (

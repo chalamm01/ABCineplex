@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { Heart, Star} from "lucide-react"
 import { useEffect, useState } from "react"
 import { reviewsApi, type Review } from "@/services/api"
+import { Spinner } from "@/components/ui/spinner"
 
 
 // const reviewData = {
@@ -89,7 +90,7 @@ export default function ReviewPage() {
   if (loading) {
   return (
     <div className="min-h-screen flex items-center justify-center">
-      Loading...
+      <Spinner/>
     </div>
   )
   }

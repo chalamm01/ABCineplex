@@ -66,19 +66,17 @@ export default function Home() {
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
+      <div className="min-h-screen px-32 bg-white/70 backdrop-blur-md py-12">
+      <div className="flex justify-center items-center">
       {loading && (
-        <div className="flex justify-center items-center py-20">
           <Spinner/>
-        </div>
       )}
-
       {error && (
-        <div className="flex justify-center items-center py-20">
-          <p className="text-lg text-red-500">{error}</p>
-        </div>
-      )}
 
+          <p className="text-lg text-red-500">{error}</p>
+
+      )}
+      </div>
       {!loading && !error && (
         <main>
           <HeroCarousel slides={slides} />

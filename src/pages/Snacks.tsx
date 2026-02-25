@@ -16,11 +16,11 @@ function Snacks() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      productsApi.getProducts(0, 100),
+      productsApi.getProducts(0, 100, true),
       productsApi.getCategories(),
     ])
       .then(([prods, cats]) => {
-        setProducts(prods.filter((p) => p.in_stock));
+        setProducts(prods); // Show all products, ignore in_stock filter for debugging
         setCategories(cats);
       })
       .catch(() => setError('Failed to load snacks.'))
@@ -35,7 +35,6 @@ function Snacks() {
 
   // Group products by category
   const grouped = categories
-    .filter((cat) => products.some((p) => p.category_id === cat.id))
     .sort((a, b) => a.display_order - b.display_order)
     .map((cat) => ({
       category: cat,

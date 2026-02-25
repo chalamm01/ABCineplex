@@ -26,7 +26,7 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
         }}
       >
         {/* Movie Poster */}
-        <div className="relative overflow-hidden rounded-lg mb-2 sm:mb-4 aspect-[2/3] bg-neutral-900">
+        <div className="relative overflow-hidden rounded-lg mb-2 sm:mb-4 aspect-2/3 bg-neutral-900">
           <img
             src={movie.poster_url}
             alt={movie.title}
