@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { RegisterSchema } from '@/lib/validations/auth';
 import { signUp } from '@/services/auth';
 import { Button } from '@/components/ui/button';
@@ -15,41 +16,42 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
+type RegisterFormValues = z.infer<typeof RegisterSchema>;
+
 export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  const form = useForm({
+  const form = useForm<RegisterFormValues>({
     resolver: zodResolver(RegisterSchema),
     defaultValues: {
-      name: '',
+      first_name: '',
+      last_name: '',
       email: '',
+      phone: '',
+      date_of_birth: '',
       password: '',
       confirmPassword: '',
     },
   });
 
-  const onSubmit = async (formData: {
-    name: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-  }) => {
+  const onSubmit = async (formData: RegisterFormValues) => {
     setLoading(true);
     setError(null);
     try {
+      const fullName = `${formData.first_name} ${formData.last_name}`.trim();
       const { session } = await signUp(formData.email, formData.password, {
-        user_name: formData.name,
-        full_name: formData.name,
+        user_name: fullName,
+        full_name: fullName,
+        phone: formData.phone,
+        date_of_birth: formData.date_of_birth,
       });
 
       if (session) {
-        // Auto-confirmed — redirect to home
         navigate('/');
       } else {
-        // Email confirmation required
         setSuccess(true);
       }
     } catch (err: unknown) {
@@ -77,24 +79,47 @@ export function RegisterForm() {
             {error}
           </div>
         )}
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-gray-200">Username</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="your_username"
-                  disabled={loading}
-                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
+        {/* Name row */}
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            control={form.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-200">First Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="John"
+                    disabled={loading}
+                    className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-200">Last Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Doe"
+                    disabled={loading}
+                    className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="email"
@@ -114,6 +139,46 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-200">Phone Number</FormLabel>
+              <FormControl>
+                <Input
+                  type="tel"
+                  placeholder="0812345678"
+                  disabled={loading}
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="date_of_birth"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-200">Date of Birth</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  disabled={loading}
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="password"
@@ -133,6 +198,7 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="confirmPassword"
@@ -152,7 +218,12 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
+
+        <Button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          disabled={loading}
+        >
           {loading ? 'Creating account...' : 'Create account'}
         </Button>
       </form>

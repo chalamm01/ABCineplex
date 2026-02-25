@@ -34,7 +34,12 @@ export async function signIn(email: string, password: string): Promise<{ user: A
 export async function signUp(
   email: string,
   password: string,
-  metadata: { user_name: string; full_name: string }
+  metadata: {
+    user_name: string;
+    full_name: string;
+    phone?: string;
+    date_of_birth?: string;
+  }
 ): Promise<{ user: AuthUser; session: Session | null }> {
   const supabase = createClient();
   const { data, error } = await supabase.auth.signUp({

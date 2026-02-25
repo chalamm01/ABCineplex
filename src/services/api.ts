@@ -413,25 +413,42 @@ export interface PaginatedReviews {
   items: Review[]
 }
 
-// API call
+export interface ReviewCreate {
+  movie_id: number
+  booking_id?: number
+  review_text: string
+  rating: number
+}
+
 export const reviewsApi = {
-  async getReviewsByMovie(
-    movieId: number,
-    skip = 0,
-    limit = 20
-  ): Promise<PaginatedReviews> {
+  getReviewsByMovie: (movieId: number, skip = 0, limit = 20): Promise<PaginatedReviews> =>
+    apiCall<PaginatedReviews>(`/api/reviews/movie/${movieId}?skip=${skip}&limit=${limit}`, {
+      authenticated: false,
+    }),
 
-    const response = await fetch(
-      `http://localhost:8000/api/reviews/movie/${movieId}?skip=${skip}&limit=${limit}`,
-      {
-        credentials: "include", // if using cookies
-      }
-    )
+  createReview: (data: ReviewCreate): Promise<Review> =>
+    apiCall<Review>(`/api/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      authenticated: true,
+    }),
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch reviews")
-    }
+  updateReview: (reviewId: number, data: { review_text?: string; rating?: number }): Promise<Review> =>
+    apiCall<Review>(`/api/reviews/${reviewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      authenticated: true,
+    }),
 
-    return response.json()
-  },
+  deleteReview: (reviewId: number): Promise<void> =>
+    apiCall<void>(`/api/reviews/${reviewId}`, {
+      method: 'DELETE',
+      authenticated: true,
+    }),
+
+  likeReview: (reviewId: number): Promise<Review> =>
+    apiCall<Review>(`/api/reviews/${reviewId}/like`, {
+      method: 'POST',
+      authenticated: true,
+    }),
 }
