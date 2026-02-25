@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { HomepageMovieCard } from './homepage-movie-card';
 import type { Movie } from '@/types/api';
-
+import { Separator } from '../ui/separator';
 interface MoviesSectionProps {
   readonly nowScreening: readonly Movie[];
   readonly comingSoon: readonly Movie[];
@@ -105,11 +105,10 @@ export function MoviesSection({
   return (
     <section className="mt-6 px-6 bg-white/40 py-6 rounded-2xl">
       <div className="max-w-400 mx-auto p-6">
-        <div className="mb-12">
         <p className="text-xs tracking-widest text-neutral-500 uppercase mb-4">
           Featured
         </p>
-        <div className="flex gap-8 border-b border-neutral-200">
+        <div className="flex gap-8">
           {(['now', 'soon'] as const).map((tab) => (
             <button
               key={tab}
@@ -126,12 +125,12 @@ export function MoviesSection({
             </button>
           ))}
         </div>
-      </div>
+      <Separator className='my-6 bg-neutral-500'/>
         {/* Movies Container */}
-        <div className="relative min-h-96">
+        <div className="relative min-h-81">
           <div
             ref={containerRef}
-            className="flex gap-6 py-6 overflow-x-auto snap-x snap-mandatory scrollbar-hidden"
+            className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hidden"
           >
             {infiniteMovies.map((movie, index) => (
               <div key={`${movie.id}-${index}`} className="shrink-0 w-80">

@@ -303,12 +303,12 @@ export default function MovieBooking() {
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
       {/* Hero Section - Movie Info */}
-      <section className="pt-16 sm:pt-20 lg:pt-24 px-4 sm:px-6">
+      <section className=" px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-[300px_1fr] gap-8 lg:gap-12 items-start">
             {/* Movie Poster */}
             <div className="relative group hidden lg:block">
-              <div className="relative aspect-[2/3] w-full bg-neutral-900 rounded-lg overflow-hidden shadow-lg">
+              <div className="relative aspect-2/3 w-full h-full bg-neutral-900 rounded-lg overflow-hidden shadow-lg">
                 <img
                   src={movie.poster_url}
                   alt={movie.title}
