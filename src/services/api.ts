@@ -218,7 +218,7 @@ export const publicApi = {
 // Products & Categories Admin API
 export const productsApi = {
   getProducts: (skip = 0, limit = 50) =>
-    apiCall<Product[]>(`/api/products/?skip=${skip}&limit=${limit}&in_stock=false`),
+    apiCall<Product[]>(`/api/products/?skip=${skip}&limit=${limit}&in_stock=true`),
 
   createProduct: (product: ProductCreate) =>
     apiCall<Product>(`/api/products/`, {
