@@ -5,38 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Heart, Star} from "lucide-react"
 import { useEffect, useState } from "react"
-import { reviewsApi, type Review } from "@/services/api"
-
-
-// const reviewData = {
-//   total: 2,
-//   items: [
-//     {
-//       id: 1,
-//       movie_id: 10,
-//       booking_id: 20,
-//       user_id: "123",
-//       username: "JohnDoe",
-//       review_text: "Amazing movie! The storyline was incredible.",
-//       rating: 4,
-//       like_count: 12,
-//       created_at: "2026-02-25T08:43:56.458Z",
-//       updated_at: "2026-02-25T08:43:56.458Z"
-//     },
-//     {
-//       id: 2,
-//       movie_id: 10,
-//       booking_id: 21,
-//       user_id: "124",
-//       username: "JaneSmith",
-//       review_text: "It was okay, but a bit long.",
-//       rating: 3,
-//       like_count: 4,
-//       created_at: "2026-02-25T08:43:56.458Z",
-//       updated_at: "2026-02-25T08:43:56.458Z"
-//     }
-//   ]
-// }
+import { Textarea } from "@/components/ui/textarea"
+import type { Review } from "@/services/api"
 
 
 
@@ -57,53 +27,36 @@ function RatingStars({ rating }: { rating: number }) {
   )
 }
 
-export default function ReviewPage() {
+
+export default function Reviews() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const items = reviews
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setLoading(true)
-        setError(null)
+  const [newReview, setNewReview] = useState("")
+  const [newRating, setNewRating] = useState(5)
 
-        const data = await reviewsApi.getReviewsByMovie(10)
-        setReviews(data.items)
-        setTotal(data.total)
+  const handleSubmit = () => {
+    if (!newReview.trim()) return
 
-      } catch (err) {
-        console.error(err)
-        setError("Failed to load reviews.")
-      } finally {
-        setLoading(false)
-      }
+    const newItem: Review = {
+      id: Date.now(),
+      movie_id: 10,
+      booking_id: 0,
+      user_id: "local-user",
+      username: "You",
+      review_text: newReview,
+      rating: newRating,
+      like_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
 
-  fetchReviews()
-  }, [])
+    setReviews(prev => [newItem, ...prev])
+    setTotal(prev => prev + 1)
 
-
-  if (loading) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      Loading...
-    </div>
-  )
+    setNewReview("")
+    setNewRating(5)
   }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-destructive/10 text-destructive px-4 py-2 rounded">
-          {error}
-        </div>
-      </div>
-    )
-  }
-
 
   return (
     <div className="min-h-screen bg-muted/40 p-6 flex justify-center">
@@ -115,7 +68,45 @@ export default function ReviewPage() {
 
         <Separator />
 
-        {items.length === 0 && (
+        {/* Create Review Card */}
+        <Card>
+          <CardContent className="space-y-4 p-6">
+
+            <Textarea
+              className="min-h-[150px]"
+              placeholder="Write your review..."
+              value={newReview}
+              onChange={(e) => setNewReview(e.target.value)}
+            />
+
+            <div className="flex justify-between items-center">
+
+              {/* Star Selector */}
+              <div className="flex gap-2">
+                {[1,2,3,4,5].map((star) => (
+                  <Star
+                    key={star}
+                    onClick={() => setNewRating(star)}
+                    className={`w-5 h-5 cursor-pointer ${
+                      star <= newRating
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <Button onClick={handleSubmit}>
+                Post
+              </Button>
+
+            </div>
+
+          </CardContent>
+        </Card>
+
+        {/* Empty State */}
+        {reviews.length === 0 && (
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
               No reviews yet.
@@ -123,11 +114,11 @@ export default function ReviewPage() {
           </Card>
         )}
 
-        {items.map((review) => (
+        {/* Review List */}
+        {reviews.map((review) => (
           <Card key={review.id} className="hover:shadow-md transition">
             <CardHeader className="flex flex-row items-center justify-between">
 
-              {/* User Info */}
               <div className="flex items-center gap-4">
                 <Avatar>
                   <AvatarFallback>
@@ -145,7 +136,6 @@ export default function ReviewPage() {
                 </div>
               </div>
 
-              {/* Rating Badge */}
               <Badge variant="secondary">
                 <RatingStars rating={review.rating} />
               </Badge>
@@ -153,18 +143,15 @@ export default function ReviewPage() {
             </CardHeader>
 
             <CardContent className="space-y-4">
-
               <p className="text-sm">
                 {review.review_text}
               </p>
 
               <div className="flex justify-between items-center">
-
                 <Button variant="ghost" size="sm" className="gap-2">
                   <Heart className="w-4 h-4" />
                   {review.like_count}
                 </Button>
-
               </div>
 
             </CardContent>

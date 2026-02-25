@@ -412,26 +412,3 @@ export interface PaginatedReviews {
   total: number
   items: Review[]
 }
-
-// API call
-export const reviewsApi = {
-  async getReviewsByMovie(
-    movieId: number,
-    skip = 0,
-    limit = 20
-  ): Promise<PaginatedReviews> {
-
-    const response = await fetch(
-      `http://localhost:8000/api/reviews/movie/${movieId}?skip=${skip}&limit=${limit}`,
-      {
-        credentials: "include", // if using cookies
-      }
-    )
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch reviews")
-    }
-
-    return response.json()
-  },
-}
