@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Separator } from '@/components/ui/separator';
 import { Link } from 'react-router-dom';
 
 interface PromotionalEvent {
@@ -28,11 +29,10 @@ export function PromotionalSection({ events }: PromotionalSectionProps) {
     <section className="mt-6 px-6 bg-white/40 py-6 rounded-2xl">
       <div className="max-w-400 mx-auto p-6">
         {/* Section Header */}
-        <div className="mb-12">
         <p className="text-xs tracking-widest text-neutral-500 uppercase mb-4">
           Featured
         </p>
-        <div className="flex gap-8 border-b border-neutral-200">
+        <div className="flex gap-8">
           {(['news', 'promo'] as const).map((tab) => (
             <button
               key={tab}
@@ -49,8 +49,7 @@ export function PromotionalSection({ events }: PromotionalSectionProps) {
             </button>
           ))}
         </div>
-      </div>
-
+          <Separator className='my-6 bg-neutral-500'/>
       {/* Promo Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {displayEvents.length > 0 ? (
