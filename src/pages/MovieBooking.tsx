@@ -8,6 +8,8 @@ import { moviesApi, showtimesApi, bookingsApi } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
 import type { Movie } from '@/types/api';
 import type { BookingDate } from '@/lib/constants/movies';
+import { Spinner } from '@/components/ui/spinner'
+
 
 type SeatStatus = 'available' | 'reserved' | 'selected' | 'locked';
 
@@ -278,7 +280,7 @@ export default function MovieBooking() {
       <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
         <div className="flex justify-center items-center py-20">
-          <p className="text-lg text-neutral-600">Loading movie details...</p>
+          <Spinner/>
         </div>
       </div>
       </div>
@@ -351,7 +353,7 @@ export default function MovieBooking() {
               <SeatMap seats={seats} onSeatToggle={toggleSeat} />
             ) : (
               <div className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-300">
-                <p className="text-neutral-600">Loading seats...</p>
+                <Spinner/>
               </div>
             )}
           </div>

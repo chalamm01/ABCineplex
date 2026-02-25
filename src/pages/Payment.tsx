@@ -13,6 +13,8 @@ import {
 import { useCountdown } from '@/hooks/useCountdown';
 import { bookingsApi, moviesApi, showtimesApi } from '@/services/api';
 import { Zap, CheckCircle } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner'
+
 
 export default function Payment() {
   const [searchParams] = useSearchParams();
@@ -209,7 +211,7 @@ export default function Payment() {
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-lg text-slate-600">Loading booking details...</p>
+         <Spinner/>
         </div>
       </div>
     );

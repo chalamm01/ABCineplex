@@ -7,6 +7,7 @@ import {
   type CategoryCreate, type Showtime, type Product, type Category,
 } from '@/services/api';
 import type { Movie, HeroCarouselItem, PromoEvent } from '@/types/api';
+import { Spinner } from '@/components/ui/spinner';
 
 // ─── Generic helpers ──────────────────────────────────────────────────────────
 
@@ -129,7 +130,7 @@ function MoviesSection() {
         <h2 className="text-white font-semibold text-lg">Movies ({movies.length})</h2>
         <button className={btnPrimary} onClick={openAdd}>+ Add Movie</button>
       </div>
-      {loading ? <p className="text-zinc-400 text-sm">Loading…</p> : (
+      {loading ? <div className="flex justify-center py-4"><Spinner className="text-zinc-400 w-6 h-6" /></div> : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-zinc-800 text-zinc-400 uppercase text-xs">
@@ -310,7 +311,7 @@ function ShowtimesSection() {
       </div>
 
       {selectedMovieId && (
-        loading ? <p className="text-zinc-400 text-sm">Loading…</p> : (
+        loading ? <div className="flex justify-center py-4"><Spinner className="text-zinc-400 w-6 h-6" /></div> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="bg-zinc-800 text-zinc-400 uppercase text-xs">
@@ -417,7 +418,7 @@ function CategoriesSection() {
         <h2 className="text-white font-semibold text-lg">Categories ({categories.length})</h2>
         <button className={btnPrimary} onClick={openAdd}>+ Add Category</button>
       </div>
-      {loading ? <p className="text-zinc-400 text-sm">Loading…</p> : (
+      {loading ? <div className="flex justify-center py-4"><Spinner className="text-zinc-400 w-6 h-6" /></div> : (
         <table className="w-full text-sm text-left">
           <thead className="bg-zinc-800 text-zinc-400 uppercase text-xs">
             <tr>
@@ -517,7 +518,7 @@ function ProductsSection() {
         <h2 className="text-white font-semibold text-lg">Products ({products.length})</h2>
         <button className={btnPrimary} onClick={openAdd}>+ Add Product</button>
       </div>
-      {loading ? <p className="text-zinc-400 text-sm">Loading…</p> : (
+      {loading ? <div className="flex justify-center py-4"><Spinner className="text-zinc-400 w-6 h-6" /></div> : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-zinc-800 text-zinc-400 uppercase text-xs">
@@ -827,7 +828,7 @@ export default function Admin() {
     <div className="min-h-screen bg-zinc-950 text-white">
       {loading ? (
         <div className="flex items-center justify-center h-screen">
-          <div className="text-xl text-zinc-400">Loading...</div>
+          <Spinner className="text-zinc-400 w-10 h-10" />
         </div>
       ) : (
       <div className="max-w-7xl mx-auto px-4 py-8">

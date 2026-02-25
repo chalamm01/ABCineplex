@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { signUp, signInWithGoogle } from '@/services/auth';
+import { Spinner } from '@/components/ui/spinner'
 
 export interface SocialProvider {
   id: string;
@@ -251,7 +252,7 @@ export function Login({
               className="w-full"
               disabled={loading || !email || !password || !confirmPassword}
             >
-              {loading ? 'Signing up...' : 'Sign up with email'}
+              {loading ? '<Spinner/> Signing up...' : 'Sign up with email'}
             </Button>
           </form>
 

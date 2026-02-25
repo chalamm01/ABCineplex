@@ -3,6 +3,7 @@ import { CartContext } from "@/providers/CartContextDef";
 import { useNavigate } from "react-router-dom";
 import { productsApi } from "@/services/api";
 import type { Product, Category } from "@/services/api";
+import { Spinner } from '@/components/ui/spinner'
 
 function Snacks() {
   const context = useContext(CartContext);
@@ -47,7 +48,7 @@ function Snacks() {
 
         {loading && (
           <div className="flex justify-center py-20">
-            <p className="text-xl text-primary/60">Loading snacks…</p>
+            <Spinner/>
           </div>
         )}
 

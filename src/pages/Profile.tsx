@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/hooks/useAuth"
 import { profilesApi, type UserProfile } from "@/services/api"
 import { useEffect, useState } from "react"
+import { Spinner } from '@/components/ui/spinner'
+
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -63,7 +65,6 @@ export default function ProfilePage() {
         full_name: formData.full_name || undefined,
       });
       setProfile(updatedProfile);
-      // You could show a success message here if you have a toast system
     } catch (err) {
       console.error("Failed to save profile:", err);
       setError("Failed to save changes. Please try again.");
@@ -83,11 +84,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-muted/40 flex justify-center items-center p-6">
-        <Card className="w-full max-w-3xl">
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Loading profile...</p>
-          </CardContent>
-        </Card>
+            <Spinner/>
       </div>
     );
   }
@@ -95,8 +92,8 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-muted/40 flex justify-center items-center p-6">
-        <Card className="w-full max-w-3xl">
-          <CardContent className="pt-6">
+        <Card>
+          <CardContent>
             <p className="text-center text-muted-foreground">Please log in to view your profile.</p>
           </CardContent>
         </Card>
@@ -108,9 +105,8 @@ export default function ProfilePage() {
   const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-muted/40 flex justify-center p-6">
+    <div className="bg-muted/40 flex justify-center p-6">
       <Card className="w-full max-w-3xl">
-
         {/* Header Section */}
         <CardHeader className="flex flex-row items-center gap-6">
           <Avatar className="h-20 w-20">

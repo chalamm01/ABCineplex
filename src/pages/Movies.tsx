@@ -3,6 +3,8 @@ import { TabNavigation } from '@/components/movies/tab-navigation';
 import { MoviesGrid } from '@/components/movies/movies-grid';
 import { moviesApi } from '@/services/api';
 import type { Movie } from '@/types/api';
+import { Spinner } from '@/components/ui/spinner'
+
 
 function Movies() {
   const [activeTab, setActiveTab] = useState<'now' | 'soon'>('now');
@@ -39,7 +41,7 @@ function Movies() {
 
       {loading && (
         <div className="flex justify-center items-center py-20">
-          <p className="text-lg text-neutral-600">Loading movies...</p>
+          <Spinner/>
         </div>
       )}
 

@@ -5,7 +5,7 @@ import { PromotionalSection } from '@/components/homepage/promotional-section';
 import { moviesApi, publicApi } from '@/services/api';
 import { transformCarouselItem } from '@/types/api';
 import type { HeroCarouselItem, Movie } from '@/types/api';
-
+import { Spinner } from '@/components/ui/spinner'
 interface PromoEvent {
   id: string | number;
   image_url: string;
@@ -69,7 +69,7 @@ export default function Home() {
       <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
       {loading && (
         <div className="flex justify-center items-center py-20">
-          <p className="text-lg text-white">Loading...</p>
+          <Spinner/>
         </div>
       )}
 
