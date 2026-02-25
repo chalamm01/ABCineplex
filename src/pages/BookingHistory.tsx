@@ -50,7 +50,8 @@ export default function BookingHistoryPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-50 px-32 py-6">
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+    <main className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
       <h1 className="mb-8 border-b-2 border-black pb-2 text-3xl font-extrabold uppercase tracking-tight text-black">
         Booking History
       </h1>
@@ -71,6 +72,7 @@ export default function BookingHistoryPage() {
         </div>
       )}
     </main>
+    </div>
   );
 }
 
