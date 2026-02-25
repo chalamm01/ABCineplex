@@ -25,7 +25,18 @@ export default function BookingHistoryPage() {
       try {
         const response = await bookingsApi.getUserBookings();
         // response.bookings is an array of BookingDetail
-        const mapped: BookingCardData[] = response.bookings.map((booking: any) => ({
+        interface ApiBooking {
+          booking_id: string | number;
+          movie_title?: string;
+          screen_name?: string;
+          showtime_start?: string;
+          created_at: string;
+          poster_url?: string;
+          seats?: string[] | string;
+        }
+
+        const typedResponse = response as { bookings: ApiBooking[] };
+        const mapped: BookingCardData[] = typedResponse.bookings.map((booking: ApiBooking) => ({
           id: booking.booking_id.toString(),
           title: booking.movie_title || "Unknown",
           cinema: booking.screen_name || "ABCineplex",
@@ -40,8 +51,12 @@ export default function BookingHistoryPage() {
           seats: Array.isArray(booking.seats) ? booking.seats.join(", ") : String(booking.seats || "-"),
         }));
         setBookings(mapped);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch booking history.");
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Failed to fetch booking history.");
+        }
       } finally {
         setLoading(false);
       }
@@ -49,29 +64,33 @@ export default function BookingHistoryPage() {
     fetchBookings();
   }, []);
 
+  let content;
+  if (loading) {
+    content = <div className="text-center text-gray-500"><Spinner/></div>;
+  } else if (error) {
+    content = <div className="text-center text-red-500">{error}</div>;
+  } else {
+    content = (
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {bookings.length === 0 ? (
+          <div className="col-span-2 text-center text-gray-500">No bookings found.</div>
+        ) : (
+          bookings.map((booking) => (
+            <BookingCard key={booking.id} {...booking} />
+          ))
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-    <main className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
-      <h1 className="mb-8 border-b-2 border-black pb-2 text-3xl font-extrabold uppercase tracking-tight text-black">
-        Booking History
-      </h1>
-
-      {loading ? (
-        <div className="text-center text-gray-500"><Spinner/></div>
-      ) : error ? (
-        <div className="text-center text-red-500">{error}</div>
-      ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {bookings.length === 0 ? (
-            <div className="col-span-2 text-center text-gray-500">No bookings found.</div>
-          ) : (
-            bookings.map((booking) => (
-              <BookingCard key={booking.id} {...booking} />
-            ))
-          )}
-        </div>
-      )}
-    </main>
+      <main className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
+        <h1 className="mb-8 border-b-2 border-black pb-2 text-3xl font-extrabold uppercase tracking-tight text-black">
+          Booking History
+        </h1>
+        {content}
+      </main>
     </div>
   );
 }
