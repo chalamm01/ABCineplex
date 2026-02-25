@@ -52,6 +52,14 @@ export interface PromoEvent {
   updated_at: string;
 }
 
+export interface UserProfile {
+  user_id: number;
+  user_name: string;
+  email: string;
+  phone: string;
+  loyalty_points: number;
+}
+
 // Helper functions for formatting API data
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
