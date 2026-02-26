@@ -113,7 +113,7 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
           </div>
 
           {/* User Profile */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative justify-end" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
