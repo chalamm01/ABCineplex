@@ -17,7 +17,7 @@ interface PromotionalEvent {
 export default function Home() {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [nowScreeningData, setNowScreeningData] = useState<Movie[]>([]);
-  const [comingSoonData, setComingSoonData] = useState<Movie[]>([]);
+  const [upcomingData, setUpcomingData] = useState<Movie[]>([]);
   const [promotions, setPromotions] = useState<PromotionalEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,10 +28,12 @@ export default function Home() {
         setLoading(true);
         setError(null);
 
-        const [heroData, nowScreeningRes, comingSoonRes, promoData] = await Promise.all([
+        const page = 1;
+        const limit = 10;
+        const [heroData, nowScreeningRes, upcomingRes, promoData] = await Promise.all([
           publicApi.getHeroCarousel(),
-          moviesApi.getMovies({ status: 'now_showing', page: 1, limit: 10 }),
-          moviesApi.getMovies({ status: 'upcoming', page: 1, limit: 10 }),
+          moviesApi.getMoviesPublic(page, limit, 'now_showing'),
+          moviesApi.getMoviesPublic(page, limit, 'upcoming'),
           publicApi.getPromoEvents(),
         ]);
 
@@ -41,14 +43,14 @@ export default function Home() {
           .map(transformCarouselItem);
 
         setSlides(transformedSlides);
-        setNowScreeningData(nowScreeningRes.movies);
-        setComingSoonData(comingSoonRes.movies);
+        setNowScreeningData(nowScreeningRes);
+        setUpcomingData(upcomingRes);
 
         const activePromotions = promoData
           .filter((item) => item.is_active)
           .map((item) => ({
             id: item.id,
-            image: item.image_url ?? '',
+           image: item.image_url ?? '',
             title: item.title ?? '',
             category: item.promo_type === 'news' ? ('news' as const) : ('promo' as const),
           }));
@@ -81,7 +83,7 @@ export default function Home() {
 
           <MoviesSection
             nowScreening={nowScreeningData}
-            comingSoon={comingSoonData}
+            comingSoon={upcomingData}
           />
 
           <PromotionalSection events={promotions} />

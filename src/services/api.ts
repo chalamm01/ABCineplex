@@ -1,4 +1,4 @@
-import type { Movie, HeroCarouselItem, PromoEvent } from '@/types/api';
+import type { Movie, HeroCarouselItem, PromoEvent, MovieShowtimesResponse } from '@/types/api';
 import { createClient } from '@/lib/supabase/client';
 
 // Admin CRUD types
@@ -127,43 +127,57 @@ async function apiCall<T>(
   return response.json();
 }
 
+// Normalize movie list response — backend returns { movies: [...] } or a plain array
+function extractMovies(res: Movie[] | { movies: Movie[] }): Movie[] {
+  if (Array.isArray(res)) return res;
+  return res.movies ?? [];
+}
+
 // Movies API
 export const moviesApi = {
   // Admin: Get all movies (no status filter, admin endpoint)
-  getMovies: (skip = 0, limit = 100): Promise<Movie[]> =>
-    apiCall<Movie[]>(`/api/v1/admin/movies?skip=${skip}&limit=${limit}`),
+  getMovies: async (page = 1, limit = 100): Promise<Movie[]> => {
+    const safePage = page < 1 ? 1 : page;
+    const res = await apiCall<Movie[] | { movies: Movie[] }>(`/api/v1/movies?page=${safePage}&limit=${limit}`);
+    return extractMovies(res);
+  },
+
+  getMoviesPublic: async (page = 1, limit = 100, status = 'now_showing'): Promise<Movie[]> => {
+    const res = await apiCall<Movie[] | { movies: Movie[] }>(`/api/v1/movies?status=${status}&page=${page}&limit=${limit}`);
+    return extractMovies(res);
+  },
 
   // Get single movie by ID (admin endpoint)
   getMovieById: (movieId: number): Promise<Movie> =>
-    apiCall<Movie>(`/api/v1/admin/movies/${movieId}`),
+    apiCall<Movie>(`/api/v1/movies/${movieId}`),
 
-  // Get showtimes by movie (public endpoint, unchanged)
-  getShowtimesByMovie: (movieId: number, date?: string, days = 7): Promise<Movie[]> => {
+  // Get showtimes by movie (public endpoint)
+  getShowtimesByMovie: (movieId: number, date?: string, days = 7): Promise<MovieShowtimesResponse> => {
     const params = new URLSearchParams();
     if (date) params.append('date', date);
     params.append('days', days.toString());
-    return apiCall<Movie[]>(`/api/v1/movies/${movieId}/showtimes?${params.toString()}`);
+    return apiCall<MovieShowtimesResponse>(`/api/v1/movies/${movieId}/showtimes?${params.toString()}`);
   },
 
   // Admin: Create movie
   createMovie: (movie: MovieCreate): Promise<Movie> =>
-    apiCall<Movie>(`/api/v1/admin/movies`, {
+    apiCall<Movie>(`/api/v1/movies`, {
       method: 'POST',
       body: JSON.stringify(movie),
       authenticated: true,
     }),
 
-  // Admin: Update movie
+  // Admin: Update movie (PATCH)
   updateMovie: (movieId: number, movie: Partial<MovieCreate>): Promise<Movie> =>
-    apiCall<Movie>(`/api/v1/admin/movies/${movieId}`, {
-      method: 'PUT',
+    apiCall<Movie>(`/api/v1/movies/${movieId}`, {
+      method: 'PATCH',
       body: JSON.stringify(movie),
       authenticated: true,
     }),
 
   // Admin: Delete movie
   deleteMovie: (movieId: number): Promise<{ message: string }> =>
-    apiCall<{ message: string }>(`/api/v1/admin/movies/${movieId}`, { method: 'DELETE', authenticated: true }),
+    apiCall<{ message: string }>(`/api/v1/movies/${movieId}`, { method: 'DELETE', authenticated: true }),
 };
 
 // Showtimes API
@@ -198,23 +212,29 @@ export const showtimesApi = {
       authenticated: true,
     }),
 
+  // Admin: List showtimes for a specific movie
+  getShowtimesByMovie: (movieId: number): Promise<Showtime[]> =>
+    apiCall<Showtime[]>(`/api/v1/showtimes?movie_id=${movieId}`, { authenticated: true }),
+
   // Admin: Create showtime
   createShowtime: (showtime: ShowtimeCreate) =>
-    apiCall(`/api/v1/admin/showtimes`, {
+    apiCall(`/api/v1/showtimes`, {
       method: 'POST',
       body: JSON.stringify(showtime),
+      authenticated: true,
     }),
 
   // Admin: Update showtime
   updateShowtime: (showtimeId: number, showtime: Partial<ShowtimeCreate>) =>
-    apiCall(`/api/v1/admin/showtimes/${showtimeId}`, {
+    apiCall(`/api/v1/showtimes/${showtimeId}`, {
       method: 'PATCH',
       body: JSON.stringify(showtime),
+      authenticated: true,
     }),
 
   // Admin: Delete showtime
   deleteShowtime: (showtimeId: number) =>
-    apiCall(`/api/v1/admin/showtimes/${showtimeId}`, { method: 'DELETE' }),
+    apiCall(`/api/v1/showtimes/${showtimeId}`, { method: 'DELETE', authenticated: true }),
 };
 
 // Public API (Hero carousel, promo events)
@@ -229,25 +249,29 @@ export const publicApi = {
 
   // Admin: Hero carousel CRUD
   createHeroSlide: (data: object) =>
-    apiCall<HeroCarouselItem>(`/api/v1/hero-carousel`, { method: 'POST', body: JSON.stringify(data) }),
+    apiCall<HeroCarouselItem>(`/api/v1/hero-carousel`, { method: 'POST', body: JSON.stringify(data), authenticated: true }),
   updateHeroSlide: (id: string, data: object) =>
-    apiCall<HeroCarouselItem>(`/api/v1/hero-carousel/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    apiCall<HeroCarouselItem>(`/api/v1/hero-carousel/${id}`, { method: 'PUT', body: JSON.stringify(data), authenticated: true }),
   deleteHeroSlide: (id: string) =>
-    apiCall(`/api/v1/hero-carousel/${id}`, { method: 'DELETE' }),
+    apiCall(`/api/v1/hero-carousel/${id}`, { method: 'DELETE', authenticated: true }),
 
   // Admin: Promo events CRUD
   createPromoEvent: (data: object) =>
-    apiCall<PromoEvent>(`/api/v1/promo-events`, { method: 'POST', body: JSON.stringify(data) }),
+    apiCall<PromoEvent>(`/api/v1/promo-events`, { method: 'POST', body: JSON.stringify(data), authenticated: true }),
   updatePromoEvent: (id: string, data: object) =>
-    apiCall<PromoEvent>(`/api/v1/promo-events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    apiCall<PromoEvent>(`/api/v1/promo-events/${id}`, { method: 'PUT', body: JSON.stringify(data), authenticated: true }),
   deletePromoEvent: (id: string) =>
-    apiCall(`/api/v1/promo-events/${id}`, { method: 'DELETE' }),
+    apiCall(`/api/v1/promo-events/${id}`, { method: 'DELETE', authenticated: true }),
 };
 
 // Products & Categories Admin API
 export const productsApi = {
   getProducts: (skip = 0, limit = 50) =>
     apiCall<Product[]>(`/api/v1/products/?skip=${skip}&limit=${limit}&in_stock=true`),
+
+  // Admin: get all products regardless of stock status
+  getAllProducts: (skip = 0, limit = 100) =>
+    apiCall<Product[]>(`/api/v1/products/?skip=${skip}&limit=${limit}`, { authenticated: true }),
 
   createProduct: (product: ProductCreate) =>
     apiCall<Product>(`/api/v1/products/`, {
