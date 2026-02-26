@@ -47,7 +47,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(combinedUser);
     } catch (error) {
       console.error('Backend sync failed:', error);
-      setUser(null);
+      // Don't set user to null on backend failure — construct minimal fallback from Supabase user
+      // This keeps the user "logged in" even if backend profile sync fails temporarily
+      const fallbackUser: AuthUser = {
+        id: supabaseUser.id,
+        email: supabaseUser.email || '',
+        user_name: supabaseUser.user_metadata?.username || supabaseUser.email?.split('@')[0] || 'User',
+        first_name: supabaseUser.user_metadata?.first_name || '',
+        last_name: supabaseUser.user_metadata?.last_name || '',
+        phone: null,
+        date_of_birth: null,
+        is_admin: false,
+        is_student: false,
+        student_id_verified: false,
+        membership_tier: 'none',
+        reward_points: 0,
+        attendance_streak: 0,
+        avatar_url: supabaseUser.user_metadata?.avatar_url,
+      };
+      setUser(fallbackUser);
     }
   }, []);
 
@@ -70,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         setSession(newSession);
-        if (newSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        if (newSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
           await syncProfile(newSession.user);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
