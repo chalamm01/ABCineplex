@@ -18,10 +18,10 @@ function Movies() {
         setLoading(true);
         setError(null);
 
-        const status = activeTab === 'now' ? 'now_showing' : 'coming_soon';
-        const data = await moviesApi.getMovies(0, 50, status);
+        const status = activeTab === 'now' ? 'now_showing' : 'upcoming';
+        const data = await moviesApi.getMovies({ status, page: 1, limit: 50 });
 
-        setMovies(data || []);
+        setMovies(data.movies);
       } catch (err) {
         console.error('Failed to fetch movies:', err);
         setError('Failed to load movies. Please try again later.');

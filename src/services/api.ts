@@ -1,4 +1,4 @@
-import type { Movie, HeroCarouselItem, PromoEvent } from '@/types/api';
+import type { Movie, MoviesListResponse, MovieDetail, MovieShowtimesResponse, HeroCarouselItem, PromoEvent } from '@/types/api';
 import { createClient } from '@/lib/supabase/client';
 
 // Admin CRUD types
@@ -72,12 +72,19 @@ export interface ProductCreate {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Seat type from API
-interface APISeat {
+export interface APISeat {
   seat_id: number;
   row_label: string;
   seat_number: number;
   status: string;
   price?: number;
+}
+
+export interface HoldResult {
+  hold_id: string;
+  seat_ids: number[];
+  expires_at: string;
+  expires_in_seconds: number;
 }
 
 // Helper function to make API calls with optional Supabase auth
@@ -122,70 +129,94 @@ async function apiCall<T>(
 
 // Movies API
 export const moviesApi = {
-  // Get all movies with pagination
-  getMovies: (skip = 0, limit = 20, status?: string) => {
+  // Get all movies with pagination and filters (API spec 5.3)
+  getMovies: ({ status = 'now_showing', page = 1, limit = 20 }: { status?: string; page?: number; limit?: number } = {}): Promise<MoviesListResponse> => {
     const params = new URLSearchParams();
-    params.append('skip', skip.toString());
+    params.append('status', status);
+    params.append('page', page.toString());
     params.append('limit', limit.toString());
-    if (status) params.append('status', status);
-
-    return apiCall<Movie[]>(`/api/v1/movies?${params.toString()}`);
+    return apiCall<MoviesListResponse>(`/api/v1/movies?${params.toString()}`);
   },
 
   // Get single movie by ID
-  getMovieById: (movieId: number) =>
-    apiCall<Movie>(`/api/v1/movies/${movieId}`),
+  getMovieById: (movieId: number): Promise<MovieDetail> =>
+    apiCall<MovieDetail>(`/api/v1/movies/${movieId}`),
+
+  getShowtimesByMovie: (movieId: number, date?: string, days = 7): Promise<MovieShowtimesResponse> => {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    params.append('days', days.toString());
+    return apiCall<MovieShowtimesResponse>(`/api/v1/movies/${movieId}/showtimes?${params.toString()}`);
+  },
 
   // Admin: Create movie
-  createMovie: (movie: MovieCreate) =>
+  createMovie: (movie: MovieCreate): Promise<Movie> =>
     apiCall<Movie>(`/api/v1/movies`, {
       method: 'POST',
       body: JSON.stringify(movie),
     }),
 
   // Admin: Update movie
-  updateMovie: (movieId: number, movie: Partial<MovieCreate>) =>
+  updateMovie: (movieId: number, movie: Partial<MovieCreate>): Promise<Movie> =>
     apiCall<Movie>(`/api/v1/movies/${movieId}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(movie),
     }),
 
   // Admin: Delete movie
-  deleteMovie: (movieId: number) =>
-    apiCall(`/api/v1/movies/${movieId}`, { method: 'DELETE' }),
+  deleteMovie: (movieId: number): Promise<{ message: string }> =>
+    apiCall<{ message: string }>(`/api/v1/movies/${movieId}`, { method: 'DELETE' }),
 };
 
 // Showtimes API
 export const showtimesApi = {
-  // Get showtimes for a specific movie
-  getShowtimesByMovie: (movieId: number) =>
-    apiCall<Showtime[]>(`/api/v1/showtimes/movie/${movieId}`),
+  // Get showtime details (API spec 5.4)
+  getShowtime: (showtimeId: number) =>
+    apiCall(`/api/v1/showtimes/${showtimeId}`),
 
-  // Get seats for a showtime
-  getSeats: (showtimeId: number) =>
+  // Get seat map for a showtime (API spec 5.4)
+  getSeats: (showtimeId: number): Promise<APISeat[]> =>
     apiCall<APISeat[]>(`/api/v1/showtimes/${showtimeId}/seats`),
 
-  // Get showtime details
-  getShowtime: (showtimeId: number) =>
-    apiCall<Showtime>(`/api/v1/showtimes/${showtimeId}`),
+  // Hold seats for a showtime (API spec 5.5)
+  holdSeats: (showtimeId: number, seat_ids: number[]): Promise<HoldResult> =>
+    apiCall<HoldResult>(`/api/v1/showtimes/${showtimeId}/seats/hold`, {
+      method: 'POST',
+      body: JSON.stringify({ seat_ids }),
+      authenticated: true,
+    }),
+
+  // Release seat hold (API spec 5.5)
+  releaseHold: (showtimeId: number, hold_id: string) =>
+    apiCall(`/api/v1/showtimes/${showtimeId}/seats/hold`, {
+      method: 'DELETE',
+      body: JSON.stringify({ hold_id }),
+      authenticated: true,
+    }),
+
+  // Check hold status (API spec 5.5)
+  getHoldStatus: (showtimeId: number, hold_id: string) =>
+    apiCall(`/api/v1/showtimes/${showtimeId}/seats/hold/status?hold_id=${hold_id}`, {
+      authenticated: true,
+    }),
 
   // Admin: Create showtime
   createShowtime: (showtime: ShowtimeCreate) =>
-    apiCall<Showtime>(`/api/v1/showtimes`, {
+    apiCall(`/api/v1/admin/showtimes`, {
       method: 'POST',
       body: JSON.stringify(showtime),
     }),
 
   // Admin: Update showtime
   updateShowtime: (showtimeId: number, showtime: Partial<ShowtimeCreate>) =>
-    apiCall<Showtime>(`/api/v1/showtimes/${showtimeId}`, {
-      method: 'PUT',
+    apiCall(`/api/v1/admin/showtimes/${showtimeId}`, {
+      method: 'PATCH',
       body: JSON.stringify(showtime),
     }),
 
   // Admin: Delete showtime
   deleteShowtime: (showtimeId: number) =>
-    apiCall(`/api/v1/showtimes/${showtimeId}`, { method: 'DELETE' }),
+    apiCall(`/api/v1/admin/showtimes/${showtimeId}`, { method: 'DELETE' }),
 };
 
 // Public API (Hero carousel, promo events)
@@ -258,194 +289,112 @@ export const productsApi = {
     apiCall(`/api/v1/products/categories/${categoryId}`, { method: 'DELETE', authenticated: true }),
 };
 
-// Bookings API - Two-step booking flow
-interface ReserveSeatRequest {
-  user_id: string;
-  showtime_id: number;
-  seat_ids: number[];
-  price_per_seat: number;
-}
-
-interface ReserveSeatResponse {
-  success: boolean;
-  booking_id?: number;
-  payment_deadline?: string;
-  total_amount?: number;
-  error?: string;
-  unavailable_seats?: number[];
-}
-
-interface ConfirmPaymentRequest {
-  booking_id: number;
-  payment_intent_id?: string;
-}
-
-interface ConfirmPaymentResponse {
-  success: boolean;
-  message: string;
-  booking_id?: number;
-  tickets?: { ticket_id: number; seat_id: number; row_label: string; seat_number: number }[];
-}
-
-// Booking detail response from API
-export interface BookingDetailResponse {
-  booking_id: number;
-  user_id: string;
-  booking_status: string;
-  total_amount: number;
-  payment_deadline: string;
-  created_at: string;
-  showtime_id: number;
-  screen_name: string;
-  seats: string[];
-  movie_id?: number;
-  movie_title?: string;
-  poster_url?: string;
-  showtime_start?: string;
-  showtime_end?: string;
-}
-
+// Bookings API (API spec 5.6)
 export const bookingsApi = {
-  // Step 1: Reserve seats (starts 5-minute countdown)
-  reserveSeats: (data: ReserveSeatRequest): Promise<ReserveSeatResponse> =>
-    apiCall<ReserveSeatResponse>(`/api/v1/bookings/reserve`, {
+  // Create a booking after payment succeeds
+  createBooking: (data: {
+    showtime_id: number;
+    seat_ids: number[];
+    ticket_type: 'normal' | 'student' | 'member';
+    hold_id: string;
+    snack_order?: { item_id: number; quantity: number }[];
+  }) =>
+    apiCall(`/api/v1/bookings`, {
       method: 'POST',
       body: JSON.stringify(data),
+      authenticated: true,
     }),
 
-  // Step 2: Confirm payment (finalizes booking) — kept for direct/legacy use
-  confirmPayment: (data: ConfirmPaymentRequest): Promise<ConfirmPaymentResponse> =>
-    apiCall<ConfirmPaymentResponse>(`/api/v1/bookings/confirm-payment`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+  // Get booking detail
+  getBooking: (bookingId: string) =>
+    apiCall(`/api/v1/bookings/${bookingId}`, { authenticated: true }),
 
-  // Cancel a pending booking (POST variant)
-  cancelBooking: (bookingId: number) =>
-    apiCall(`/api/v1/bookings/cancel`, {
-      method: 'POST',
-      body: JSON.stringify({ booking_id: bookingId }),
-    }),
+  // Cancel a booking
+  cancelBooking: (bookingId: string) =>
+    apiCall(`/api/v1/bookings/${bookingId}`, { method: 'DELETE', authenticated: true }),
 
-  // Cancel / delete a booking (DELETE variant per spec §5.6)
-  deleteBooking: (bookingId: number) =>
-    apiCall(`/api/v1/bookings/${bookingId}`, { method: 'DELETE' }),
-
-  // Get booking details by ID
-  getBooking: (bookingId: number): Promise<BookingDetailResponse> =>
-    apiCall<BookingDetailResponse>(`/api/v1/bookings/${bookingId}`),
-
-  // Get user's bookings (uses auth token)
-  getUserBookings: (status?: string) => {
-    const params = status ? `?status=${status}` : '';
-    // Use /me endpoint which extracts user from auth token
-    return apiCall(`/api/v1/bookings/me${params}`, { authenticated: true });
-  },
-
-  // Get user's bookings by user ID (fallback)
-  getUserBookingsById: (userId: string, status?: string) => {
-    const params = status ? `?status=${status}` : '';
-    return apiCall(`/api/v1/bookings/user/${userId}/bookings${params}`);
+  // Get current user's bookings
+  getUserBookings: (status?: string, page = 1, limit = 10) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    return apiCall(`/api/v1/users/me/bookings?${params.toString()}`, { authenticated: true });
   },
 };
 
-// Mock Payment API (§5.7)
-interface PaymentInitiateRequest {
-  booking_id: number;
-  payment_method: 'mock_card' | 'mock_qr' | 'mock_cash';
-  mock_should_succeed?: boolean;
-}
-
-export interface PaymentInitiateResponse {
-  payment_id: string;
-  status: string;
-  amount: number;
-  payment_method: string;
-}
-
-export interface PaymentConfirmResponse {
-  payment_id: string;
-  status: string;
-  booking_id: number;
-  booking_status?: string;
-  points_earned?: number;
-  message?: string;
-}
-
-export interface PaymentStatusResponse {
-  payment_id: string;
-  booking_id: number;
-  status: string;
-  amount: number;
-  payment_method: string;
-  paid_at?: string;
-}
-
+// Payments API (API spec 5.7)
 export const paymentsApi = {
   // Initiate a mock payment for a booking
-  initiate: (data: PaymentInitiateRequest): Promise<PaymentInitiateResponse> =>
-    apiCall<PaymentInitiateResponse>(`/api/v1/payments/initiate`, {
+  initiate: (data: {
+    booking_id: string;
+    payment_method: 'mock_card' | 'mock_qr' | 'mock_cash';
+    mock_should_succeed?: boolean;
+  }) =>
+    apiCall(`/api/v1/payments/initiate`, {
       method: 'POST',
       body: JSON.stringify(data),
+      authenticated: true,
     }),
 
-  // Confirm (or decline) a mock payment
-  confirm: (paymentId: string, mockResult = true): Promise<PaymentConfirmResponse> =>
-    apiCall<PaymentConfirmResponse>(`/api/v1/payments/${paymentId}/confirm`, {
+  // Confirm mock payment result
+  confirm: (paymentId: string, mock_result: boolean) =>
+    apiCall(`/api/v1/payments/${paymentId}/confirm`, {
       method: 'POST',
-      body: JSON.stringify({ mock_result: mockResult }),
+      body: JSON.stringify({ mock_result }),
+      authenticated: true,
     }),
 
-  // Get current status of a mock payment
-  getPayment: (paymentId: string): Promise<PaymentStatusResponse> =>
-    apiCall<PaymentStatusResponse>(`/api/v1/payments/${paymentId}`),
+  // Get payment status
+  getPayment: (paymentId: string) =>
+    apiCall(`/api/v1/payments/${paymentId}`, { authenticated: true }),
 };
 
 // user API
 export interface UserProfile {
-  user_id: string;
+  id: string;
   email: string;
-  full_name: string | null;
-  user_name?: string | null;
-  phone?: string | null;
-  loyalty_points: number;
-  is_admin?: boolean;
-  is_active?: boolean;
-  created_at?: string;
-  updated_at?: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  date_of_birth: string;
+  is_student: boolean;
+  student_id_verified: boolean;
+  membership_tier: 'none' | 'free' | 'paid';
+  reward_points: number;
+  attendance_streak: number;
 }
 
 export interface ProfileUpdateData {
-  full_name?: string;
-  user_name?: string;
+  first_name?: string;
+  last_name?: string;
   phone?: string;
+  date_of_birth?: string;
 }
 
 export const usersApi = {
   // Get current user profile
   getCurrentUser: (): Promise<UserProfile> =>
-    apiCall<UserProfile>(`/api/v1/users/me`),
+    apiCall(`/api/v1/users/me`, { authenticated: true }),
 
-  // Get user by ID (alias for consistency)
-  getProfile: (userId: string): Promise<UserProfile> =>
-    apiCall<UserProfile>(`/api/v1/users/${userId}`),
-
-  // Update user (alias for consistency)
-  updateProfile: (userId: string, data: ProfileUpdateData): Promise<UserProfile> =>
-    apiCall<UserProfile>(`/api/v1/users/${userId}`, {
-      method: 'PUT',
+  // Update current user profile
+  updateProfile: (data: ProfileUpdateData): Promise<UserProfile> =>
+    apiCall(`/api/v1/users/me`, {
+      method: 'PATCH',
       body: JSON.stringify(data),
+      authenticated: true,
     }),
 
-  // Get all users (admin only)
-  getAllUsers: (skip = 0, limit = 20): Promise<UserProfile[]> =>
-    apiCall<UserProfile[]>(`/api/v1/users?skip=${skip}&limit=${limit}`),
+  // Student verification upload (multipart/form-data)
+  submitStudentVerification: (formData: FormData) =>
+    fetch(`${API_BASE_URL}/api/v1/users/me/student-verification`, {
+      method: 'POST',
+      body: formData,
+      headers: {}, // Let browser set Content-Type
+      credentials: 'include',
+    }).then(res => res.json()),
 
-  // Delete/deactivate user
-  deleteUser: (userId: string): Promise<{ message: string }> =>
-    apiCall<{ message: string }>(`/api/v1/users/${userId}`, {
-      method: 'DELETE',
-    }),
+  // Get user's bookings (use bookingsApi.getUserBookings)
 };
 
 // Keep profilesApi as an alias for backward compatibility
