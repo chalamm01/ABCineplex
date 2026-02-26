@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginSchema } from '@/lib/validations/auth';
-import { signIn } from '@/services/auth';
+import { authApi } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -35,8 +35,9 @@ export function LoginForm() {
     setLoading(true);
     setError(null);
     try {
-      await signIn(formData.email, formData.password);
-      navigate('/homepage');
+      const response = await authApi.login(formData);
+      localStorage.setItem('token', response.token);
+      navigate('/');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid credentials';
       setError(message);

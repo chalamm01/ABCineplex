@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const { loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,17 +22,15 @@ export default function AuthCallback() {
           }
         }
 
-        // Wait until the auth context is done loading, then redirect
-        if (!loading) {
-          navigate('/', { replace: true });
-        }
+        // Auth callback completed, redirect to home
+        navigate('/', { replace: true });
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Authentication failed');
       }
     };
 
     handleCallback();
-  }, [loading, navigate]);
+  }, [navigate]);
 
   if (error) {
     return (

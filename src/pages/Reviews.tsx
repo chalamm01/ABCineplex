@@ -23,8 +23,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Heart, Star, Plus } from "lucide-react"
 import { useState } from "react"
-import { useAuth } from "@/hooks/useAuth"
-import type { Review } from "@/services/api"
+import type { ReviewResponse } from "@/types/api"
+
+// Extended review type for local state management
+interface ReviewItem extends ReviewResponse {
+  username: string
+  like_count: number
+  updated_at?: string
+}
 
 function RatingStars({ rating }: { rating: number }) {
   return (
@@ -71,21 +77,22 @@ function StarSelector({
 }
 
 export default function Reviews() {
-  const { isAuthenticated } = useAuth()
+  // Check authentication via localStorage token
+  const isAuthenticated = !!localStorage.getItem('token')
 
-  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviews, setReviews] = useState<ReviewItem[]>([])
   const [total, setTotal] = useState(0)
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingReview, setEditingReview] = useState<Review | null>(null)
+  const [editingReview, setEditingReview] = useState<ReviewItem | null>(null)
   const [formRating, setFormRating] = useState(5)
   const [formText, setFormText] = useState("")
   const [formError, setFormError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
   // Delete state
-  const [deleteTarget, setDeleteTarget] = useState<Review | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ReviewItem | null>(null)
   const [deleting, setDeleting] = useState(false)
 
   const submitLabel = editingReview ? "Save Changes" : "Post Review"
@@ -98,7 +105,7 @@ export default function Reviews() {
     setDialogOpen(true)
   }
 
-  function openEditDialog(review: Review) {
+  function openEditDialog(review: ReviewItem) {
     setEditingReview(review)
     setFormRating(review.rating)
     setFormText(review.review_text)
@@ -122,16 +129,16 @@ export default function Reviews() {
         )
       )
     } else {
-      const newItem: Review = {
+      const newItem: ReviewItem = {
         id: Date.now(),
         movie_id: 0,
-        booking_id: 0,
         user_id: "local-user",
         username: "You",
         review_text: formText,
         rating: formRating,
         like_count: 0,
         created_at: new Date().toISOString(),
+        points_awarded: false,
         updated_at: new Date().toISOString(),
       }
       setReviews(prev => [newItem, ...prev])

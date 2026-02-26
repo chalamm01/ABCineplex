@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { RegisterSchema } from '@/lib/validations/auth';
-import { signUp } from '@/services/auth';
+import { authApi } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -21,7 +21,6 @@ type RegisterFormValues = z.infer<typeof RegisterSchema>;
 export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   const form = useForm<RegisterFormValues>({
@@ -41,19 +40,17 @@ export function RegisterForm() {
     setLoading(true);
     setError(null);
     try {
-      const fullName = `${formData.first_name} ${formData.last_name}`.trim();
-      const { session } = await signUp(formData.email, formData.password, {
-        user_name: fullName,
-        full_name: fullName,
+      await authApi.register({
+        email: formData.email,
+        password: formData.password,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         phone: formData.phone,
         date_of_birth: formData.date_of_birth,
       });
 
-      if (session) {
-        navigate('/');
-      } else {
-        setSuccess(true);
-      }
+      // After successful registration, redirect to login
+      navigate('/login');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed';
       setError(message);
@@ -61,15 +58,6 @@ export function RegisterForm() {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4 text-sm text-green-400">
-        <p className="font-medium">Check your email!</p>
-        <p>We&apos;ve sent a confirmation link to your email address. Please verify to continue.</p>
-      </div>
-    );
-  }
 
   return (
     <Form {...form}>

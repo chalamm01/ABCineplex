@@ -127,15 +127,24 @@ export interface Movie {
   title: string;
   synopsis?: string;
   genre?: string | string[];
+  genres?: string[];
   runtime_minutes?: number;
+  duration_minutes?: number;
   rating_tmdb?: number;
+  imdb_score?: number;
   poster_url?: string;
+  banner_url?: string;
   status: string;
+  release_status?: string;
   release_date?: string;
   director?: string;
   starring?: string[];
   trailer_url?: string;
   credits_duration_minutes?: number;
+  content_rating?: string;
+  audio_languages?: string[];
+  subtitle_languages?: string[];
+  tag_event?: string;
 }
 
 export interface MovieDetail extends Movie {
@@ -396,6 +405,7 @@ export interface ReviewResponse extends ReviewBase {
 export interface HeroSlide {
   id: string;
   image_url: string;
+  image?: string; // Alias for image_url
   title?: string;
   description?: string;
   cta_link?: string;
@@ -413,6 +423,53 @@ export interface Promotion {
   is_active: boolean;
   start_date?: string;
   end_date?: string;
+}
+
+// ============================================================================
+// PRODUCTS & SNACKS TYPES
+// ============================================================================
+
+export interface ProductCategory {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  is_active: boolean;
+}
+
+export interface Product {
+  id: string;
+  category_id: string;
+  name: string;
+  description?: string;
+  price: number;
+  image_url?: string;
+  is_available: boolean;
+}
+
+export interface SnackMenuItem {
+  id: string;
+  name: string;
+  category?: string;
+  price: number;
+  image_url?: string;
+  is_available: boolean;
+  description?: string;
+}
+
+export interface SnackOrderItem {
+  item_id: string;
+  quantity: number;
+  unit_price?: number;
+}
+
+export interface SnackOrder {
+  id: string;
+  booking_id: string;
+  items: SnackOrderItem[];
+  total_amount: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // ============================================================================
@@ -502,6 +559,23 @@ export interface DashboardStats {
 }
 
 // ============================================================================
+// TYPE ALIASES & CONVENIENCE TYPES
+// ============================================================================
+
+export type CategoryCreate = Omit<ProductCategory, 'id'>;
+export type Category = ProductCategory;
+export type ProductCreate = Omit<Product, 'id'>;
+export type APISeat = SeatInMap;
+export type PromoEvent = Promotion;
+export type HeroCarouselItem = HeroSlide;
+
+export interface DateGroupShowtime extends ShowtimeCard {
+  dayName?: string;
+  day?: number;
+  month?: number;
+}
+
+// ============================================================================
 // UTILITY TYPES & FUNCTIONS
 // ============================================================================
 
@@ -514,4 +588,29 @@ export function transformCarouselItem(item: HeroSlide) {
     ctaLink: item.cta_link,
     ctaText: item.cta_text,
   };
+}
+
+export function formatYear(dateString?: string): string {
+  if (!dateString) return 'N/A';
+  try {
+    const date = new Date(dateString);
+    return date.getFullYear().toString();
+  } catch {
+    return 'N/A';
+  }
+}
+
+export function formatDuration(minutes?: number): string {
+  if (!minutes) return 'N/A';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins}m`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
+}
+
+export function formatLanguages(languages?: string[]): string {
+  if (!languages || languages.length === 0) return 'N/A';
+  if (languages.length === 1) return languages[0];
+  return languages.slice(0, 2).join(', ');
 }

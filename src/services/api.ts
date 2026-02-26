@@ -25,7 +25,6 @@ import type {
   ReserveSeatResponse,
   ConfirmPaymentRequest,
   ConfirmPaymentResponse,
-  CancelBookingRequest,
   CancelBookingResponse,
   BookingDetail,
   InitiatePaymentRequest,
@@ -43,6 +42,11 @@ import type {
   AdminUserUpdate,
   DashboardStats,
   ErrorResponse,
+  ProductCategory,
+  Product,
+  SnackMenuItem,
+  SnackOrderItem,
+  SnackOrder,
 } from '@/types/api';
 
 // ============================================================================
@@ -56,12 +60,15 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/
 // ============================================================================
 
 class APIError extends Error {
-  constructor(
-    public status: number,
-    public data?: ErrorResponse,
-  ) {
+  status: number;
+  data?: ErrorResponse;
+
+  constructor(status: number, data?: ErrorResponse) {
     super(data?.message || `HTTP ${status}`);
+    this.status = status;
+    this.data = data;
     this.name = 'APIError';
+    Object.setPrototypeOf(this, APIError.prototype);
   }
 }
 
@@ -204,6 +211,16 @@ export const movieApi = {
     return request<MovieListResponse>('GET', `/movies?${params.toString()}`, undefined, false);
   },
 
+  getMoviesPublic: (
+    page: number = 1,
+    limit: number = 20,
+    status?: string,
+    genre?: string,
+    search?: string,
+  ): Promise<MovieListResponse> => {
+    return movieApi.getMovies(page, limit, status, genre, search);
+  },
+
   getMovieById: (movieId: number): Promise<MovieDetail> =>
     request<MovieDetail>('GET', `/movies/${movieId}`, undefined, false),
 
@@ -225,6 +242,18 @@ export const movieApi = {
 
   getQualityScore: (movieId: number): Promise<QualityScoreResponse> =>
     request<QualityScoreResponse>('GET', `/movies/${movieId}/quality-score`, undefined, false),
+
+  getShowtimesByMovie: (movieId: number): Promise<MovieShowtimesResponse> =>
+    movieApi.getMovieShowtimes(movieId),
+
+  createMovie: (movie: MovieCreate): Promise<Movie> =>
+    requestWithAuth<Movie>('POST', '/movies', movie),
+
+  updateMovie: (movieId: number, movie: MovieUpdate): Promise<Movie> =>
+    requestWithAuth<Movie>('PATCH', `/movies/${movieId}`, movie),
+
+  deleteMovie: (movieId: number): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/movies/${movieId}`),
 };
 
 export const moviesApi = movieApi; // Alias for backward compatibility
@@ -236,6 +265,9 @@ export const moviesApi = movieApi; // Alias for backward compatibility
 export const showtimeApi = {
   getShowtimeById: (showtimeId: number): Promise<ShowtimeDetail> =>
     request<ShowtimeDetail>('GET', `/showtimes/${showtimeId}`, undefined, false),
+
+  getShowtime: (showtimeId: number): Promise<ShowtimeDetail> =>
+    showtimeApi.getShowtimeById(showtimeId),
 
   getSeats: (showtimeId: number): Promise<SeatMapResponse> =>
     request<SeatMapResponse>('GET', `/showtimes/${showtimeId}/seats`, undefined, false),
@@ -256,6 +288,20 @@ export const showtimeApi = {
 
   getShowtimesByMovie: (movieId: number): Promise<Showtime[]> =>
     request<Showtime[]>('GET', `/showtimes/movie/${movieId}`, undefined, false),
+
+  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_in_seconds: number }> =>
+    request<{ hold_id: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
+      seat_ids: seatIds,
+    }),
+
+  createShowtime: (showtime: ShowtimeCreate): Promise<Showtime> =>
+    requestWithAuth<Showtime>('POST', '/showtimes', showtime),
+
+  updateShowtime: (showtimeId: number, showtime: ShowtimeUpdate): Promise<Showtime> =>
+    requestWithAuth<Showtime>('PATCH', `/showtimes/${showtimeId}`, showtime),
+
+  deleteShowtime: (showtimeId: number): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/showtimes/${showtimeId}`),
 };
 
 export const showtimesApi = showtimeApi; // Alias
@@ -299,8 +345,17 @@ export const bookingApi = {
   getBookingById: (bookingId: number): Promise<BookingDetail> =>
     requestWithAuth<BookingDetail>('GET', `/bookings/${bookingId}`),
 
+  getBooking: (bookingId: number): Promise<BookingDetail> =>
+    bookingApi.getBookingById(bookingId),
+
   getBookingTickets: (bookingId: number): Promise<{ tickets: any[] }> =>
     requestWithAuth<{ tickets: any[] }>('GET', `/bookings/${bookingId}/tickets`),
+
+  getUserBookings: (status?: string, page: number = 1, limit: number = 10): Promise<UserBookingsResponse> =>
+    requestWithAuth<UserBookingsResponse>(
+      'GET',
+      `/bookings/user/bookings?status=${status || ''}&page=${page}&limit=${limit}`,
+    ),
 
   cancelBooking: (bookingId: number): Promise<CancelBookingResponse> =>
     requestWithAuth<CancelBookingResponse>('DELETE', `/bookings/${bookingId}`),
@@ -331,12 +386,20 @@ export const paymentApi = {
   initiatePayment: (request: InitiatePaymentRequest): Promise<InitiatePaymentResponse> =>
     requestWithAuth<InitiatePaymentResponse>('POST', '/payments/initiate', request),
 
+  initiate: (request: InitiatePaymentRequest): Promise<InitiatePaymentResponse> =>
+    paymentApi.initiatePayment(request),
+
   confirmPayment: (paymentId: string, mockResult: boolean): Promise<PaymentResponse> =>
     requestWithAuth<PaymentResponse>('POST', `/payments/${paymentId}/confirm`, { mock_result: mockResult }),
+
+  confirm: (paymentId: string, mockResult: boolean): Promise<PaymentResponse> =>
+    paymentApi.confirmPayment(paymentId, mockResult),
 
   getPaymentStatus: (paymentId: string): Promise<PaymentResponse> =>
     requestWithAuth<PaymentResponse>('GET', `/payments/${paymentId}`),
 };
+
+export const paymentsApi = paymentApi; // Alias for backward compatibility
 
 // ============================================================================
 // REVIEW API
@@ -357,6 +420,66 @@ export const reviewApi = {
 };
 
 // ============================================================================
+// PRODUCTS & SNACKS API
+// ============================================================================
+
+export const productsApi = {
+  // Products (Categories)
+  getCategories: (): Promise<ProductCategory[]> =>
+    request<ProductCategory[]>('GET', '/products/categories'),
+
+  getCategory: (categoryId: string): Promise<ProductCategory> =>
+    request<ProductCategory>('GET', `/products/categories/${categoryId}`),
+
+  createCategory: (category: Omit<ProductCategory, 'id'>): Promise<ProductCategory> =>
+    requestWithAuth<ProductCategory>('POST', '/products/categories', category),
+
+  updateCategory: (categoryId: string, category: Partial<ProductCategory>): Promise<ProductCategory> =>
+    requestWithAuth<ProductCategory>('PATCH', `/products/categories/${categoryId}`, category),
+
+  deleteCategory: (categoryId: string): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/products/categories/${categoryId}`),
+
+  // Products
+  listProducts: (categoryId?: string, limit: number = 50, offset: number = 0): Promise<Product[]> =>
+    request<Product[]>('GET', `/products?${categoryId ? `category_id=${categoryId}&` : ''}limit=${limit}&offset=${offset}`),
+
+  getAllProducts: (limit: number = 50, offset: number = 0): Promise<Product[]> =>
+    productsApi.listProducts(undefined, limit, offset),
+
+  getProduct: (productId: string): Promise<Product> =>
+    request<Product>('GET', `/products/${productId}`),
+
+  createProduct: (product: Omit<Product, 'id'>): Promise<Product> =>
+    requestWithAuth<Product>('POST', '/products', product),
+
+  updateProduct: (productId: string, product: Partial<Product>): Promise<Product> =>
+    requestWithAuth<Product>('PATCH', `/products/${productId}`, product),
+
+  deleteProduct: (productId: string): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/products/${productId}`),
+};
+
+export const snacksApi = {
+  // Menu items
+  getMenu: (): Promise<SnackMenuItem[]> =>
+    request<SnackMenuItem[]>('GET', '/snacks'),
+
+  getMenuItem: (itemId: string): Promise<SnackMenuItem> =>
+    request<SnackMenuItem>('GET', `/snacks/${itemId}`),
+
+  // Pre-order for booking
+  getSnackOrder: (bookingId: string): Promise<SnackOrder> =>
+    requestWithAuth<SnackOrder>('GET', `/snacks/orders/${bookingId}`),
+
+  updateSnackOrder: (bookingId: string, items: SnackOrderItem[]): Promise<SnackOrder> =>
+    requestWithAuth<SnackOrder>('PATCH', `/snacks/orders/${bookingId}`, { items }),
+
+  deleteSnackOrder: (bookingId: string): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/snacks/orders/${bookingId}`),
+};
+
+// ============================================================================
 // PUBLIC API (Hero Carousel, Promotions)
 // ============================================================================
 
@@ -364,8 +487,26 @@ export const publicApi = {
   getHeroCarousel: (): Promise<HeroSlide[]> =>
     request<HeroSlide[]>('GET', '/hero-carousel', undefined, false),
 
+  createHeroSlide: (slide: Omit<HeroSlide, 'id'>): Promise<HeroSlide> =>
+    requestWithAuth<HeroSlide>('POST', '/hero-carousel', slide),
+
+  updateHeroSlide: (slideId: string, slide: Partial<HeroSlide>): Promise<HeroSlide> =>
+    requestWithAuth<HeroSlide>('PATCH', `/hero-carousel/${slideId}`, slide),
+
+  deleteHeroSlide: (slideId: string): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/hero-carousel/${slideId}`),
+
   getPromoEvents: (): Promise<Promotion[]> =>
     request<Promotion[]>('GET', '/promo-events', undefined, false),
+
+  createPromoEvent: (promo: Omit<Promotion, 'id'>): Promise<Promotion> =>
+    requestWithAuth<Promotion>('POST', '/promo-events', promo),
+
+  updatePromoEvent: (promoId: string, promo: Partial<Promotion>): Promise<Promotion> =>
+    requestWithAuth<Promotion>('PATCH', `/promo-events/${promoId}`, promo),
+
+  deletePromoEvent: (promoId: string): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/promo-events/${promoId}`),
 };
 
 // ============================================================================
@@ -401,7 +542,7 @@ export const adminApi = {
     requestWithAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
 
   // Bookings
-  listBookings: (userId?: string, showtimeId?: number, status?: string, limit: number = 100, offset: number = 0) =>
+  listBookings: (_userId?: string, _showtimeId?: number, _status?: string, limit: number = 100, offset: number = 0) =>
     requestWithAuth<{ bookings: BookingDetail[] }>('GET', `/admin/bookings?limit=${limit}&offset=${offset}`, undefined),
 
   updateBooking: (bookingId: number, newShowtimeId?: number, newSeatIds?: number[], adminNote?: string) =>
@@ -414,6 +555,9 @@ export const adminApi = {
   // Users
   listUsers: (search?: string, skip: number = 0, limit: number = 100): Promise<AdminUserResponse[]> =>
     requestWithAuth<AdminUserResponse[]>('GET', `/admin/users?search=${search || ''}&skip=${skip}&limit=${limit}`),
+
+  getUsers: (search?: string, skip: number = 0, limit: number = 100): Promise<AdminUserResponse[]> =>
+    adminApi.listUsers(search, skip, limit),
 
   updateUser: (userId: string, user: AdminUserUpdate): Promise<AdminUserResponse> =>
     requestWithAuth<AdminUserResponse>('PATCH', `/admin/users/${userId}`, user),
@@ -455,3 +599,23 @@ function requestWithAuth<T>(method: string, path: string, body?: unknown): Promi
 // ============================================================================
 
 export { APIError };
+
+// Re-export commonly used types from api module
+export type {
+  MovieCreate,
+  ShowtimeCreate,
+  Showtime,
+  UserProfile,
+  ProductCategory,
+  Product,
+  ProductCreate,
+  SeatInMap,
+  Promotion,
+  HeroSlide,
+  CategoryCreate,
+  Category,
+  APISeat,
+  PromoEvent,
+  HeroCarouselItem,
+  DateGroupShowtime,
+} from '@/types/api';

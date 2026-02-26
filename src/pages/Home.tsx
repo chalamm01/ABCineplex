@@ -3,12 +3,11 @@ import { HeroCarousel } from '@/components/homepage/hero-carousel';
 import { MoviesSection } from '@/components/homepage/movies-section';
 import { PromotionalSection } from '@/components/homepage/promotional-section';
 import { moviesApi, publicApi } from '@/services/api';
-import { transformCarouselItem } from '@/types/api';
 import type { HeroSlide, Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 
 interface PromotionalEvent {
-  id: number;
+  id: string;
   image: string;
   title: string;
   category: 'news' | 'promo';
@@ -37,18 +36,17 @@ export default function Home() {
           publicApi.getPromoEvents(),
         ]);
 
-        const transformedSlides = heroData
-          .filter((item) => item.is_active)
-          .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-          .map(transformCarouselItem);
+        const activeSlides = heroData
+          .filter((item: HeroSlide) => item.is_active)
+          .sort((a: HeroSlide, b: HeroSlide) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
-        setSlides(transformedSlides);
-        setNowScreeningData(nowScreeningRes);
-        setUpcomingData(upcomingRes);
+        setSlides(activeSlides);
+        setNowScreeningData(nowScreeningRes.movies);
+        setUpcomingData(upcomingRes.movies);
 
         const activePromotions = promoData
-          .filter((item) => item.is_active)
-          .map((item) => ({
+          .filter((item: typeof promoData[0]) => item.is_active)
+          .map((item: typeof promoData[0]) => ({
             id: item.id,
            image: item.image_url ?? '',
             title: item.title ?? '',

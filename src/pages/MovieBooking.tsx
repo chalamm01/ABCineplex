@@ -6,7 +6,6 @@ import { SeatMap } from '@/components/movies/seat-map';
 import { TicketSummary } from '@/components/movies/ticket-summary';
 import { moviesApi, showtimesApi } from '@/services/api';
 import type { APISeat } from '@/services/api';
-import { useAuth } from '@/hooks/useAuth';
 import type { MovieDetail, ShowtimeCard } from '@/types/api';
 import type { BookingDate } from '@/lib/constants/movies';
 import { Spinner } from '@/components/ui/spinner';
@@ -35,7 +34,7 @@ interface Seat {
 export default function MovieBooking() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const isAuthenticated = !!localStorage.getItem('token');
   const movieId = Number(id);
 
   const [movie, setMovie] = useState<MovieDetail | null>(null);
@@ -185,7 +184,7 @@ export default function MovieBooking() {
   const handleBooking = async () => {
     if (!currentShowtimeId || selectedSeats.length === 0) return;
 
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated) {
       alert('Please sign in to book tickets.');
       navigate('/login');
       return;

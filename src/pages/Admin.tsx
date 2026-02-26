@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { userApi } from '@/services/api';
+import type { UserProfile } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import MoviesSection from '@/components/admin/MoviesSection';
 import ShowtimesSection from '@/components/admin/ShowtimesSection';
@@ -24,17 +25,35 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>('movies');
-  const { user, loading, isAuthenticated } = useAuth();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (loading) return;
-    if (!isAuthenticated) { navigate('/login'); return; }
-    if (user && !user.is_admin) {
-      console.warn('Access denied: user is not an admin', user);
-      navigate('/');
-    }
-  }, [user, loading, isAuthenticated, navigate]);
+    const checkAdmin = async () => {
+      const isAuthenticated = !!localStorage.getItem('token');
+      if (!isAuthenticated) {
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      try {
+        const profile = await userApi.getProfile();
+        setUser(profile);
+        if (!profile.is_admin) {
+          console.warn('Access denied: user is not an admin', profile);
+          navigate('/', { replace: true });
+        }
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+        navigate('/login', { replace: true });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAdmin();
+  }, [navigate]);
 
   if (loading) {
     return (

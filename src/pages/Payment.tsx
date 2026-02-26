@@ -74,7 +74,7 @@ export default function Payment() {
           try {
             const movie = await moviesApi.getMovieById(Number(movieId));
             movieTitle = movie.title;
-            posterUrl = movie.poster_url;
+            posterUrl = movie.poster_url ?? '';
           } catch {
             console.error('Failed to fetch movie');
           }
@@ -83,7 +83,7 @@ export default function Payment() {
         if (showtimeId) {
           try {
             const showtime = await showtimesApi.getShowtime(Number(showtimeId));
-            const startDate = new Date(showtime.start_time);
+            const startDate = new Date(showtime.start_time || new Date());
             showTime = startDate.toLocaleString('en-GB', {
               day: '2-digit',
               month: '2-digit',
@@ -103,7 +103,7 @@ export default function Payment() {
 
         if (bookingId) {
           try {
-            const booking = await bookingsApi.getBooking(bookingId);
+            const booking = await bookingsApi.getBooking(Number(bookingId));
             if (booking.payment_deadline) {
               setPaymentDeadline(new Date(booking.payment_deadline));
             }
@@ -201,7 +201,7 @@ export default function Payment() {
     if (!shouldCancel) return;
 
     try {
-      await bookingsApi.cancelBooking(bookingId);
+      if (bookingId) await bookingsApi.cancelBooking(Number(bookingId));
       navigate('/');
     } catch (err) {
       console.error('Cancel error:', err);

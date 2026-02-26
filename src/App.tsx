@@ -13,7 +13,6 @@ import Home from "./pages/Home.tsx";
 import Admin from "./pages/Admin.tsx";
 import Profile from "./pages/Profile.tsx";
 import Reviews from "./pages/Reviews.tsx";
-import { Profiler } from "react";
 
 import BookingHistoryPage from "./pages/BookingHistory";
 
