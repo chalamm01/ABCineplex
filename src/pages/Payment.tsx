@@ -103,7 +103,7 @@ export default function Payment() {
 
         if (bookingId) {
           try {
-            const booking = await bookingsApi.getBooking(Number(bookingId));
+            const booking = await bookingsApi.getBooking(bookingId);
             if (booking.payment_deadline) {
               setPaymentDeadline(new Date(booking.payment_deadline));
             }
@@ -167,7 +167,7 @@ export default function Payment() {
 
       // Step 1: Initiate mock payment
       const initiated = await paymentsApi.initiate({
-        booking_id: Number(bookingId),
+        booking_id: bookingId,
         payment_method: mockMethod,
         mock_should_succeed: true,
       });
@@ -201,7 +201,7 @@ export default function Payment() {
     if (!shouldCancel) return;
 
     try {
-      await bookingsApi.cancelBooking(Number(bookingId));
+      await bookingsApi.cancelBooking(bookingId);
       navigate('/');
     } catch (err) {
       console.error('Cancel error:', err);

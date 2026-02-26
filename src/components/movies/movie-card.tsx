@@ -45,19 +45,19 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Status</p>
-              <p className="font-medium text-neutral-900">{movie.status?.replace('_', ' ') ?? 'N/A'}</p>
+              <p className="font-medium text-neutral-900">{movie.release_status?.replace('_', ' ') ?? 'N/A'}</p>
             </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Duration</p>
-              <p className="font-medium text-neutral-900">{formatDuration(movie.runtime_minutes)}</p>
+              <p className="font-medium text-neutral-900">{formatDuration(movie.duration_minutes)}</p>
             </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Genre</p>
-              <p className="font-medium text-neutral-900">{movie.genre || 'N/A'}</p>
+              <p className="font-medium text-neutral-900">{movie.genres?.join(', ') || 'N/A'}</p>
             </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Rating</p>
-              <p className="font-medium text-neutral-900">{movie.rating_tmdb != null ? `${movie.rating_tmdb}/10` : 'N/A'}</p>
+              <p className="font-medium text-neutral-900">{movie.imdb_score != null ? `${movie.imdb_score}/10` : 'N/A'}</p>
             </div>
           </div>
         </div>
