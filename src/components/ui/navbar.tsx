@@ -11,7 +11,6 @@ import {
   UserPlus,
   Ticket,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
   readonly activeNav?: string;
@@ -142,7 +141,7 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
                       <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
                     </div>
                     {/* Profile */}
-                    <button 
+                    <button
                       onClick={handleProfile}
                       className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 transition-colors text-neutral-700 hover:text-black border-b border-neutral-100"
                     >

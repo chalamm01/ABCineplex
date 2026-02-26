@@ -4,19 +4,17 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/hooks/useAuth"
-import { usersApi, type UserProfile, type ProfileUpdateData } from "@/services/api"
 import { useEffect, useState } from "react"
 import { Spinner } from '@/components/ui/spinner'
+import { useApi, useApiMutation } from '@/hooks/useApi'
+import { userApi } from '@/services/api'
+import type { UserProfile, UserUpdate } from '@/types/api'
 
 export default function ProfilePage() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data: profile, loading, error: fetchError, execute: fetchProfile } = useApi<UserProfile>(null);
+  const { mutate: updateProfile, loading: saving, error: saveError } = useApiMutation<UserProfile, UserUpdate>();
 
-  const [formData, setFormData] = useState<ProfileUpdateData>({
+  const [formData, setFormData] = useState<UserUpdate>({
     first_name: "",
     last_name: "",
     phone: "",
@@ -24,29 +22,18 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        // Using the getCurrentUser method from your API
-        const data = await usersApi.getCurrentUser();
-        setProfile(data);
+    // Fetch user profile on component mount
+    fetchProfile(() => userApi.getProfile()).then((loadedProfile) => {
+      if (loadedProfile) {
         setFormData({
-          first_name: data.first_name || "",
-          last_name: data.last_name || "",
-          phone: data.phone || "",
-          date_of_birth: data.date_of_birth || "",
+          first_name: loadedProfile.first_name || "",
+          last_name: loadedProfile.last_name || "",
+          phone: loadedProfile.phone || "",
+          date_of_birth: loadedProfile.date_of_birth || "",
         });
-      } catch (err) {
-        console.error("Failed to fetch profile:", err);
-        setError("Failed to load profile. Please try again.");
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchProfile();
-  }, []);
+    });
+  }, [fetchProfile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -55,16 +42,17 @@ export default function ProfilePage() {
 
   const handleSaveChanges = async () => {
     try {
-      setSaving(true);
-      setError(null);
-      const updatedProfile = await usersApi.updateProfile(formData);
-      setProfile(updatedProfile);
-      alert("Profile updated successfully!");
+      const updatedProfile = await updateProfile(
+        (payload) => userApi.updateProfile(payload),
+        formData
+      );
+      if (updatedProfile) {
+        // Refresh profile data
+        fetchProfile(() => userApi.getProfile());
+        alert("Profile updated successfully!");
+      }
     } catch (err) {
       console.error("Failed to save profile:", err);
-      setError("Failed to save changes. Please try again.");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -78,6 +66,8 @@ export default function ProfilePage() {
       });
     }
   };
+
+  const error = fetchError?.message || saveError?.message;
 
   if (loading) {
     return (
