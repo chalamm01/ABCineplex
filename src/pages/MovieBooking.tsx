@@ -79,6 +79,7 @@ export default function MovieBooking() {
     const fetchShowtimes = async () => {
       try {
         const data = await moviesApi.getShowtimesByMovie(movieId);
+        console.log(data);
         const byDate = data.showtimes_by_date ?? {};
         setShowtimesByDate(byDate);
 
@@ -134,7 +135,7 @@ export default function MovieBooking() {
     setSelectedTime(times[0] ?? '');
   }, [selectedDate, bookingDates, showtimesByDate]);
 
-  // Fetch seat map when showtime selection changes
+  // Fetch sea map when showtime selection changes
   useEffect(() => {
     const fetchSeats = async () => {
       if (!selectedTime || bookingDates.length === 0) return;

@@ -154,9 +154,9 @@ export const moviesApi = {
   // Get showtimes by movie (public endpoint)
   getShowtimesByMovie: (movieId: number, date?: string, days = 7): Promise<MovieShowtimesResponse> => {
     const params = new URLSearchParams();
-    if (date) params.append('date', date);
+    if (date) params.append('date_from', date);
     params.append('days', days.toString());
-    return apiCall<MovieShowtimesResponse>(`/api/v1/showtimes/movie/${movieId}?${params.toString()}`);
+    return apiCall<MovieShowtimesResponse>(`/api/v1/movies/${movieId}/showtimes?${params.toString()}`);
   },
 
   // Admin: Create movie
@@ -187,8 +187,17 @@ export const showtimesApi = {
     apiCall(`/api/v1/showtimes/${showtimeId}`),
 
   // Get seat map for a showtime (API spec 5.4)
-  getSeats: (showtimeId: number): Promise<APISeat[]> =>
-    apiCall<APISeat[]>(`/api/v1/showtimes/${showtimeId}/seats`),
+  getSeats: async (showtimeId: number): Promise<APISeat[]> => {
+    const res = await apiCall<APISeat[] | { seats: APISeat[] }>(`/api/v1/showtimes/${showtimeId}/seats`);
+    console.log('🎬 Raw seat response:', res);
+    console.log('Is array?', Array.isArray(res));
+    if (Array.isArray(res)) {
+      console.log('✅ Already an array');
+      return res;
+    }
+    console.log('Has .seats property?', res?.seats);
+    return res.seats ?? [];
+  },
 
   // Hold seats for a showtime (API spec 5.5)
   holdSeats: (showtimeId: number, seat_ids: number[]): Promise<HoldResult> =>
