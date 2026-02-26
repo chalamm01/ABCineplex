@@ -34,11 +34,11 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
       <div className="grid grid-cols-3 gap-3 sm:gap-4">
         <div className="p-3 sm:p-4 bg-neutral-100 rounded-lg sm:rounded-xl border border-neutral-300">
           <div className="text-xs text-neutral-600 mb-1 uppercase tracking-wider font-semibold">Duration</div>
-          <div className="text-black font-semibold text-sm sm:text-base">{formatDuration(movie.duration_minutes)}</div>
+          <div className="text-black font-semibold text-sm sm:text-base">{formatDuration(movie.runtime_minutes)}</div>
         </div>
         <div className="p-3 sm:p-4 bg-neutral-100 rounded-lg sm:rounded-xl border border-neutral-300">
           <div className="text-xs text-neutral-600 mb-1 uppercase tracking-wider font-semibold">Rating</div>
-          <div className="text-black font-semibold text-sm sm:text-base">{movie.content_rating ?? 'N/A'}</div>
+          <div className="text-black font-semibold text-sm sm:text-base">{movie.rate ?? 'N/A'}</div>
         </div>
       </div>
 

@@ -49,7 +49,7 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
             </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Duration</p>
-              <p className="font-medium text-neutral-900">{formatDuration(movie.duration_minutes)}</p>
+              <p className="font-medium text-neutral-900">{formatDuration(movie.runtime_minutes)}</p>
             </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Genre</p>

@@ -7,29 +7,22 @@ import { TicketSummary } from '@/components/movies/ticket-summary';
 import { moviesApi, showtimesApi } from '@/services/api';
 import type { APISeat } from '@/services/api';
 import type { MovieDetail, ShowtimeCard } from '@/types/api';
-import type { BookingDate } from '@/lib/constants/movies';
 import { Spinner } from '@/components/ui/spinner';
 
-// Re-declare types for showtime grouping
-interface ShowtimeInfo {
-  time: string;
-  showtimeId: number;
-  status: 'available' | 'selected' | 'sold_out' | 'past';
-}
+// Use types from api.ts
+import type { SeatInMap, DateGroupShowtime as ApiDateGroupShowtime } from '@/types/api';
+import type { Seat as ApiSeat } from '@/types/api';
+import type { BookingDate } from '@/lib/constants/movies';
 
-interface DateGroupShowtime extends BookingDate {
-  showtimes: ShowtimeInfo[];
-}
-
-type SeatStatus = 'available' | 'reserved' | 'selected' | 'locked';
-
-interface Seat {
+type Seat = {
   id: number;
   row: string;
   col: number;
-  status: SeatStatus;
+  status: 'available' | 'reserved' | 'selected' | 'locked';
   price?: number;
-}
+};
+
+type DateGroupShowtime = ApiDateGroupShowtime & { showtimes: { time: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past' }[] };
 
 export default function MovieBooking() {
   const { id } = useParams<{ id: string }>();
@@ -250,6 +243,9 @@ export default function MovieBooking() {
     );
   }
 
+  // Get the correct duration (runtime_minutes or duration_minutes)
+  const movieDuration = movie.duration_minutes;
+
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
@@ -265,7 +261,8 @@ export default function MovieBooking() {
                   />
                 </div>
               </div>
-              <BookingMovieInfo movie={movie} />
+              {/* Pass duration as a prop or use in BookingMovieInfo if needed */}
+              <BookingMovieInfo movie={movie}/>
             </div>
           </div>
         </section>

@@ -126,8 +126,8 @@ export interface Movie {
   id: number;
   title: string;
   synopsis?: string;
-  genre?: string | string[];
   genres?: string[];
+  rate?: string
   runtime_minutes?: number;
   duration_minutes?: number;
   rating_tmdb?: number;
