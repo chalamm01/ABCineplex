@@ -33,6 +33,20 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
     { id: 'community', label: 'Community', icon: Users },
   ];
 
+  // Load user from localStorage on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (err) {
+          console.error('Failed to parse user from localStorage:', err);
+        }
+      }
+    }
+  }, [isAuthenticated]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

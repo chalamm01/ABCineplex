@@ -149,6 +149,9 @@ export const authApi = {
 
   refresh: (refreshToken: string): Promise<LoginResponse> =>
     request<LoginResponse>('POST', '/auth/refresh', { refresh_token: refreshToken }, false),
+
+  getGoogleOAuthUrl: (): Promise<{ url: string }> =>
+    request<{ url: string }>('GET', '/auth/google', undefined, false),
 };
 
 // ============================================================================

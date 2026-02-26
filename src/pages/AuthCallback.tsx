@@ -11,15 +11,34 @@ export default function AuthCallback() {
       try {
         const supabase = createClient();
 
-        // If the URL contains a code param (PKCE flow), exchange it
         const params = new URLSearchParams(globalThis.location.search);
         const code = params.get('code');
         if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { error: exchangeError, data } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) {
             setError(exchangeError.message);
             return;
           }
+
+          if (data?.session?.access_token) {
+            localStorage.setItem('token', data.session.access_token);
+          }
+
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          if (userError || !userData?.user?.email) {
+            setError(userError?.message || 'Failed to get user info');
+            return;
+          }
+
+          // Store basic user info from auth (will be enhanced when user profile loads)
+          const userInfo = {
+            id: userData.user.id,
+            email: userData.user.email,
+            first_name: userData.user.user_metadata?.first_name || '',
+            last_name: userData.user.user_metadata?.last_name || '',
+            user_name: userData.user.user_metadata?.user_name || userData.user.email.split('@')[0],
+          };
+          localStorage.setItem('user', JSON.stringify(userInfo));
         }
 
         // Auth callback completed, redirect to home
