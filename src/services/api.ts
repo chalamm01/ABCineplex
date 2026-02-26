@@ -313,19 +313,23 @@ export const bookingsApi = {
       body: JSON.stringify(data),
     }),
 
-  // Step 2: Confirm payment (finalizes booking)
+  // Step 2: Confirm payment (finalizes booking) — kept for direct/legacy use
   confirmPayment: (data: ConfirmPaymentRequest): Promise<ConfirmPaymentResponse> =>
     apiCall<ConfirmPaymentResponse>(`/api/bookings/confirm-payment`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  // Cancel a pending booking
+  // Cancel a pending booking (POST variant)
   cancelBooking: (bookingId: number) =>
     apiCall(`/api/bookings/cancel`, {
       method: 'POST',
       body: JSON.stringify({ booking_id: bookingId }),
     }),
+
+  // Cancel / delete a booking (DELETE variant per spec §5.6)
+  deleteBooking: (bookingId: number) =>
+    apiCall(`/api/bookings/${bookingId}`, { method: 'DELETE' }),
 
   // Get booking details by ID
   getBooking: (bookingId: number): Promise<BookingDetailResponse> =>
@@ -343,6 +347,58 @@ export const bookingsApi = {
     const params = status ? `?status=${status}` : '';
     return apiCall(`/api/bookings/user/${userId}/bookings${params}`);
   },
+};
+
+// Mock Payment API (§5.7)
+interface PaymentInitiateRequest {
+  booking_id: number;
+  payment_method: 'mock_card' | 'mock_qr' | 'mock_cash';
+  mock_should_succeed?: boolean;
+}
+
+export interface PaymentInitiateResponse {
+  payment_id: string;
+  status: string;
+  amount: number;
+  payment_method: string;
+}
+
+export interface PaymentConfirmResponse {
+  payment_id: string;
+  status: string;
+  booking_id: number;
+  booking_status?: string;
+  points_earned?: number;
+  message?: string;
+}
+
+export interface PaymentStatusResponse {
+  payment_id: string;
+  booking_id: number;
+  status: string;
+  amount: number;
+  payment_method: string;
+  paid_at?: string;
+}
+
+export const paymentsApi = {
+  // Initiate a mock payment for a booking
+  initiate: (data: PaymentInitiateRequest): Promise<PaymentInitiateResponse> =>
+    apiCall<PaymentInitiateResponse>(`/api/payments/initiate`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Confirm (or decline) a mock payment
+  confirm: (paymentId: string, mockResult = true): Promise<PaymentConfirmResponse> =>
+    apiCall<PaymentConfirmResponse>(`/api/payments/${paymentId}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify({ mock_result: mockResult }),
+    }),
+
+  // Get current status of a mock payment
+  getPayment: (paymentId: string): Promise<PaymentStatusResponse> =>
+    apiCall<PaymentStatusResponse>(`/api/payments/${paymentId}`),
 };
 
 // user API

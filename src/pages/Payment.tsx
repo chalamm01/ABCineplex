@@ -11,7 +11,7 @@ import {
   type BookingDetails,
 } from '@/components/payment';
 import { useCountdown } from '@/hooks/useCountdown';
-import { bookingsApi, moviesApi, showtimesApi } from '@/services/api';
+import { bookingsApi, moviesApi, showtimesApi, paymentsApi } from '@/services/api';
 import { Zap, CheckCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner'
 
@@ -162,21 +162,26 @@ export default function Payment() {
     try {
       setIsProcessing(true);
 
+      // Map UI payment method to backend mock method (§5.7)
+      const mockMethod = paymentMethod === 'card' ? 'mock_card' : 'mock_qr';
+
+      // Step 1: Initiate mock payment
+      const initiated = await paymentsApi.initiate({
+        booking_id: Number(bookingId),
+        payment_method: mockMethod,
+        mock_should_succeed: true,
+      });
+
       // Simulate a short processing delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Confirm payment via API
-      const result = await bookingsApi.confirmPayment({
-        booking_id: Number(bookingId),
-        payment_intent_id: paymentMethod === 'card'
-          ? `card_${Date.now()}_${cardNumber.replaceAll(/\s/g, '').slice(-4)}`
-          : `promptpay_${Date.now()}`,
-      });
+      // Step 2: Confirm mock payment
+      const result = await paymentsApi.confirm(initiated.payment_id, true);
 
-      if (result.success) {
+      if (result.status === 'success') {
         setPaymentSuccess(true);
       } else {
-        alert(`Payment failed: ${result.message}`);
+        alert(`Payment failed: ${result.message || 'Unknown error'}`);
       }
     } catch (err) {
       console.error('Payment error:', err);
