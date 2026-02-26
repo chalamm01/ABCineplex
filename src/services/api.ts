@@ -305,6 +305,23 @@ export interface BookingDetailResponse {
   showtime_end?: string;
 }
 
+function mapUserProfile(data: any): UserProfile {
+  return {
+    id: data.id || data.user_id || 'n/a',
+    user_name: data.user_name ?? 'n/a',
+    email: data.email ?? 'n/a',
+    first_name: data.first_name ?? (data.full_name ? data.full_name.split(' ')[0] : 'n/a'),
+    last_name: data.last_name ?? (data.full_name ? (data.full_name.split(' ').slice(1).join(' ') || 'n/a') : 'n/a'),
+    phone: data.phone ?? 'n/a',
+    date_of_birth: data.date_of_birth ?? 'n/a',
+    is_student: data.is_student ?? false,
+    student_id_verified: data.student_id_verified ?? false,
+    membership_tier: data.membership_tier ?? 'n/a',
+    reward_points: data.reward_points ?? data.loyalty_points ?? 0,
+    attendance_streak: data.attendance_streak ?? 0,
+  };
+}
+
 export const bookingsApi = {
   // Step 1: Reserve seats (starts 5-minute countdown)
   reserveSeats: (data: ReserveSeatRequest): Promise<ReserveSeatResponse> =>
@@ -367,12 +384,20 @@ export interface ProfileUpdateData {
 
 export const usersApi = {
   // Get current user profile
-  getCurrentUser: (): Promise<UserProfile> =>
-    apiCall<UserProfile>(`/api/users/me`),
+
+  getCurrentUser: async (): Promise<UserProfile> => {
+    const data = await apiCall<any>(`/api/users/me`);
+    return mapUserProfile(data);
+  },
 
   // Get user by ID (alias for consistency)
-  getProfile: (userId: string): Promise<UserProfile> =>
-    apiCall<UserProfile>(`/api/users/${userId}`),
+
+  getProfile: async (userId: string): Promise<UserProfile> => {
+    const data = await apiCall<any>(`/api/users/${userId}`);
+    return mapUserProfile(data);
+  },
+// Helper to map backend user fields to frontend UserProfile
+
 
   // Update user (alias for consistency)
   updateProfile: (userId: string, data: ProfileUpdateData): Promise<UserProfile> =>
