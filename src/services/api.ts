@@ -1,505 +1,457 @@
-import type { Movie, HeroCarouselItem, PromoEvent, MovieShowtimesResponse } from '@/types/api';
-import { createClient } from '@/lib/supabase/client';
+/**
+ * API Service Layer
+ * Organized by domain, with centralized error handling
+ */
 
-// Admin CRUD types
-export interface MovieCreate {
-  title: string;
-  release_date: string;
-  imdb_score?: number;
-  duration_minutes: number;
-  content_rating: string;
-  director?: string;
-  starring?: string[];
-  synopsis?: string;
-  poster_url: string;
-  banner_url: string;
-  trailer_url?: string;
-  audio_languages?: string[];
-  subtitle_languages?: string[];
-  tag_event?: string;
-  release_status: string;
-  genres?: string[];
-}
+import type {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  UserProfile,
+  UserUpdate,
+  UserBookingsResponse,
+  UserPointsResponse,
+  Movie,
+  MovieDetail,
+  MovieListResponse,
+  MovieShowtimesResponse,
+  QualityScoreResponse,
+  Showtime,
+  ShowtimeDetail,
+  SeatMapResponse,
+  TimeCommitmentResponse,
+  ReserveSeatRequest,
+  ReserveSeatResponse,
+  ConfirmPaymentRequest,
+  ConfirmPaymentResponse,
+  CancelBookingRequest,
+  CancelBookingResponse,
+  BookingDetail,
+  InitiatePaymentRequest,
+  InitiatePaymentResponse,
+  PaymentResponse,
+  ReviewCreate,
+  ReviewResponse,
+  HeroSlide,
+  Promotion,
+  MovieCreate,
+  MovieUpdate,
+  ShowtimeCreate,
+  ShowtimeUpdate,
+  AdminUserResponse,
+  AdminUserUpdate,
+  DashboardStats,
+  ErrorResponse,
+} from '@/types/api';
 
-export interface ShowtimeCreate {
-  movie_id: number;
-  screen_id: number;
-  start_time: string;
-  base_price: number;
-}
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
 
-export interface Showtime {
-  id: number;
-  movie_id: number;
-  screen_id: number;
-  start_time: string;
-  base_price: number;
-  created_at: string;
-}
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
-export interface Category {
-  id: string;
-  name: string;
-  display_order: number;
-  is_active: boolean;
-}
+// ============================================================================
+// UTILITIES
+// ============================================================================
 
-export interface CategoryCreate {
-  name: string;
-  display_order: number;
-}
-
-export interface Product {
-  id: string;
-  name: string;
-  category_id: string;
-  price: string;
-  description?: string;
-  image_url?: string;
-  in_stock: boolean;
-  created_at: string;
-}
-
-export interface ProductCreate {
-  name: string;
-  category_id: string;
-  price: number;
-  description?: string;
-  image_url?: string;
-  in_stock: boolean;
-}
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-// Seat type from API
-export interface APISeat {
-  seat_id: number;
-  row_label: string;
-  seat_number: number;
-  status: string;
-  price?: number;
-}
-
-export interface HoldResult {
-  hold_id: string;
-  seat_ids: number[];
-  expires_at: string;
-  expires_in_seconds: number;
-}
-
-// Helper function to make API calls with optional Supabase auth
-async function apiCall<T>(
-  endpoint: string,
-  options?: RequestInit & { authenticated?: boolean }
-): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options?.headers as Record<string, string>),
-  };
-
-  // Attach Supabase access token for authenticated requests
-  if (options?.authenticated !== false) {
-    try {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.access_token) {
-        headers['Authorization'] = `Bearer ${data.session.access_token}`;
-      } else {
-        console.warn('No auth session found');
-      }
-    } catch (error) {
-      console.error('Failed to get auth session:', error);
-    }
+class APIError extends Error {
+  constructor(
+    public status: number,
+    public data?: ErrorResponse,
+  ) {
+    super(data?.message || `HTTP ${status}`);
+    this.name = 'APIError';
   }
+}
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+async function handleResponse<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get('content-type');
+  const isJson = contentType?.includes('application/json');
+  const data = isJson ? await response.json() : null;
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`API Error: ${response.status} ${response.statusText}`, errorText);
-    throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
+    // Try to extract error message from standardized format
+    const errorData: ErrorResponse = data || {
+      message: `HTTP ${response.status}`,
+    };
+    throw new APIError(response.status, errorData);
   }
 
-  return response.json();
+  return data as T;
 }
 
-// Normalize movie list response — backend returns { movies: [...] } or a plain array
-function extractMovies(res: Movie[] | { movies: Movie[] }): Movie[] {
-  if (Array.isArray(res)) return res;
-  return res.movies ?? [];
+function getAuthToken(): string | null {
+  // Try multiple possible storage locations
+  return (
+    localStorage.getItem('token') ||
+    localStorage.getItem('authToken') ||
+    sessionStorage.getItem('token') ||
+    null
+  );
 }
 
-// Movies API
-export const moviesApi = {
-  // Admin: Get all movies (no status filter, admin endpoint)
-  getMovies: async (page = 1, limit = 100): Promise<Movie[]> => {
-    const safePage = page < 1 ? 1 : page;
-    const res = await apiCall<Movie[] | { movies: Movie[] }>(`/api/v1/movies?page=${safePage}&limit=${limit}`);
-    return extractMovies(res);
-  },
+function buildHeaders(includeAuth: boolean = true): HeadersInit {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
 
-  getMoviesPublic: async (page = 1, limit = 100, status = 'now_showing'): Promise<Movie[]> => {
-    const res = await apiCall<Movie[] | { movies: Movie[] }>(`/api/v1/movies?status=${status}&page=${page}&limit=${limit}`);
-    return extractMovies(res);
-  },
-
-  // Get single movie by ID (admin endpoint)
-  getMovieById: (movieId: number): Promise<Movie> =>
-    apiCall<Movie>(`/api/v1/movies/${movieId}`),
-
-  // Get showtimes by movie (public endpoint)
-  getShowtimesByMovie: (movieId: number, date?: string, days = 7): Promise<MovieShowtimesResponse> => {
-    const params = new URLSearchParams();
-    if (date) params.append('date_from', date);
-    params.append('days', days.toString());
-    return apiCall<MovieShowtimesResponse>(`/api/v1/movies/${movieId}/showtimes?${params.toString()}`);
-  },
-
-  // Admin: Create movie
-  createMovie: (movie: MovieCreate): Promise<Movie> =>
-    apiCall<Movie>(`/api/v1/movies`, {
-      method: 'POST',
-      body: JSON.stringify(movie),
-      authenticated: true,
-    }),
-
-  // Admin: Update movie (PATCH)
-  updateMovie: (movieId: number, movie: Partial<MovieCreate>): Promise<Movie> =>
-    apiCall<Movie>(`/api/v1/movies/${movieId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(movie),
-      authenticated: true,
-    }),
-
-  // Admin: Delete movie
-  deleteMovie: (movieId: number): Promise<{ message: string }> =>
-    apiCall<{ message: string }>(`/api/v1/movies/${movieId}`, { method: 'DELETE', authenticated: true }),
-};
-
-// Showtimes API
-export const showtimesApi = {
-  // Get showtime details (API spec 5.4)
-  getShowtime: (showtimeId: number) =>
-    apiCall(`/api/v1/showtimes/${showtimeId}`),
-
-  // Get seat map for a showtime (API spec 5.4)
-  getSeats: async (showtimeId: number): Promise<APISeat[]> => {
-    const res = await apiCall<APISeat[] | { seats: APISeat[] }>(`/api/v1/showtimes/${showtimeId}/seats`);
-    console.log('🎬 Raw seat response:', res);
-    console.log('Is array?', Array.isArray(res));
-    if (Array.isArray(res)) {
-      console.log('✅ Already an array');
-      return res;
+  if (includeAuth) {
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
-    console.log('Has .seats property?', res?.seats);
-    return res.seats ?? [];
+  }
+
+  return headers;
+}
+
+async function request<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+  includeAuth: boolean = true,
+): Promise<T> {
+  const url = `${API_BASE_URL}${path}`;
+  const options: RequestInit = {
+    method,
+    headers: buildHeaders(includeAuth),
+  };
+
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
+  return handleResponse<T>(response);
+}
+
+// ============================================================================
+// AUTH API
+// ============================================================================
+
+export const authApi = {
+  login: (credentials: LoginRequest): Promise<LoginResponse> =>
+    request<LoginResponse>('POST', '/auth/login', credentials, false),
+
+  register: (data: RegisterRequest): Promise<RegisterResponse> =>
+    request<RegisterResponse>('POST', '/auth/register', data, false),
+
+  logout: (): Promise<{ message: string }> =>
+    request<{ message: string }>('POST', '/auth/logout'),
+
+  refresh: (refreshToken: string): Promise<LoginResponse> =>
+    request<LoginResponse>('POST', '/auth/refresh', { refresh_token: refreshToken }, false),
+};
+
+// ============================================================================
+// USER API
+// ============================================================================
+
+export const userApi = {
+  getProfile: (): Promise<UserProfile> =>
+    request<UserProfile>('GET', '/users/me'),
+
+  updateProfile: (data: UserUpdate): Promise<UserProfile> =>
+    request<UserProfile>('PATCH', '/users/me', data),
+
+  submitStudentVerification: (file: File): Promise<{ message: string }> => {
+    const formData = new FormData();
+    formData.append('student_id_image', file);
+    return fetch(`${API_BASE_URL}/users/me/student-verification`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
+      body: formData,
+    }).then((res) => handleResponse(res));
   },
 
-  // Hold seats for a showtime (API spec 5.5)
-  holdSeats: (showtimeId: number, seat_ids: number[]): Promise<HoldResult> =>
-    apiCall<HoldResult>(`/api/v1/showtimes/${showtimeId}/seats/hold`, {
-      method: 'POST',
-      body: JSON.stringify({ seat_ids }),
-      authenticated: true,
-    }),
+  getBookings: (status?: string, page: number = 1, limit: number = 10): Promise<UserBookingsResponse> =>
+    request<UserBookingsResponse>(
+      'GET',
+      `/users/me/bookings?status=${status || ''}&page=${page}&limit=${limit}`,
+    ),
 
-  // Release seat hold (API spec 5.5)
-  releaseHold: (showtimeId: number, hold_id: string) =>
-    apiCall(`/api/v1/showtimes/${showtimeId}/seats/hold`, {
-      method: 'DELETE',
-      body: JSON.stringify({ hold_id }),
-      authenticated: true,
-    }),
+  getPoints: (): Promise<UserPointsResponse> =>
+    request<UserPointsResponse>('GET', '/users/me/points'),
 
-  // Check hold status (API spec 5.5)
-  getHoldStatus: (showtimeId: number, hold_id: string) =>
-    apiCall(`/api/v1/showtimes/${showtimeId}/seats/hold/status?hold_id=${hold_id}`, {
-      authenticated: true,
-    }),
+  getUserById: (userId: string): Promise<AdminUserResponse> =>
+    request<AdminUserResponse>('GET', `/users/${userId}`),
 
-  // Admin: List showtimes for a specific movie
-  getShowtimesByMovie: (movieId: number): Promise<Showtime[]> =>
-    apiCall<Showtime[]>(`/api/v1/showtimes?movie_id=${movieId}`, { authenticated: true }),
-
-  // Admin: Create showtime
-  createShowtime: (showtime: ShowtimeCreate) =>
-    apiCall(`/api/v1/showtimes`, {
-      method: 'POST',
-      body: JSON.stringify(showtime),
-      authenticated: true,
-    }),
-
-  // Admin: Update showtime
-  updateShowtime: (showtimeId: number, showtime: Partial<ShowtimeCreate>) =>
-    apiCall(`/api/v1/showtimes/${showtimeId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(showtime),
-      authenticated: true,
-    }),
-
-  // Admin: Delete showtime
-  deleteShowtime: (showtimeId: number) =>
-    apiCall(`/api/v1/showtimes/${showtimeId}`, { method: 'DELETE', authenticated: true }),
+  deactivateAccount: (userId: string): Promise<{ message: string }> =>
+    request<{ message: string }>('DELETE', `/users/${userId}`),
 };
 
-// Public API (Hero carousel, promo events)
-export const publicApi = {
-  // Get hero carousel slides
-  getHeroCarousel: () =>
-    apiCall<HeroCarouselItem[]>(`/api/v1/hero-carousel`),
+// ============================================================================
+// MOVIE API
+// ============================================================================
 
-  // Get promo events
-  getPromoEvents: () =>
-    apiCall<PromoEvent[]>(`/api/v1/promo-events`),
-
-  // Admin: Hero carousel CRUD
-  createHeroSlide: (data: object) =>
-    apiCall<HeroCarouselItem>(`/api/v1/hero-carousel`, { method: 'POST', body: JSON.stringify(data), authenticated: true }),
-  updateHeroSlide: (id: string, data: object) =>
-    apiCall<HeroCarouselItem>(`/api/v1/hero-carousel/${id}`, { method: 'PUT', body: JSON.stringify(data), authenticated: true }),
-  deleteHeroSlide: (id: string) =>
-    apiCall(`/api/v1/hero-carousel/${id}`, { method: 'DELETE', authenticated: true }),
-
-  // Admin: Promo events CRUD
-  createPromoEvent: (data: object) =>
-    apiCall<PromoEvent>(`/api/v1/promo-events`, { method: 'POST', body: JSON.stringify(data), authenticated: true }),
-  updatePromoEvent: (id: string, data: object) =>
-    apiCall<PromoEvent>(`/api/v1/promo-events/${id}`, { method: 'PUT', body: JSON.stringify(data), authenticated: true }),
-  deletePromoEvent: (id: string) =>
-    apiCall(`/api/v1/promo-events/${id}`, { method: 'DELETE', authenticated: true }),
-};
-
-// Products & Categories Admin API
-export const productsApi = {
-  getProducts: (skip = 0, limit = 50) =>
-    apiCall<Product[]>(`/api/v1/products/?skip=${skip}&limit=${limit}&in_stock=true`),
-
-  // Admin: get all products regardless of stock status
-  getAllProducts: (skip = 0, limit = 100) =>
-    apiCall<Product[]>(`/api/v1/products/?skip=${skip}&limit=${limit}`, { authenticated: true }),
-
-  createProduct: (product: ProductCreate) =>
-    apiCall<Product>(`/api/v1/products/`, {
-      method: 'POST',
-      body: JSON.stringify(product),
-      authenticated: true,
-    }),
-
-  updateProduct: (productId: string, product: Partial<ProductCreate>) =>
-    apiCall<Product>(`/api/v1/products/${productId}`, {
-      method: 'PUT',
-      body: JSON.stringify(product),
-      authenticated: true,
-    }),
-
-  deleteProduct: (productId: string) =>
-    apiCall(`/api/v1/products/${productId}`, { method: 'DELETE', authenticated: true }),
-
-  getCategories: () =>
-    apiCall<Category[]>(`/api/v1/products/categories`),
-
-  createCategory: (category: CategoryCreate) =>
-    apiCall<Category>(`/api/v1/products/categories`, {
-      method: 'POST',
-      body: JSON.stringify(category),
-      authenticated: true,
-    }),
-
-  updateCategory: (categoryId: string, category: Partial<CategoryCreate>) =>
-    apiCall<Category>(`/api/v1/products/categories/${categoryId}`, {
-      method: 'PUT',
-      body: JSON.stringify(category),
-      authenticated: true,
-    }),
-
-  deleteCategory: (categoryId: string) =>
-    apiCall(`/api/v1/products/categories/${categoryId}`, { method: 'DELETE', authenticated: true }),
-};
-
-// Bookings API (API spec 5.6)
-export const bookingsApi = {
-  // Create a booking after payment succeeds
-  createBooking: (data: {
-    showtime_id: number;
-    seat_ids: number[];
-    ticket_type: 'normal' | 'student' | 'member';
-    hold_id: string;
-    snack_order?: { item_id: number; quantity: number }[];
-  }) =>
-    apiCall(`/api/v1/bookings`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      authenticated: true,
-    }),
-
-  // Get booking detail
-  getBooking: (bookingId: string) =>
-    apiCall(`/api/v1/bookings/${bookingId}`, { authenticated: true }),
-
-  // Cancel a booking
-  cancelBooking: (bookingId: string) =>
-    apiCall(`/api/v1/bookings/${bookingId}`, { method: 'DELETE', authenticated: true }),
-
-  // Get current user's bookings
-  getUserBookings: (status?: string, page = 1, limit = 10) => {
+export const movieApi = {
+  getMovies: (
+    page: number = 1,
+    limit: number = 20,
+    status?: string,
+    genre?: string,
+    search?: string,
+  ): Promise<MovieListResponse> => {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
+    if (genre) params.append('genre', genre);
+    if (search) params.append('search', search);
     params.append('page', page.toString());
     params.append('limit', limit.toString());
-    return apiCall(`/api/v1/users/me/bookings?${params.toString()}`, { authenticated: true });
+    return request<MovieListResponse>('GET', `/movies?${params.toString()}`, undefined, false);
   },
+
+  getMovieById: (movieId: number): Promise<MovieDetail> =>
+    request<MovieDetail>('GET', `/movies/${movieId}`, undefined, false),
+
+  getMovieShowtimes: (
+    movieId: number,
+    dateFrom?: string,
+    days: number = 7,
+  ): Promise<MovieShowtimesResponse> => {
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('date_from', dateFrom);
+    params.append('days', days.toString());
+    return request<MovieShowtimesResponse>(
+      'GET',
+      `/movies/${movieId}/showtimes?${params.toString()}`,
+      undefined,
+      false,
+    );
+  },
+
+  getQualityScore: (movieId: number): Promise<QualityScoreResponse> =>
+    request<QualityScoreResponse>('GET', `/movies/${movieId}/quality-score`, undefined, false),
 };
 
-// Payments API (API spec 5.7)
-export const paymentsApi = {
-  // Initiate a mock payment for a booking
-  initiate: (data: {
-    booking_id: string;
-    payment_method: 'mock_card' | 'mock_qr' | 'mock_cash';
-    mock_should_succeed?: boolean;
-  }) =>
-    apiCall(`/api/v1/payments/initiate`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      authenticated: true,
-    }),
+export const moviesApi = movieApi; // Alias for backward compatibility
 
-  // Confirm mock payment result
-  confirm: (paymentId: string, mock_result: boolean) =>
-    apiCall(`/api/v1/payments/${paymentId}/confirm`, {
-      method: 'POST',
-      body: JSON.stringify({ mock_result }),
-      authenticated: true,
-    }),
+// ============================================================================
+// SHOWTIME API
+// ============================================================================
 
-  // Get payment status
-  getPayment: (paymentId: string) =>
-    apiCall(`/api/v1/payments/${paymentId}`, { authenticated: true }),
+export const showtimeApi = {
+  getShowtimeById: (showtimeId: number): Promise<ShowtimeDetail> =>
+    request<ShowtimeDetail>('GET', `/showtimes/${showtimeId}`, undefined, false),
+
+  getSeats: (showtimeId: number): Promise<SeatMapResponse> =>
+    request<SeatMapResponse>('GET', `/showtimes/${showtimeId}/seats`, undefined, false),
+
+  getAllSeats: (showtimeId: number): Promise<SeatMapResponse> =>
+    request<SeatMapResponse>('GET', `/showtimes/${showtimeId}/seats/all`, undefined, false),
+
+  getTimeCommitment: (showtimeId: number, travelMinutes?: number): Promise<TimeCommitmentResponse> => {
+    const params = new URLSearchParams();
+    if (travelMinutes !== undefined) params.append('travel_minutes', travelMinutes.toString());
+    return request<TimeCommitmentResponse>(
+      'GET',
+      `/showtimes/${showtimeId}/time-commitment?${params.toString()}`,
+      undefined,
+      false,
+    );
+  },
+
+  getShowtimesByMovie: (movieId: number): Promise<Showtime[]> =>
+    request<Showtime[]>('GET', `/showtimes/movie/${movieId}`, undefined, false),
 };
 
-// user API
-export interface UserProfile {
-  id: string;
-  email: string;
-  user_name: string;
-  first_name: string;
-  last_name: string;
-  phone: string | null;
-  date_of_birth: string | null;
-  is_admin: boolean; // Added
-  is_student: boolean;
-  student_id_verified: boolean;
-  membership_tier: 'free' | 'paid' | 'none';
-  reward_points: number;
-  attendance_streak: number;
-}
+export const showtimesApi = showtimeApi; // Alias
+
+// ============================================================================
+// SEAT HOLD API
+// ============================================================================
+
+export const seatApi = {
+  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_in_seconds: number }> =>
+    request<{ hold_id: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
+      seat_ids: seatIds,
+    }),
+
+  releaseHold: (showtimeId: number, holdId: string): Promise<{ message: string }> =>
+    request<{ message: string }>('DELETE', `/showtimes/${showtimeId}/seats/hold`, { hold_id: holdId }),
+
+  getHoldStatus: (showtimeId: number, holdId: string): Promise<{ is_active: boolean; expires_in_seconds: number }> =>
+    request<{ is_active: boolean; expires_in_seconds: number }>(
+      'GET',
+      `/showtimes/${showtimeId}/seats/hold/status?hold_id=${holdId}`,
+      undefined,
+      false,
+    ),
+};
+
+// ============================================================================
+// BOOKING API
+// ============================================================================
+
+export const bookingApi = {
+  createBooking: (request: ReserveSeatRequest): Promise<ReserveSeatResponse> =>
+    bookingApi.reserveSeats(request),
+
+  reserveSeats: (request: ReserveSeatRequest): Promise<ReserveSeatResponse> =>
+    requestWithAuth<ReserveSeatResponse>('POST', '/bookings', request),
+
+  confirmPayment: (request: ConfirmPaymentRequest): Promise<ConfirmPaymentResponse> =>
+    requestWithAuth<ConfirmPaymentResponse>('POST', '/bookings/confirm-payment', request),
+
+  getBookingById: (bookingId: number): Promise<BookingDetail> =>
+    requestWithAuth<BookingDetail>('GET', `/bookings/${bookingId}`),
+
+  getBookingTickets: (bookingId: number): Promise<{ tickets: any[] }> =>
+    requestWithAuth<{ tickets: any[] }>('GET', `/bookings/${bookingId}/tickets`),
+
+  cancelBooking: (bookingId: number): Promise<CancelBookingResponse> =>
+    requestWithAuth<CancelBookingResponse>('DELETE', `/bookings/${bookingId}`),
+
+  changeShowtime: (
+    bookingId: number,
+    newShowtimeId: number,
+    newSeatIds: number[],
+  ): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('POST', `/bookings/${bookingId}/change-showtime`, {
+      new_showtime_id: newShowtimeId,
+      new_seat_ids: newSeatIds,
+    }),
+
+  changeSeat: (bookingId: number, newSeatIds: number[]): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('POST', `/bookings/${bookingId}/change-seat`, {
+      new_seat_ids: newSeatIds,
+    }),
+};
+
+export const bookingsApi = bookingApi; // Alias
+
+// ============================================================================
+// PAYMENT API
+// ============================================================================
+
+export const paymentApi = {
+  initiatePayment: (request: InitiatePaymentRequest): Promise<InitiatePaymentResponse> =>
+    requestWithAuth<InitiatePaymentResponse>('POST', '/payments/initiate', request),
+
+  confirmPayment: (paymentId: string, mockResult: boolean): Promise<PaymentResponse> =>
+    requestWithAuth<PaymentResponse>('POST', `/payments/${paymentId}/confirm`, { mock_result: mockResult }),
+
+  getPaymentStatus: (paymentId: string): Promise<PaymentResponse> =>
+    requestWithAuth<PaymentResponse>('GET', `/payments/${paymentId}`),
+};
+
+// ============================================================================
+// REVIEW API
+// ============================================================================
+
+export const reviewApi = {
+  createReview: (movieId: number, review: Omit<ReviewCreate, 'movie_id'>): Promise<ReviewResponse> =>
+    requestWithAuth<ReviewResponse>('POST', `/reviews`, { ...review, movie_id: movieId }),
+
+  updateReview: (reviewId: number, review: Partial<ReviewCreate>): Promise<ReviewResponse> =>
+    requestWithAuth<ReviewResponse>('PATCH', `/reviews/${reviewId}`, review),
+
+  getMovieReviews: (movieId: number): Promise<ReviewResponse[]> =>
+    request<ReviewResponse[]>('GET', `/reviews/movie/${movieId}`, undefined, false),
+
+  deleteReview: (reviewId: number): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/reviews/${reviewId}`),
+};
+
+// ============================================================================
+// PUBLIC API (Hero Carousel, Promotions)
+// ============================================================================
+
+export const publicApi = {
+  getHeroCarousel: (): Promise<HeroSlide[]> =>
+    request<HeroSlide[]>('GET', '/hero-carousel', undefined, false),
+
+  getPromoEvents: (): Promise<Promotion[]> =>
+    request<Promotion[]>('GET', '/promo-events', undefined, false),
+};
+
+// ============================================================================
+// ADMIN API
+// ============================================================================
+
 export const adminApi = {
-  getUsers: (skip = 0, limit = 20): Promise<UserProfile[]> =>
-    apiCall<UserProfile[]>(`/api/v1/users/?skip=${skip}&limit=${limit}`, { authenticated: true }),
+  // Dashboard
+  getDashboard: (): Promise<DashboardStats> =>
+    requestWithAuth<DashboardStats>('GET', '/admin/dashboard'),
 
-  updateUser: (userId: string, data: Partial<UserProfile>): Promise<UserProfile> =>
-    apiCall<UserProfile>(`/api/v1/users/${userId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-      authenticated: true,
+  // Movies
+  listMovies: (): Promise<Movie[]> =>
+    requestWithAuth<Movie[]>('GET', '/admin/movies'),
+
+  createMovie: (movie: MovieCreate): Promise<Movie> =>
+    requestWithAuth<Movie>('POST', '/admin/movies', movie),
+
+  updateMovie: (movieId: number, movie: MovieUpdate): Promise<Movie> =>
+    requestWithAuth<Movie>('PATCH', `/admin/movies/${movieId}`, movie),
+
+  deleteMovie: (movieId: number): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/admin/movies/${movieId}`),
+
+  // Showtimes
+  createShowtime: (showtime: ShowtimeCreate): Promise<Showtime> =>
+    requestWithAuth<Showtime>('POST', '/admin/showtimes', showtime),
+
+  updateShowtime: (showtimeId: number, showtime: ShowtimeUpdate): Promise<Showtime> =>
+    requestWithAuth<Showtime>('PATCH', `/admin/showtimes/${showtimeId}`, showtime),
+
+  deleteShowtime: (showtimeId: number): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
+
+  // Bookings
+  listBookings: (userId?: string, showtimeId?: number, status?: string, limit: number = 100, offset: number = 0) =>
+    requestWithAuth<{ bookings: BookingDetail[] }>('GET', `/admin/bookings?limit=${limit}&offset=${offset}`, undefined),
+
+  updateBooking: (bookingId: number, newShowtimeId?: number, newSeatIds?: number[], adminNote?: string) =>
+    requestWithAuth<BookingDetail>('PATCH', `/admin/bookings/${bookingId}`, {
+      new_showtime_id: newShowtimeId,
+      new_seat_ids: newSeatIds,
+      admin_note: adminNote,
     }),
 
-  deactivateUser: (userId: string) =>
-    apiCall(`/api/v1/users/${userId}`, { method: 'DELETE', authenticated: true }),
+  // Users
+  listUsers: (search?: string, skip: number = 0, limit: number = 100): Promise<AdminUserResponse[]> =>
+    requestWithAuth<AdminUserResponse[]>('GET', `/admin/users?search=${search || ''}&skip=${skip}&limit=${limit}`),
+
+  updateUser: (userId: string, user: AdminUserUpdate): Promise<AdminUserResponse> =>
+    requestWithAuth<AdminUserResponse>('PATCH', `/admin/users/${userId}`, user),
+
+  deleteUser: (userId: string): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/admin/users/${userId}`),
+
+  // Hero Carousel (CMS)
+  createHeroSlide: (slide: Omit<HeroSlide, 'id'>): Promise<HeroSlide> =>
+    requestWithAuth<HeroSlide>('POST', '/admin/hero-carousel', slide),
+
+  updateHeroSlide: (slideId: string, slide: Partial<HeroSlide>): Promise<HeroSlide> =>
+    requestWithAuth<HeroSlide>('PUT', `/admin/hero-carousel/${slideId}`, slide),
+
+  deleteHeroSlide: (slideId: string): Promise<{ status: string }> =>
+    requestWithAuth<{ status: string }>('DELETE', `/admin/hero-carousel/${slideId}`),
+
+  // Promo Events (CMS)
+  createPromotion: (promo: Omit<Promotion, 'id'>): Promise<Promotion> =>
+    requestWithAuth<Promotion>('POST', '/admin/promo-events', promo),
+
+  updatePromotion: (promoId: string, promo: Partial<Promotion>): Promise<Promotion> =>
+    requestWithAuth<Promotion>('PUT', `/admin/promo-events/${promoId}`, promo),
+
+  deletePromotion: (promoId: string): Promise<{ status: string }> =>
+    requestWithAuth<{ status: string }>('DELETE', `/admin/promo-events/${promoId}`),
 };
-export interface ProfileUpdateData {
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-  date_of_birth?: string;
+
+// ============================================================================
+// HELPER: Auth-required requests
+// ============================================================================
+
+function requestWithAuth<T>(method: string, path: string, body?: unknown): Promise<T> {
+  return request<T>(method, path, body, true);
 }
 
-export const usersApi = {
-  // Get current user profile
-  getCurrentUser: (): Promise<UserProfile> =>
-    apiCall(`/api/v1/users/me`, { authenticated: true }),
+// ============================================================================
+// ERROR HANDLING
+// ============================================================================
 
-  // Update current user profile
-  updateProfile: (data: ProfileUpdateData): Promise<UserProfile> =>
-    apiCall(`/api/v1/users/me`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-      authenticated: true,
-    }),
-
-  // Student verification upload (multipart/form-data)
-  submitStudentVerification: (formData: FormData) =>
-    fetch(`${API_BASE_URL}/api/v1/users/me/student-verification`, {
-      method: 'POST',
-      body: formData,
-      headers: {}, // Let browser set Content-Type
-      credentials: 'include',
-    }).then(res => res.json()),
-
-  // Get user's bookings (use bookingsApi.getUserBookings)
-};
-
-// Keep profilesApi as an alias for backward compatibility
-export const profilesApi = usersApi;
-
-export interface Review {
-  id: number
-  movie_id: number
-  booking_id: number
-  user_id: string
-  username: string
-  review_text: string
-  rating: number
-  like_count: number
-  created_at: string
-  updated_at: string
-}
-
-export interface PaginatedReviews {
-  total: number
-  items: Review[]
-}
-
-export interface ReviewCreate {
-  movie_id: number
-  booking_id?: number
-  review_text: string
-  rating: number
-}
-
-export const reviewsApi = {
-  getReviewsByMovie: (movieId: number, skip = 0, limit = 20): Promise<PaginatedReviews> =>
-    apiCall<PaginatedReviews>(`/api/v1/reviews/movie/${movieId}?skip=${skip}&limit=${limit}`, {
-      authenticated: false,
-    }),
-
-  createReview: (data: ReviewCreate): Promise<Review> =>
-    apiCall<Review>(`/api/v1/reviews`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      authenticated: true,
-    }),
-
-  updateReview: (reviewId: number, data: { review_text?: string; rating?: number }): Promise<Review> =>
-    apiCall<Review>(`/api/v1/reviews/${reviewId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-      authenticated: true,
-    }),
-
-  deleteReview: (reviewId: number): Promise<void> =>
-    apiCall<void>(`/api/v1/reviews/${reviewId}`, {
-      method: 'DELETE',
-      authenticated: true,
-    }),
-
-  likeReview: (reviewId: number): Promise<Review> =>
-    apiCall<Review>(`/api/v1/reviews/${reviewId}/like`, {
-      method: 'POST',
-      authenticated: true,
-    }),
-}
+export { APIError };
