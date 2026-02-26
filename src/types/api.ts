@@ -53,11 +53,18 @@ export interface PromoEvent {
 }
 
 export interface UserProfile {
-  user_id: number;
-  user_name: string;
+  id: string;
+  user_name?: string;
   email: string;
-  phone: string;
-  loyalty_points: number;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  date_of_birth?: string;
+  is_student: boolean;
+  student_id_verified: boolean;
+  membership_tier: string;
+  reward_points: number;
+  attendance_streak: number;
 }
 
 // Helper functions for formatting API data
