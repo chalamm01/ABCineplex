@@ -1,4 +1,4 @@
-import type { Movie, MoviesListResponse, MovieDetail, MovieShowtimesResponse, HeroCarouselItem, PromoEvent } from '@/types/api';
+import type { Movie, HeroCarouselItem, PromoEvent } from '@/types/api';
 import { createClient } from '@/lib/supabase/client';
 
 // Admin CRUD types
@@ -129,43 +129,41 @@ async function apiCall<T>(
 
 // Movies API
 export const moviesApi = {
-  // Get all movies with pagination and filters (API spec 5.3)
-  getMovies: ({ status = 'now_showing', page = 1, limit = 20 }: { status?: string; page?: number; limit?: number } = {}): Promise<MoviesListResponse> => {
-    const params = new URLSearchParams();
-    params.append('status', status);
-    params.append('page', page.toString());
-    params.append('limit', limit.toString());
-    return apiCall<MoviesListResponse>(`/api/v1/movies?${params.toString()}`);
-  },
+  // Admin: Get all movies (no status filter, admin endpoint)
+  getMovies: (skip = 0, limit = 100): Promise<Movie[]> =>
+    apiCall<Movie[]>(`/api/v1/admin/movies?skip=${skip}&limit=${limit}`),
 
-  // Get single movie by ID
-  getMovieById: (movieId: number): Promise<MovieDetail> =>
-    apiCall<MovieDetail>(`/api/v1/movies/${movieId}`),
+  // Get single movie by ID (admin endpoint)
+  getMovieById: (movieId: number): Promise<Movie> =>
+    apiCall<Movie>(`/api/v1/admin/movies/${movieId}`),
 
-  getShowtimesByMovie: (movieId: number, date?: string, days = 7): Promise<MovieShowtimesResponse> => {
+  // Get showtimes by movie (public endpoint, unchanged)
+  getShowtimesByMovie: (movieId: number, date?: string, days = 7): Promise<Movie[]> => {
     const params = new URLSearchParams();
     if (date) params.append('date', date);
     params.append('days', days.toString());
-    return apiCall<MovieShowtimesResponse>(`/api/v1/movies/${movieId}/showtimes?${params.toString()}`);
+    return apiCall<Movie[]>(`/api/v1/movies/${movieId}/showtimes?${params.toString()}`);
   },
 
   // Admin: Create movie
   createMovie: (movie: MovieCreate): Promise<Movie> =>
-    apiCall<Movie>(`/api/v1/movies`, {
+    apiCall<Movie>(`/api/v1/admin/movies`, {
       method: 'POST',
       body: JSON.stringify(movie),
+      authenticated: true,
     }),
 
   // Admin: Update movie
   updateMovie: (movieId: number, movie: Partial<MovieCreate>): Promise<Movie> =>
-    apiCall<Movie>(`/api/v1/movies/${movieId}`, {
-      method: 'PATCH',
+    apiCall<Movie>(`/api/v1/admin/movies/${movieId}`, {
+      method: 'PUT',
       body: JSON.stringify(movie),
+      authenticated: true,
     }),
 
   // Admin: Delete movie
   deleteMovie: (movieId: number): Promise<{ message: string }> =>
-    apiCall<{ message: string }>(`/api/v1/movies/${movieId}`, { method: 'DELETE' }),
+    apiCall<{ message: string }>(`/api/v1/admin/movies/${movieId}`, { method: 'DELETE', authenticated: true }),
 };
 
 // Showtimes API
@@ -352,19 +350,34 @@ export const paymentsApi = {
 
 // user API
 export interface UserProfile {
-  user_name: string;
-  reward_points: number;
   id: string;
   email: string;
+  user_name: string;
   first_name: string;
   last_name: string;
-  phone: string;
-  date_of_birth: string;
+  phone: string | null;
+  date_of_birth: string | null;
+  is_admin: boolean; // Added
   is_student: boolean;
-  membership_tier: 'none' | 'free' | 'paid';
+  student_id_verified: boolean;
+  membership_tier: 'free' | 'paid' | 'none';
+  reward_points: number;
   attendance_streak: number;
 }
+export const adminApi = {
+  getUsers: (skip = 0, limit = 20): Promise<UserProfile[]> =>
+    apiCall<UserProfile[]>(`/api/v1/users/?skip=${skip}&limit=${limit}`, { authenticated: true }),
 
+  updateUser: (userId: string, data: Partial<UserProfile>): Promise<UserProfile> =>
+    apiCall<UserProfile>(`/api/v1/users/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      authenticated: true,
+    }),
+
+  deactivateUser: (userId: string) =>
+    apiCall(`/api/v1/users/${userId}`, { method: 'DELETE', authenticated: true }),
+};
 export interface ProfileUpdateData {
   first_name?: string;
   last_name?: string;
