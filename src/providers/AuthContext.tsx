@@ -8,6 +8,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import { AuthContext } from '@/providers/AuthContextDef';
+import { usersApi, type UserProfile } from '@/services/api'; // Import your API service
 
 export interface AuthUser {
   id: string;
@@ -16,15 +17,6 @@ export interface AuthUser {
   full_name?: string;
   avatar_url?: string;
   is_admin?: boolean;
-}
-
-export interface AuthContextType {
-  user: AuthUser | null;
-  session: Session | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  signOut: () => Promise<void>;
-  refreshUser: () => Promise<void>;
 }
 
 function mapUser(user: User): AuthUser {
@@ -45,52 +37,42 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
   const supabase = useMemo(() => createClient(), []);
 
+  // Centralized logic to sync Supabase Auth with your Backend Database
+  const syncProfile = useCallback(async (supabaseUser: User) => {
+    const mappedUser = mapUser(supabaseUser);
+    try {
+      // ✅ Uses usersApi which correctly calls /api/v1/users/me
+      const dbUser: UserProfile = await usersApi.getCurrentUser();
+
+      // Merge backend-specific flags (like is_admin) into the auth state
+      // Assuming your backend UserProfile has an is_admin field
+      if ((dbUser as any).is_admin) {
+        mappedUser.is_admin = true;
+      }
+    } catch (error) {
+      // If the backend call fails, we still have the basic Supabase info
+      console.warn('Backend sync failed, using session metadata only.');
+    }
+    setUser(mappedUser);
+  }, []);
+
   const refreshUser = useCallback(async () => {
     const { data } = await supabase.auth.getUser();
     if (data.user) {
-      const mappedUser = mapUser(data.user);
-      // Fetch admin status from backend
-      if (data.user.email && session?.access_token) {
-        try {
-          const response = await fetch('http://localhost:8000/api/users/me', {
-            headers: { Authorization: `Bearer ${session.access_token}` }
-          });
-          const dbUser = await response.json();
-          if (dbUser.is_admin) {
-            mappedUser.is_admin = true;
-          }
-        } catch {
-          // Silently fail, use metadata admin status
-        }
-      }
-      setUser(mappedUser);
+      await syncProfile(data.user);
     } else {
       setUser(null);
     }
-  }, [supabase, session]);
+  }, [supabase, syncProfile]);
 
   useEffect(() => {
-    // Get initial session
+    // 1. Initial Session Check
     const initAuth = async () => {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
+
       if (currentSession?.user) {
-        const mappedUser = mapUser(currentSession.user);
-        // Fetch admin status from backend
-        if (currentSession.user.email && currentSession.access_token) {
-          try {
-            const response = await fetch('http://localhost:8000/api/users/me', {
-              headers: { Authorization: `Bearer ${currentSession.access_token}` }
-            });
-            const dbUser = await response.json();
-            if (dbUser.is_admin) {
-              mappedUser.is_admin = true;
-            }
-          } catch {
-            // Silently fail, use metadata admin status
-          }
-        }
-        setUser(mappedUser);
+        await syncProfile(currentSession.user);
       } else {
         setUser(null);
       }
@@ -99,32 +81,15 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
     initAuth();
 
-    // Listen for auth state changes (login, logout, token refresh)
+    // 2. Listen for Auth State Changes (Login, Logout, Token Refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
         setSession(newSession);
-
         if (newSession?.user) {
-          const mappedUser = mapUser(newSession.user);
-          // Fetch admin status from backend
-          if (newSession.user.email && newSession.access_token) {
-            try {
-              const response = await fetch('http://localhost:8000/api/users/me', {
-                headers: { Authorization: `Bearer ${newSession.access_token}` }
-              });
-              const dbUser = await response.json();
-              if (dbUser.is_admin) {
-                mappedUser.is_admin = true;
-              }
-            } catch {
-              // Silently fail, use metadata admin status
-            }
-          }
-          setUser(mappedUser);
+          await syncProfile(newSession.user);
         } else {
           setUser(null);
         }
-
         setLoading(false);
       }
     );
@@ -132,7 +97,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, syncProfile]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
@@ -151,5 +116,3 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 }
-
-// useAuth hook moved to @/context/useAuth.ts for react-refresh compatibility

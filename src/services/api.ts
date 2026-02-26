@@ -352,6 +352,8 @@ export const paymentsApi = {
 
 // user API
 export interface UserProfile {
+  user_name: string;
+  reward_points: number;
   id: string;
   email: string;
   first_name: string;
@@ -359,9 +361,7 @@ export interface UserProfile {
   phone: string;
   date_of_birth: string;
   is_student: boolean;
-  student_id_verified: boolean;
   membership_tier: 'none' | 'free' | 'paid';
-  reward_points: number;
   attendance_streak: number;
 }
 

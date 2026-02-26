@@ -221,7 +221,7 @@ export function SocialLogin({
               className="w-full"
               disabled={loading || !email || !password}
             >
-              {loading ? '<Spinner/> Signing in...' : 'Sign in with email'}
+              {loading ? (<><Spinner className="mr-2" /> Signing in...</>) : 'Sign in with email'}
             </Button>
           </form>
 
