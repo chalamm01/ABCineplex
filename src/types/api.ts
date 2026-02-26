@@ -52,6 +52,7 @@ export interface PromoEvent {
   updated_at: string;
 }
 
+
 // Helper functions for formatting API data
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);

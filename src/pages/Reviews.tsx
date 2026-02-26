@@ -23,11 +23,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Heart, Star, Pencil, Trash2, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
-import { reviewsApi, type Review } from "@/services/api"
-import { Spinner } from "@/components/ui/spinner"
-import { useAuth } from "@/hooks/useAuth"
+import { Textarea } from "@/components/ui/textarea"
+import type { Review } from "@/services/api"
 
-const MOVIE_ID = 10
+
 
 function RatingStars({ rating }: { rating: number }) {
   return (
@@ -73,131 +72,35 @@ function StarSelector({
   )
 }
 
-export default function ReviewPage() {
-  const { user, isAuthenticated } = useAuth()
 
+export default function Reviews() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  // Create / Edit dialog
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingReview, setEditingReview] = useState<Review | null>(null)
-  const [formRating, setFormRating] = useState(5)
-  const [formText, setFormText] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
+  const [newReview, setNewReview] = useState("")
+  const [newRating, setNewRating] = useState(5)
 
-  // Delete confirm dialog
-  const [deleteTarget, setDeleteTarget] = useState<Review | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const handleSubmit = () => {
+    if (!newReview.trim()) return
 
-  const fetchReviews = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await reviewsApi.getReviewsByMovie(MOVIE_ID)
-      setReviews(data.items)
-      setTotal(data.total)
-    } catch (err) {
-      console.error(err)
-      setError("Failed to load reviews.")
-    } finally {
-      setLoading(false)
+    const newItem: Review = {
+      id: Date.now(),
+      movie_id: 10,
+      booking_id: 0,
+      user_id: "local-user",
+      username: "You",
+      review_text: newReview,
+      rating: newRating,
+      like_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
-  }
 
-  useEffect(() => {
-    fetchReviews()
-  }, [])
+    setReviews(prev => [newItem, ...prev])
+    setTotal(prev => prev + 1)
 
-  function openCreateDialog() {
-    setEditingReview(null)
-    setFormRating(5)
-    setFormText("")
-    setFormError(null)
-    setDialogOpen(true)
-  }
-
-  function openEditDialog(review: Review) {
-    setEditingReview(review)
-    setFormRating(review.rating)
-    setFormText(review.review_text)
-    setFormError(null)
-    setDialogOpen(true)
-  }
-
-  async function handleSubmit() {
-    if (!formText.trim()) {
-      setFormError("Review text cannot be empty.")
-      return
-    }
-    setSubmitting(true)
-    setFormError(null)
-    try {
-      if (editingReview) {
-        await reviewsApi.updateReview(editingReview.id, {
-          review_text: formText,
-          rating: formRating,
-        })
-      } else {
-        await reviewsApi.createReview({
-          movie_id: MOVIE_ID,
-          review_text: formText,
-          rating: formRating,
-        })
-      }
-      setDialogOpen(false)
-      fetchReviews()
-    } catch (e) {
-      setFormError(String(e))
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function handleDelete() {
-    if (!deleteTarget) return
-    setDeleting(true)
-    try {
-      await reviewsApi.deleteReview(deleteTarget.id)
-      setDeleteTarget(null)
-      fetchReviews()
-    } catch (e) {
-      alert(String(e))
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  async function handleLike(review: Review) {
-    try {
-      const updated = await reviewsApi.likeReview(review.id)
-      setReviews((prev) => prev.map((r) => (r.id === review.id ? updated : r)))
-    } catch {
-      // silently fail
-    }
-  }
-
-  const submitLabel = editingReview ? "Save Changes" : "Submit Review"
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-destructive/10 text-destructive px-4 py-2 rounded">
-          {error}
-        </div>
-      </div>
-    )
+    setNewReview("")
+    setNewRating(5)
   }
 
   return (
@@ -217,6 +120,44 @@ export default function ReviewPage() {
 
         <Separator />
 
+        {/* Create Review Card */}
+        <Card>
+          <CardContent className="space-y-4 p-6">
+
+            <Textarea
+              className="min-h-[150px]"
+              placeholder="Write your review..."
+              value={newReview}
+              onChange={(e) => setNewReview(e.target.value)}
+            />
+
+            <div className="flex justify-between items-center">
+
+              {/* Star Selector */}
+              <div className="flex gap-2">
+                {[1,2,3,4,5].map((star) => (
+                  <Star
+                    key={star}
+                    onClick={() => setNewRating(star)}
+                    className={`w-5 h-5 cursor-pointer ${
+                      star <= newRating
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <Button onClick={handleSubmit}>
+                Post
+              </Button>
+
+            </div>
+
+          </CardContent>
+        </Card>
+
+        {/* Empty State */}
         {reviews.length === 0 && (
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
@@ -225,12 +166,11 @@ export default function ReviewPage() {
           </Card>
         )}
 
-        {/* Review Cards */}
+        {/* Review List */}
         {reviews.map((review) => (
           <Card key={review.id} className="hover:shadow-md transition">
             <CardHeader className="flex flex-row items-center justify-between">
 
-              {/* User Info */}
               <div className="flex items-center gap-4">
                 <Avatar>
                   <AvatarFallback>{review.username[0]}</AvatarFallback>
@@ -243,48 +183,21 @@ export default function ReviewPage() {
                 </div>
               </div>
 
-              {/* Rating Badge */}
               <Badge variant="secondary">
                 <RatingStars rating={review.rating} />
               </Badge>
             </CardHeader>
 
             <CardContent className="space-y-4">
-              <p className="text-sm">{review.review_text}</p>
+              <p className="text-sm">
+                {review.review_text}
+              </p>
 
               <div className="flex justify-between items-center">
-                {/* Like Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => handleLike(review)}
-                  disabled={!isAuthenticated}
-                >
+                <Button variant="ghost" size="sm" className="gap-2">
                   <Heart className="w-4 h-4" />
                   {review.like_count}
                 </Button>
-
-                {/* Edit / Delete — own reviews only */}
-                {user?.id === review.user_id && (
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditDialog(review)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setDeleteTarget(review)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
