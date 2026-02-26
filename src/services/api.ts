@@ -156,7 +156,7 @@ export const moviesApi = {
     const params = new URLSearchParams();
     if (date) params.append('date', date);
     params.append('days', days.toString());
-    return apiCall<MovieShowtimesResponse>(`/api/v1/movies/${movieId}/showtimes?${params.toString()}`);
+    return apiCall<MovieShowtimesResponse>(`/api/v1/showtimes/movie/${movieId}?${params.toString()}`);
   },
 
   // Admin: Create movie
