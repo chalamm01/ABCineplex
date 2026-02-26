@@ -7,7 +7,7 @@ interface HomepageMovieCardProps {
 }
 
 export function HomepageMovieCard({ movie }: HomepageMovieCardProps) {
-  const imageSrc = movie.banner_url || '';
+  const imageSrc = movie.banner_url ?? movie.poster_url ?? '';
 
   if (!imageSrc) return null;
 
@@ -32,7 +32,7 @@ export function HomepageMovieCard({ movie }: HomepageMovieCardProps) {
               <span className="text-xs tracking-widest text-neutral-400 uppercase">
                 Rating
               </span>
-              <span className="text-sm font-semibold text-black">{movie.content_rating}</span>
+              <span className="text-sm font-semibold text-black">{movie.content_rating ?? 'N/A'}</span>
             </div>
           </div>
 
@@ -43,7 +43,7 @@ export function HomepageMovieCard({ movie }: HomepageMovieCardProps) {
             </div>
             <div className="text-right">
               <p className="text-neutral-500 text-xs uppercase">Duration</p>
-              <p className="font-medium text-neutral-900">{formatDuration(movie.duration_minutes)}</p>
+              <p className="font-medium text-neutral-900">{formatDuration(movie.runtime_minutes)}</p>
             </div>
             <div>
               <p className="text-neutral-500 text-xs uppercase">Audio</p>

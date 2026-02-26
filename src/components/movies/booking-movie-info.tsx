@@ -1,10 +1,10 @@
 import { Play, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Movie } from '@/types/api';
+import type { MovieDetail } from '@/types/api';
 import { formatDuration, formatYear } from '@/types/api';
 
 interface BookingMovieInfoProps {
-  readonly movie: Movie;
+  readonly movie: MovieDetail;
 }
 
 export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
@@ -15,18 +15,15 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
           {movie.title} <span className='text-xl font-normal'>({formatYear(movie.release_date)})</span>
         </h1>
         <div className="flex items-center gap-2 flex-wrap">
-          {movie.genres?.map((genre) => (
-            <span
-              key={genre}
-              className="px-3 py-1.5 bg-neutral-100 text-black text-xs sm:text-sm font-medium rounded-full border border-neutral-300"
-            >
-              {genre}
+          {movie.genre && (
+            <span className="px-3 py-1.5 bg-neutral-100 text-black text-xs sm:text-sm font-medium rounded-full border border-neutral-300">
+              {movie.genre}
             </span>
-          ))}
-          {movie.imdb_score > 0 && (
+          )}
+          {movie.rating_tmdb != null && movie.rating_tmdb > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 rounded-full border border-yellow-300">
               <span className="text-xs font-bold text-yellow-700">IMDb</span>
-              <span className="text-black font-semibold text-sm">{movie.imdb_score}/10</span>
+              <span className="text-black font-semibold text-sm">{movie.rating_tmdb}/10</span>
             </div>
           )}
         </div>
@@ -35,11 +32,11 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
       <div className="grid grid-cols-3 gap-3 sm:gap-4">
         <div className="p-3 sm:p-4 bg-neutral-100 rounded-lg sm:rounded-xl border border-neutral-300">
           <div className="text-xs text-neutral-600 mb-1 uppercase tracking-wider font-semibold">Duration</div>
-          <div className="text-black font-semibold text-sm sm:text-base">{formatDuration(movie.duration_minutes)}</div>
+          <div className="text-black font-semibold text-sm sm:text-base">{formatDuration(movie.runtime_minutes)}</div>
         </div>
         <div className="p-3 sm:p-4 bg-neutral-100 rounded-lg sm:rounded-xl border border-neutral-300">
           <div className="text-xs text-neutral-600 mb-1 uppercase tracking-wider font-semibold">Rating</div>
-          <div className="text-black font-semibold text-sm sm:text-base">{movie.content_rating}</div>
+          <div className="text-black font-semibold text-sm sm:text-base">{movie.content_rating ?? 'N/A'}</div>
         </div>
       </div>
 
@@ -50,10 +47,10 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
         </div>
       )}
 
-      {movie.starring && movie.starring.length > 0 && (
+      {movie.cast_json && movie.cast_json.length > 0 && (
         <div>
           <h3 className="text-xs text-neutral-600 mb-2 uppercase tracking-wider font-semibold">Starring</h3>
-          <p className="text-black font-medium text-sm">{movie.starring.join(', ')}</p>
+          <p className="text-black font-medium text-sm">{movie.cast_json.join(', ')}</p>
         </div>
       )}
 

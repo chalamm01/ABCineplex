@@ -74,7 +74,7 @@ export default function MovieBooking() {
         const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
         const dates: BookingDate[] = Object.keys(byDate)
-          .sort()
+          .sort((a, b) => a.localeCompare(b))
           .map((dateStr) => {
             const d = new Date(dateStr);
             return {
@@ -104,7 +104,7 @@ export default function MovieBooking() {
     if (!dateKey) return;
 
     const cards = showtimesByDate[dateKey] ?? [];
-    const times = [...new Set(cards.map((c) => c.start_time ?? 'N/A'))].sort();
+    const times = [...new Set(cards.map((c) => c.start_time ?? 'N/A'))].sort((a, b) => a.localeCompare(b));
     setBookingTimes(times);
     setSelectedTime(times[0] ?? '');
   }, [selectedDate, bookingDates, showtimesByDate]);
