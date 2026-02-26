@@ -21,11 +21,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Heart, Star, Pencil, Trash2, Plus } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Heart, Star, Plus } from "lucide-react"
+import { useState } from "react"
+import { useAuth } from "@/hooks/useAuth"
 import type { Review } from "@/services/api"
-
-
 
 function RatingStars({ rating }: { rating: number }) {
   return (
@@ -71,35 +70,88 @@ function StarSelector({
   )
 }
 
-
 export default function Reviews() {
+  const { isAuthenticated } = useAuth()
+
   const [reviews, setReviews] = useState<Review[]>([])
   const [total, setTotal] = useState(0)
 
-  const [newReview, setNewReview] = useState("")
-  const [newRating, setNewRating] = useState(5)
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingReview, setEditingReview] = useState<Review | null>(null)
+  const [formRating, setFormRating] = useState(5)
+  const [formText, setFormText] = useState("")
+  const [formError, setFormError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = () => {
-    if (!newReview.trim()) return
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<Review | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
-    const newItem: Review = {
-      id: Date.now(),
-      movie_id: 10,
-      booking_id: 0,
-      user_id: "local-user",
-      username: "You",
-      review_text: newReview,
-      rating: newRating,
-      like_count: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+  const submitLabel = editingReview ? "Save Changes" : "Post Review"
+
+  function openCreateDialog() {
+    setEditingReview(null)
+    setFormRating(5)
+    setFormText("")
+    setFormError("")
+    setDialogOpen(true)
+  }
+
+  function openEditDialog(review: Review) {
+    setEditingReview(review)
+    setFormRating(review.rating)
+    setFormText(review.review_text)
+    setFormError("")
+    setDialogOpen(true)
+  }
+
+  function handleSubmit() {
+    if (!formText.trim()) {
+      setFormError("Review text cannot be empty.")
+      return
+    }
+    setSubmitting(true)
+
+    if (editingReview) {
+      setReviews(prev =>
+        prev.map(r =>
+          r.id === editingReview.id
+            ? { ...r, rating: formRating, review_text: formText, updated_at: new Date().toISOString() }
+            : r
+        )
+      )
+    } else {
+      const newItem: Review = {
+        id: Date.now(),
+        movie_id: 0,
+        booking_id: 0,
+        user_id: "local-user",
+        username: "You",
+        review_text: formText,
+        rating: formRating,
+        like_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      setReviews(prev => [newItem, ...prev])
+      setTotal(prev => prev + 1)
     }
 
-    setReviews(prev => [newItem, ...prev])
-    setTotal(prev => prev + 1)
+    setSubmitting(false)
+    setDialogOpen(false)
+    setFormText("")
+    setFormRating(5)
+    setFormError("")
+  }
 
-    setNewReview("")
-    setNewRating(5)
+  function handleDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setReviews(prev => prev.filter(r => r.id !== deleteTarget.id))
+    setTotal(prev => prev - 1)
+    setDeleteTarget(null)
+    setDeleting(false)
   }
 
   return (
@@ -119,43 +171,6 @@ export default function Reviews() {
 
         <Separator />
 
-        {/* Create Review Card */}
-        <Card>
-          <CardContent className="space-y-4 p-6">
-
-            <Textarea
-              className="min-h-[150px]"
-              placeholder="Write your review..."
-              value={newReview}
-              onChange={(e) => setNewReview(e.target.value)}
-            />
-
-            <div className="flex justify-between items-center">
-
-              {/* Star Selector */}
-              <div className="flex gap-2">
-                {[1,2,3,4,5].map((star) => (
-                  <Star
-                    key={star}
-                    onClick={() => setNewRating(star)}
-                    className={`w-5 h-5 cursor-pointer ${
-                      star <= newRating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-
-              <Button onClick={handleSubmit}>
-                Post
-              </Button>
-
-            </div>
-
-          </CardContent>
-        </Card>
-
         {/* Empty State */}
         {reviews.length === 0 && (
           <Card>
@@ -169,7 +184,6 @@ export default function Reviews() {
         {reviews.map((review) => (
           <Card key={review.id} className="hover:shadow-md transition">
             <CardHeader className="flex flex-row items-center justify-between">
-
               <div className="flex items-center gap-4">
                 <Avatar>
                   <AvatarFallback>{review.username[0]}</AvatarFallback>
@@ -181,22 +195,33 @@ export default function Reviews() {
                   </p>
                 </div>
               </div>
-
               <Badge variant="secondary">
                 <RatingStars rating={review.rating} />
               </Badge>
             </CardHeader>
 
             <CardContent className="space-y-4">
-              <p className="text-sm">
-                {review.review_text}
-              </p>
-
+              <p className="text-sm">{review.review_text}</p>
               <div className="flex justify-between items-center">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <Heart className="w-4 h-4" />
                   {review.like_count}
                 </Button>
+                {review.user_id === "local-user" && (
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(review)}>
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={() => setDeleteTarget(review)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -217,7 +242,6 @@ export default function Reviews() {
               <p className="text-sm font-medium mb-2">Rating</p>
               <StarSelector value={formRating} onChange={setFormRating} />
             </div>
-
             <div>
               <p className="text-sm font-medium mb-2">Your Review</p>
               <Textarea
@@ -227,7 +251,6 @@ export default function Reviews() {
                 rows={5}
               />
             </div>
-
             {formError && (
               <p className="text-sm text-destructive">{formError}</p>
             )}
@@ -253,8 +276,7 @@ export default function Reviews() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Review</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this review? This action cannot be
-              undone.
+              Are you sure you want to delete this review? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
