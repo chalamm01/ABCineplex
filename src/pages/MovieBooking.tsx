@@ -11,6 +11,17 @@ import type { MovieDetail, ShowtimeCard } from '@/types/api';
 import type { BookingDate } from '@/lib/constants/movies';
 import { Spinner } from '@/components/ui/spinner';
 
+// Re-declare types for showtime grouping
+interface ShowtimeInfo {
+  time: string;
+  showtimeId: number;
+  status: 'available' | 'selected' | 'sold_out' | 'past';
+}
+
+interface DateGroupShowtime extends BookingDate {
+  showtimes: ShowtimeInfo[];
+}
+
 type SeatStatus = 'available' | 'reserved' | 'selected' | 'locked';
 
 interface Seat {
@@ -42,6 +53,7 @@ export default function MovieBooking() {
 
   const [bookingDates, setBookingDates] = useState<BookingDate[]>([]);
   const [bookingTimes, setBookingTimes] = useState<string[]>([]);
+  const [summarizedShowtimes, setSummarizedShowtimes] = useState<DateGroupShowtime[]>([]);
 
   // Fetch movie details
   useEffect(() => {
@@ -85,11 +97,24 @@ export default function MovieBooking() {
             };
           });
 
+        // Build summarized showtimes with date-specific time slots
+        const grouped: DateGroupShowtime[] = dates.map((date) => {
+          const cards: ShowtimeCard[] = byDate[date.fullDate || ''] ?? [];
+          const showtimes = cards.map((card: ShowtimeCard) => ({
+            time: card.start_time ?? 'N/A',
+            showtimeId: card.showtime_id,
+            status: 'available' as const,
+          }));
+          return { ...date, showtimes };
+        });
+
         setBookingDates(dates);
+        setSummarizedShowtimes(grouped);
         setSelectedDate(0);
       } catch (error) {
         console.error('Failed to fetch showtimes:', error);
         setShowtimesByDate({});
+        setSummarizedShowtimes([]);
       }
     };
 
@@ -254,6 +279,7 @@ export default function MovieBooking() {
               selectedTime={selectedTime}
               onDateChange={setSelectedDate}
               onTimeChange={setSelectedTime}
+              summarizedShowtimes={summarizedShowtimes}
             />
 
             <div className="flex justify-center gap-8 items-start">
