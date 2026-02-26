@@ -11,16 +11,21 @@ import {
   UserPlus,
   Ticket,
 } from 'lucide-react';
+import { authApi } from '@/services/api';
+import type { UserProfile } from '@/types/api';
 
 interface HeaderProps {
   readonly activeNav?: string;
 }
 
 export function Header({ activeNav = 'home' }: HeaderProps) {
-  const { user, isAuthenticated, signOut } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  // Use initializer function to check auth on mount
+  const [isAuthenticated] = useState(() => !!localStorage.getItem('token'));
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
   const navItems = [
     { id: 'homepage', label: 'Home', icon: Home },
     { id: 'movies', label: 'Movies', icon: Film },
@@ -45,22 +50,38 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
 
   const handleSignIn = () => {
     navigate('/login');
+    setIsDropdownOpen(false);
   };
 
   const handleRegister = () => {
     navigate('/register');
+    setIsDropdownOpen(false);
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    setIsDropdownOpen(false);
-    navigate('/');
+    try {
+      // Call logout API
+      await authApi.logout();
+    } catch (err) {
+      console.error('Logout failed:', err);
+    } finally {
+      // Clear token from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Update state
+      setUser(null);
+      setIsDropdownOpen(false);
+
+      // Redirect to home
+      navigate('/');
+    }
   };
 
   const handleProfile = () => {
     setIsDropdownOpen(false);
     navigate('/profile');
-  }
+  };
 
   const handleMyBookings = () => {
     setIsDropdownOpen(false);
@@ -69,8 +90,11 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
 
   // Get user initials for avatar
   const getInitials = () => {
-    if (user?.full_name) {
-      return user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    if (user?.first_name && user?.last_name) {
+      return (user.first_name[0] + user.last_name[0]).toUpperCase();
+    }
+    if (user?.first_name) {
+      return user.first_name.slice(0, 2).toUpperCase();
     }
     if (user?.user_name) {
       return user.user_name.slice(0, 2).toUpperCase();
@@ -79,6 +103,17 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
       return user.email[0].toUpperCase();
     }
     return 'U';
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    if (user?.first_name) {
+      return user.first_name;
+    }
+    return user?.user_name || user?.email || 'User';
   };
 
   return (
@@ -136,7 +171,7 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
                     {/* User info header */}
                     <div className="px-4 py-3 border-b border-neutral-100">
                       <p className="text-sm font-semibold text-black truncate">
-                        {user?.full_name || user?.user_name || 'User'}
+                        {getDisplayName()}
                       </p>
                       <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
                     </div>
