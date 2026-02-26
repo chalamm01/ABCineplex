@@ -8,26 +8,11 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import { AuthContext } from '@/providers/AuthContextDef';
-import { usersApi, type UserProfile } from '@/services/api'; // Import your API service
+import { usersApi, type UserProfile } from '@/services/api';
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  user_name?: string;
-  full_name?: string;
+export interface AuthUser extends UserProfile {
+  // We extend UserProfile so the auth user has ALL the fields from your DB
   avatar_url?: string;
-  is_admin?: boolean;
-}
-
-function mapUser(user: User): AuthUser {
-  return {
-    id: user.id,
-    email: user.email ?? '',
-    user_name: user.user_metadata?.user_name,
-    full_name: user.user_metadata?.full_name,
-    avatar_url: user.user_metadata?.avatar_url,
-    is_admin: user.user_metadata?.is_admin ?? false,
-  };
 }
 
 export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
@@ -37,23 +22,25 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
   const supabase = useMemo(() => createClient(), []);
 
-  // Centralized logic to sync Supabase Auth with your Backend Database
+  // Centralized logic to fetch the REAL profile from public.users via your API
   const syncProfile = useCallback(async (supabaseUser: User) => {
-    const mappedUser = mapUser(supabaseUser);
     try {
-      // ✅ Uses usersApi which correctly calls /api/v1/users/me
-      const dbUser: UserProfile = await usersApi.getCurrentUser();
+      // 1. Fetch the source of truth from your database
+      const dbUser = await usersApi.getCurrentUser();
 
-      // Merge backend-specific flags (like is_admin) into the auth state
-      // Assuming your backend UserProfile has an is_admin field
-      if ((dbUser as any).is_admin) {
-        mappedUser.is_admin = true;
-      }
+      // 2. Merge Supabase Auth data (like avatar) with DB data (like is_admin)
+      const combinedUser: AuthUser = {
+        ...dbUser,
+        // Fallback to metadata for avatar if not in your DB
+        avatar_url: supabaseUser.user_metadata?.avatar_url,
+      };
+
+      setUser(combinedUser);
     } catch (error) {
-      // If the backend call fails, we still have the basic Supabase info
-      console.warn('Backend sync failed, using session metadata only.');
+      console.error('Backend sync failed. User might not exist in public.users yet.');
+      // Optional: Handle case where Supabase user exists but DB record doesn't
+      setUser(null);
     }
-    setUser(mappedUser);
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -66,7 +53,6 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, [supabase, syncProfile]);
 
   useEffect(() => {
-    // 1. Initial Session Check
     const initAuth = async () => {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
@@ -81,15 +67,17 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
     initAuth();
 
-    // 2. Listen for Auth State Changes (Login, Logout, Token Refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      async (event, newSession) => {
         setSession(newSession);
-        if (newSession?.user) {
+
+        // Only trigger sync on specific events to avoid redundant API calls
+        if (newSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
           await syncProfile(newSession.user);
-        } else {
+        } else if (event === 'SIGNED_OUT') {
           setUser(null);
         }
+
         setLoading(false);
       }
     );

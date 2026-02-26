@@ -820,6 +820,7 @@ export default function Admin() {
 
   useEffect(() => {
     if (!loading && (!user || !user.is_admin)) {
+      console.log(user)
       navigate('/');
     }
   }, [user, loading, navigate]);
