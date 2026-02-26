@@ -400,11 +400,13 @@ export const usersApi = {
 
 
   // Update user (alias for consistency)
-  updateProfile: (userId: string, data: ProfileUpdateData): Promise<UserProfile> =>
-    apiCall<UserProfile>(`/api/users/${userId}`, {
-      method: 'PUT',
+  updateProfile: async (userId: string, data: ProfileUpdateData): Promise<UserProfile> => {
+    const res = await apiCall<any>(`/api/users/${userId}`, {
+      method: 'PATCH',
       body: JSON.stringify(data),
-    }),
+    });
+    return mapUserProfile(res);
+  },
 
   // Get all users (admin only)
   getAllUsers: (skip = 0, limit = 20): Promise<UserProfile[]> =>
