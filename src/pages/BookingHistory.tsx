@@ -4,6 +4,7 @@ import { bookingsApi } from "@/services/api";
 import { Spinner } from "@/components/ui/spinner";
 import type { BookingSummary } from "@/types/api";
 
+export default function BookingHistoryPage() {
   const [bookings, setBookings] = useState<BookingSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +19,7 @@ import type { BookingSummary } from "@/types/api";
       .finally(() => setLoading(false));
   }, []);
 
-  return (
+  return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <main className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
         <h1 className="mb-8 border-b-2 border-black pb-2 text-3xl font-extrabold uppercase tracking-tight text-black">
