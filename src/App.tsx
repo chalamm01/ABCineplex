@@ -13,6 +13,7 @@ import Home from "./pages/Home.tsx";
 import Admin from "./pages/Admin.tsx";
 import Profile from "./pages/Profile.tsx";
 import Reviews from "./pages/Reviews.tsx";
+import Community from "./pages/Community.tsx";
 
 import BookingHistoryPage from "./pages/BookingHistory";
 import SetPassword from "./pages/SetPassword.tsx";
@@ -37,6 +38,7 @@ function App() {
           <Route path="/profile" element={<Profile/>} />
           <Route path="/reviews" element={<Reviews/>} />
           <Route path="/bookings" element={<BookingHistoryPage />} />
+          <Route path="/community" element={<Community/>}/>
           <Route path="/setup-password" element={<SetPassword />} />
         </Routes>
       </div>
