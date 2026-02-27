@@ -3,7 +3,7 @@ import { TabNavigation } from '@/components/movies/tab-navigation';
 import { MoviesGrid } from '@/components/movies/movies-grid';
 import { movieApi } from '@/services/api';
 import type { Movie } from '@/types/api';
-import { Spinner } from '@/components/ui/spinner'
+import { Spinner } from '@/components/ui/spinner';
 
 function Movies() {
   const [activeTab, setActiveTab] = useState<'now' | 'soon'>('now');
@@ -17,16 +17,18 @@ function Movies() {
         setLoading(true);
         setError(null);
 
-        // Map tab to correct status param
-        const status = activeTab === 'now' ? 'now_showing' : 'upcoming';
-        const page = 1;
-        const limit = 20;
+        // Backend expects 'now_showing' or 'upcoming'
+        const statusParam = activeTab === 'now' ? 'now_showing' : 'upcoming';
 
-        // Fetch movies from API
-        const response = await movieApi.getMovies(page, limit, status);
-        // Transform API data to match frontend Movie type
-        const movies = (response.movies || [])
-        setMovies(movies);
+        const response = await movieApi.getMovies(1, 40, statusParam);
+
+        // Ensure we handle both cases:
+        // 1. API filtered correctly (use as is)
+        // 2. API returned all (filter manually for safety)
+        const allFetched = response?.movies || [];
+        const filtered = allFetched.filter((m: Movie) => m.release_status === statusParam);
+
+        setMovies(filtered);
       } catch (err) {
         console.error('Failed to fetch movies:', err);
         setError('Failed to load movies. Please try again later.');
@@ -41,28 +43,22 @@ function Movies() {
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
+      <div className="min-h-screen px-4 md:px-32 py-6 bg-white/70 backdrop-blur-md">
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {loading && (
+        {loading ? (
           <div className="flex justify-center items-center py-20">
-            <Spinner/>
+            <Spinner />
           </div>
-        )}
-
-        {error && (
-          <div className="flex justify-center items-center py-20">
-            <p className="text-lg text-red-600">{error}</p>
+        ) : error ? (
+          <div className="flex justify-center items-center py-20 text-red-600 font-medium">
+            {error}
           </div>
-        )}
-
-        {!loading && !error && movies.length > 0 && (
+        ) : movies.length > 0 ? (
           <MoviesGrid movies={movies} />
-        )}
-
-        {!loading && !error && movies.length === 0 && (
+        ) : (
           <div className="flex justify-center items-center py-20">
-            <p className="text-lg text-neutral-600">No movies available</p>
+            <p className="text-lg text-neutral-500 italic">No movies {activeTab === 'now' ? 'currently showing' : 'coming soon'}</p>
           </div>
         )}
       </div>

@@ -93,6 +93,7 @@ export interface BookingSummary {
   total_amount?: number;
   created_at?: string;
   movie_title?: string;
+  poster_url?: string;
   screen_name?: string;
   showtime_start?: string;
   seats?: string[];
@@ -148,7 +149,6 @@ export interface Movie {
   imdb_score?: number;
   poster_url?: string;
   banner_url?: string;
-  status: string;
   release_status?: string;
   release_date?: string;
   director?: string;
@@ -224,7 +224,7 @@ export interface QualityScoreResponse {
 export interface Showtime {
   id: number;
   movie_id: number;
-  screen_id: number;
+  theatre_id: number;
   start_time?: string;
   base_price: number;
   language?: string;
@@ -303,7 +303,7 @@ export interface ReserveSeatRequest {
 
 export interface ReserveSeatResponse {
   success: boolean;
-  booking_id?: number;
+  booking_id?: string;        // UUID
   payment_deadline?: string;
   total_amount?: number;
   error?: string;
@@ -311,17 +311,17 @@ export interface ReserveSeatResponse {
 }
 
 export interface ConfirmPaymentRequest {
-  booking_id: number;
+  booking_id: string;         // UUID
   payment_intent_id?: string;
 }
 
 export interface ConfirmPaymentResponse {
   success: boolean;
   message: string;
-  booking_id?: number;
+  booking_id?: string;        // UUID
   tickets?: Array<{
     ticket_id: number;
-    booking_id: number;
+    booking_id: string;       // UUID
     seat_id: number;
     row_label: string;
     seat_number: number;
@@ -330,7 +330,7 @@ export interface ConfirmPaymentResponse {
 }
 
 export interface BookingDetail {
-  booking_id: number;
+  booking_id: string;         // UUID
   user_id: string;
   booking_status: string;
   total_amount: number;
@@ -345,7 +345,7 @@ export interface BookingDetail {
   qr_code_data?: string;
   tickets?: Array<{
     ticket_id: number;
-    booking_id: number;
+    booking_id: string;       // UUID
     seat_id: number;
     row_label: string;
     seat_number: number;
@@ -353,7 +353,7 @@ export interface BookingDetail {
 }
 
 export interface CancelBookingRequest {
-  booking_id: number;
+  booking_id: string;         // UUID
 }
 
 export interface CancelBookingResponse {
@@ -494,6 +494,7 @@ export interface MovieCreate {
   title: string;
   release_date: string;
   imdb_score?: number;
+  runtime_minutes: number;
   duration_minutes: number;
   content_rating?: string;
   director?: string;
@@ -524,13 +525,13 @@ export interface MovieUpdate {
   audio_languages?: string[];
   subtitle_languages?: string[];
   tag_event?: string;
-  release_status?: string;
+  status?: string;
   genre?: string;
 }
 
 export interface ShowtimeCreate {
   movie_id: number;
-  screen_id: number;
+  theatre_id: number;
   start_time: string;
   base_price: number;
   language?: string;
@@ -542,7 +543,7 @@ export interface ShowtimeCreate {
 
 export interface ShowtimeUpdate {
   movie_id?: number;
-  screen_id?: number;
+  theatre_id?: number;
   start_time?: string;
   base_price?: number;
   language?: string;

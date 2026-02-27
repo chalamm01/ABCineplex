@@ -24,21 +24,21 @@ function App() {
       <Navbar />
       <div className="flex-1">
         <Routes>
-          <Route path="/" element={<Home/>}/>
-          <Route path="/homepage" element={<Home/>}/>
-          <Route path="/login" element={<Login/>} />
-          <Route path="/register" element={<Register/>} />
-          <Route path="/auth/callback" element={<AuthCallback/>} />
-          <Route path="/snacks" element={<Snacks/>} />
-          <Route path="/cart" element={<Cart/>} />
-          <Route path="/movies" element={<Movies/>} />
-          <Route path="/movie/:id" element={<MovieBooking/>} />
-          <Route path="/payment" element={<Payment/>} />
-          <Route path="/admin" element={<Admin/>} />
-          <Route path="/profile" element={<Profile/>} />
-          <Route path="/reviews" element={<Reviews/>} />
+          <Route path="/" element={<Home />} />
+          <Route path="/homepage" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/snacks" element={<Snacks />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/movies" element={<Movies />} />
+          <Route path="/movie/:id" element={<MovieBooking />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/reviews" element={<Reviews />} />
           <Route path="/bookings" element={<BookingHistoryPage />} />
-          <Route path="/community" element={<Community/>}/>
+          <Route path="/community" element={<Community />} />
           <Route path="/setup-password" element={<SetPassword />} />
         </Routes>
       </div>

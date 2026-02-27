@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { moviesApi, showtimesApi, type ShowtimeCreate, type Showtime } from '@/services/api';
+import { adminApi, showtimesApi, type ShowtimeCreate, type Showtime } from '@/services/api';
 import type { Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -7,7 +7,7 @@ import {
   inputCls, btnEdit, btnDanger,
 } from './AdminShared';
 
-const emptyShowtime: ShowtimeCreate = { movie_id: 0, screen_id: 0, start_time: '', base_price: 0 };
+const emptyShowtime: ShowtimeCreate = { movie_id: 0, theatre_id: 0, start_time: '', base_price: 0 };
 
 type ModalMode = 'add' | 'edit' | null;
 
@@ -22,7 +22,7 @@ export default function ShowtimesSection() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    moviesApi.getMovies(1, 100).then(setMovies).catch(() => {});
+    adminApi.listMovies().then(setMovies).catch(() => {});
   }, []);
 
   async function loadShowtimes(movieId: number) {
@@ -49,11 +49,11 @@ export default function ShowtimesSection() {
   }
 
   function openEdit(s: Showtime) {
-    const dt = new Date(s.start_time);
+    const dt = new Date(s.start_time ?? '');
     const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16);
-    setForm({ movie_id: s.movie_id, screen_id: s.screen_id, start_time: local, base_price: s.base_price });
+    setForm({ movie_id: s.movie_id, theatre_id: s.theatre_id, start_time: local, base_price: s.base_price });
     setEditId(s.id);
     setModal('edit');
     setError('');
@@ -118,7 +118,7 @@ export default function ShowtimesSection() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <TableHead cols={['ID', 'Screen', 'Start Time', 'Base Price (฿)', 'Actions']} />
+              <TableHead cols={['ID', 'Theatre', 'Start Time', 'Base Price (฿)', 'Actions']} />
               <tbody>
                 {showtimes.length === 0 && (
                   <tr>
@@ -130,8 +130,8 @@ export default function ShowtimesSection() {
                 {showtimes.map(s => (
                   <tr key={s.id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
                     <td className="px-3 py-2 text-zinc-400">{s.id}</td>
-                    <td className="px-3 py-2 text-zinc-300">Screen {s.screen_id}</td>
-                    <td className="px-3 py-2 text-white">{new Date(s.start_time).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-zinc-300">Theatre {s.theatre_id}</td>
+                    <td className="px-3 py-2 text-white">{s.start_time ? new Date(s.start_time).toLocaleString() : '—'}</td>
                     <td className="px-3 py-2 text-zinc-300">฿{s.base_price}</td>
                     <td className="px-3 py-2">
                       <div className="flex gap-1">
@@ -156,8 +156,8 @@ export default function ShowtimesSection() {
                 {movies.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
               </select>
             </Field>
-            <Field label="Screen ID">
-              <input className={inputCls} type="number" min="1" value={form.screen_id} onChange={e => f('screen_id', +e.target.value)} />
+            <Field label="Theatre ID">
+              <input className={inputCls} type="number" min="1" value={form.theatre_id} onChange={e => f('theatre_id', +e.target.value)} />
             </Field>
             <Field label="Start Time">
               <input className={inputCls} type="datetime-local" value={form.start_time} onChange={e => f('start_time', e.target.value)} />
