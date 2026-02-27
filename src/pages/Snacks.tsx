@@ -16,7 +16,7 @@ function Snacks() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      productsApi.getProducts(0, 100, true),
+      productsApi.getProducts(0, 100),
       productsApi.getCategories(),
     ])
       .then(([prods, cats]) => {

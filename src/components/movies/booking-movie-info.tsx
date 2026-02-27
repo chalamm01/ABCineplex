@@ -2,12 +2,14 @@ import { Play, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Movie } from '@/types/api';
 import { formatDuration, formatYear } from '@/types/api';
-
+import { Badge } from "@/components/ui/badge";
 interface BookingMovieInfoProps {
   readonly movie: Movie;
 }
 
 export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
+  const firstGenre = movie.genre;
+  console.log(movie);
   return (
     <div className="space-y-6">
       <div>
@@ -15,31 +17,42 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
           {movie.title} <span className='text-xl font-normal'>({formatYear(movie.release_date)})</span>
         </h1>
         <div className="flex items-center gap-2 flex-wrap">
-          {movie.genres?.map((genre) => (
-            <span
-              key={genre}
-              className="px-3 py-1.5 bg-neutral-100 text-black text-xs sm:text-sm font-medium rounded-full border border-neutral-300"
-            >
-              {genre}
-            </span>
-          ))}
-          {movie.imdb_score > 0 && (
+          {firstGenre && (
+            <Badge>
+              {firstGenre}
+            </Badge>
+          )}
+          {movie.imdb_score != null && movie.imdb_score > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 rounded-full border border-yellow-300">
               <span className="text-xs font-bold text-yellow-700">IMDb</span>
               <span className="text-black font-semibold text-sm">{movie.imdb_score}/10</span>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
-        <div className="p-3 sm:p-4 bg-neutral-100 rounded-lg sm:rounded-xl border border-neutral-300">
-          <div className="text-xs text-neutral-600 mb-1 uppercase tracking-wider font-semibold">Duration</div>
-          <div className="text-black font-semibold text-sm sm:text-base">{formatDuration(movie.duration_minutes)}</div>
-        </div>
-        <div className="p-3 sm:p-4 bg-neutral-100 rounded-lg sm:rounded-xl border border-neutral-300">
-          <div className="text-xs text-neutral-600 mb-1 uppercase tracking-wider font-semibold">Rating</div>
-          <div className="text-black font-semibold text-sm sm:text-base">{movie.content_rating}</div>
+          {movie.audio_languages && movie.audio_languages.length > 0 && (
+            <Badge variant="secondary">
+              🔊 {movie.audio_languages.join(', ')}
+            </Badge>
+          )}
+          {movie.subtitle_languages && movie.subtitle_languages.length > 0 && (
+            <Badge variant="secondary">
+              📝 {movie.subtitle_languages.join(', ')}
+            </Badge>
+          )}
+          {movie.credits_duration_minutes != null && movie.credits_duration_minutes > 0 && (
+            <Badge variant="outline">
+              Credits: {movie.credits_duration_minutes}m
+            </Badge>
+          )}
+          {movie.runtime_minutes && (
+            <Badge variant="secondary">
+              ⏱️ {formatDuration(movie.runtime_minutes)}
+            </Badge>
+          )}
+          {movie.content_rating && (
+            <Badge variant="secondary">
+              🎬 {movie.content_rating}
+            </Badge>
+          )}
         </div>
       </div>
 

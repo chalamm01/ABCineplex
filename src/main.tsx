@@ -4,8 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { CartProvider } from './providers/CartContext.tsx'
-import { AuthProvider } from './providers/AuthContext.tsx'
-
+import { AuthProvider } from './context/AuthContext.tsx'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
@@ -14,6 +13,6 @@ createRoot(document.getElementById('root')!).render(
           <App />
         </BrowserRouter>
       </CartProvider>
-    </AuthProvider>
+      </AuthProvider>
   </StrictMode>,
 )

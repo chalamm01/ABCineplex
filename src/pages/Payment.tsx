@@ -11,7 +11,7 @@ import {
   type BookingDetails,
 } from '@/components/payment';
 import { useCountdown } from '@/hooks/useCountdown';
-import { bookingsApi, moviesApi, showtimesApi } from '@/services/api';
+import { bookingsApi, moviesApi, showtimesApi, paymentsApi } from '@/services/api';
 import { Zap, CheckCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner'
 
@@ -74,7 +74,7 @@ export default function Payment() {
           try {
             const movie = await moviesApi.getMovieById(Number(movieId));
             movieTitle = movie.title;
-            posterUrl = movie.poster_url;
+            posterUrl = movie.poster_url ?? '';
           } catch {
             console.error('Failed to fetch movie');
           }
@@ -83,7 +83,7 @@ export default function Payment() {
         if (showtimeId) {
           try {
             const showtime = await showtimesApi.getShowtime(Number(showtimeId));
-            const startDate = new Date(showtime.start_time);
+            const startDate = new Date(showtime.start_time || new Date());
             showTime = startDate.toLocaleString('en-GB', {
               day: '2-digit',
               month: '2-digit',
@@ -162,21 +162,26 @@ export default function Payment() {
     try {
       setIsProcessing(true);
 
+      // Map UI payment method to backend mock method (§5.7)
+      const mockMethod = paymentMethod === 'card' ? 'mock_card' : 'mock_qr';
+
+      // Step 1: Initiate mock payment
+      const initiated = await paymentsApi.initiate({
+        booking_id: bookingId,
+        payment_method: mockMethod,
+        mock_should_succeed: true,
+      });
+
       // Simulate a short processing delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Confirm payment via API
-      const result = await bookingsApi.confirmPayment({
-        booking_id: Number(bookingId),
-        payment_intent_id: paymentMethod === 'card'
-          ? `card_${Date.now()}_${cardNumber.replaceAll(/\s/g, '').slice(-4)}`
-          : `promptpay_${Date.now()}`,
-      });
+      // Step 2: Confirm mock payment
+      const result = await paymentsApi.confirm(initiated.payment_id, true);
 
-      if (result.success) {
+      if (result.status === 'success') {
         setPaymentSuccess(true);
       } else {
-        alert(`Payment failed: ${result.message}`);
+        alert(`Payment failed: ${result.message || 'Unknown error'}`);
       }
     } catch (err) {
       console.error('Payment error:', err);
@@ -196,7 +201,7 @@ export default function Payment() {
     if (!shouldCancel) return;
 
     try {
-      await bookingsApi.cancelBooking(Number(bookingId));
+      if (bookingId) await bookingsApi.cancelBooking(Number(bookingId));
       navigate('/');
     } catch (err) {
       console.error('Cancel error:', err);

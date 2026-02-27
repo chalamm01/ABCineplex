@@ -3,22 +3,21 @@ import { HeroCarousel } from '@/components/homepage/hero-carousel';
 import { MoviesSection } from '@/components/homepage/movies-section';
 import { PromotionalSection } from '@/components/homepage/promotional-section';
 import { moviesApi, publicApi } from '@/services/api';
-import { transformCarouselItem } from '@/types/api';
-import type { HeroCarouselItem, Movie } from '@/types/api';
-import { Spinner } from '@/components/ui/spinner'
-interface PromoEvent {
-  id: string | number;
-  image_url: string;
+import type { HeroSlide, Movie } from '@/types/api';
+import { Spinner } from '@/components/ui/spinner';
+
+interface PromotionalEvent {
+  id: string;
+  image: string;
   title: string;
-  promo_type: string;
-  is_active: boolean;
+  category: 'news' | 'promo';
 }
 
 export default function Home() {
-  const [slides, setSlides] = useState<HeroCarouselItem[]>([]);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [nowScreeningData, setNowScreeningData] = useState<Movie[]>([]);
-  const [comingSoonData, setComingSoonData] = useState<Movie[]>([]);
-  const [promotions, setPromotions] = useState<PromoEvent[]>([]);
+  const [upcomingData, setUpcomingData] = useState<Movie[]>([]);
+  const [promotions, setPromotions] = useState<PromotionalEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,29 +27,30 @@ export default function Home() {
         setLoading(true);
         setError(null);
 
-        const [heroData, nowScreening, comingSoon, promoData] = await Promise.all([
+        const page = 1;
+        const limit = 10;
+        const [heroData, nowScreeningRes, upcomingRes, promoData] = await Promise.all([
           publicApi.getHeroCarousel(),
-          moviesApi.getMovies(0, 10, 'now_showing'),
-          moviesApi.getMovies(0, 10, 'coming_soon'),
+          moviesApi.getMoviesPublic(page, limit, 'now_showing'),
+          moviesApi.getMoviesPublic(page, limit, 'upcoming'),
           publicApi.getPromoEvents(),
         ]);
 
-        const transformedSlides = heroData
-          .filter((item) => item.is_active)
-          .sort((a, b) => a.display_order - b.display_order)
-          .map(transformCarouselItem);
+        const activeSlides = heroData
+          .filter((item: HeroSlide) => item.is_active)
+          .sort((a: HeroSlide, b: HeroSlide) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
-        setSlides(transformedSlides);
-        setNowScreeningData(nowScreening);
-        setComingSoonData(comingSoon);
+        setSlides(activeSlides);
+        setNowScreeningData(nowScreeningRes.movies);
+        setUpcomingData(upcomingRes.movies);
 
         const activePromotions = promoData
-          .filter((item: PromoEvent) => item.is_active)
-          .map((item: PromoEvent) => ({
+          .filter((item: typeof promoData[0]) => item.is_active)
+          .map((item: typeof promoData[0]) => ({
             id: item.id,
-            image: item.image_url,
-            title: item.title,
-            category: item.promo_type === 'news' ? 'news' : 'promo',
+           image: item.image_url ?? '',
+            title: item.title ?? '',
+            category: item.promo_type === 'news' ? ('news' as const) : ('promo' as const),
           }));
         setPromotions(activePromotions);
       } catch (err) {
@@ -72,9 +72,7 @@ export default function Home() {
           <Spinner/>
       )}
       {error && (
-
           <p className="text-lg text-red-500">{error}</p>
-
       )}
       </div>
       {!loading && !error && (
@@ -83,7 +81,7 @@ export default function Home() {
 
           <MoviesSection
             nowScreening={nowScreeningData}
-            comingSoon={comingSoonData}
+            comingSoon={upcomingData}
           />
 
           <PromotionalSection events={promotions} />

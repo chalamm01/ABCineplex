@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Movie } from '@/types/api';
-import { formatDuration, formatYear, formatLanguages } from '@/types/api';
+import { formatDuration } from '@/types/api';
 
 interface MovieCardProps {
   readonly movie: Movie;
@@ -8,11 +8,10 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, onClick }: MovieCardProps) {
-  if (!movie.poster_url) {
-    return null;
-  }
+console.log(movie);
 
   return (
+
     <Link to={`/movie/${movie.id}`}>
       <div
         className="group cursor-pointer"
@@ -40,26 +39,26 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
         <div className="space-y-2 sm:space-y-3">
           {/* Title */}
           <h3 className="text-sm sm:text-base font-bold tracking-wide leading-tight line-clamp-2">
-            {movie.title}
+            {movie.title.toUpperCase()}
           </h3>
 
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
             <div>
-              <p className="text-neutral-500 uppercase font-semibold mb-0.5">Year</p>
-              <p className="font-medium text-neutral-900">{formatYear(movie.release_date)}</p>
+              <p className="text-neutral-500 uppercase font-semibold mb-0.5">Status</p>
+              <p className="font-medium text-neutral-900">{movie.status?.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase()) ?? 'N/A'}</p>
             </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Duration</p>
-              <p className="font-medium text-neutral-900">{formatDuration(movie.duration_minutes)}</p>
+              <p className="font-medium text-neutral-900">{formatDuration(movie.runtime_minutes)}</p>
             </div>
             <div>
-              <p className="text-neutral-500 uppercase font-semibold mb-0.5">Audio</p>
-              <p className="font-medium text-neutral-900">{formatLanguages(movie.audio_languages)}</p>
+              <p className="text-neutral-500 uppercase font-semibold mb-0.5">Genre</p>
+              <p className="font-medium text-neutral-900">{movie.genre || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-neutral-500 uppercase font-semibold mb-0.5">Subtitle</p>
-              <p className="font-medium text-neutral-900">{formatLanguages(movie.subtitle_languages)}</p>
+              <p className="text-neutral-500 uppercase font-semibold mb-0.5">Rating</p>
+              <p className="font-medium text-neutral-900">{movie.content_rating || 'N/A'}</p>
             </div>
           </div>
         </div>

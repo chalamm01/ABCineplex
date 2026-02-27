@@ -4,56 +4,48 @@ import { BookingMovieInfo } from '@/components/movies/booking-movie-info';
 import { DateTimeSelection } from '@/components/movies/date-time-selection';
 import { SeatMap } from '@/components/movies/seat-map';
 import { TicketSummary } from '@/components/movies/ticket-summary';
-import { moviesApi, showtimesApi, bookingsApi } from '@/services/api';
-import { useAuth } from '@/hooks/useAuth';
-import type { Movie } from '@/types/api';
+import { moviesApi, showtimesApi } from '@/services/api';
+import type { APISeat } from '@/services/api';
+import type { MovieDetail, ShowtimeCard } from '@/types/api';
+import { Spinner } from '@/components/ui/spinner';
+
+// Use types from api.ts
+import type { SeatInMap, DateGroupShowtime as ApiDateGroupShowtime } from '@/types/api';
+import type { Seat as ApiSeat } from '@/types/api';
 import type { BookingDate } from '@/lib/constants/movies';
-import { Spinner } from '@/components/ui/spinner'
 
-
-type SeatStatus = 'available' | 'reserved' | 'selected' | 'locked';
-
-interface Seat {
+type Seat = {
   id: number;
   row: string;
   col: number;
-  status: SeatStatus;
+  status: 'available' | 'reserved' | 'selected' | 'locked';
   price?: number;
-}
+};
 
-interface Showtime {
-  id: number;
-  movie_id: number;
-  screen_id: number;
-  start_time: string;
-  base_price: number;
-  created_at: string;
-}
+type DateGroupShowtime = ApiDateGroupShowtime & { showtimes: { time: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past' }[] };
 
 export default function MovieBooking() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const isAuthenticated = !!localStorage.getItem('token');
   const movieId = Number(id);
 
-  // Movie state
-  const [movie, setMovie] = useState<Movie | null>(null);
+  const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [movieLoading, setMovieLoading] = useState(true);
   const [movieError, setMovieError] = useState<string | null>(null);
 
-  // Showtimes state
-  const [showtimes, setShowtimes] = useState<Showtime[]>([]);
+  // showtimes_by_date: { "YYYY-MM-DD": ShowtimeCard[] }
+  const [showtimesByDate, setShowtimesByDate] = useState<Record<string, ShowtimeCard[]>>({});
 
-  // Booking state
   const [selectedDate, setSelectedDate] = useState(0);
   const [selectedTime, setSelectedTime] = useState('');
   const [seats, setSeats] = useState<Seat[]>([]);
   const [isBooking, setIsBooking] = useState(false);
   const [currentShowtimeId, setCurrentShowtimeId] = useState<number | null>(null);
 
-  // Derived state for booking dates/times from showtimes
   const [bookingDates, setBookingDates] = useState<BookingDate[]>([]);
   const [bookingTimes, setBookingTimes] = useState<string[]>([]);
+  const [summarizedShowtimes, setSummarizedShowtimes] = useState<DateGroupShowtime[]>([]);
 
   // Fetch movie details
   useEffect(() => {
@@ -62,6 +54,7 @@ export default function MovieBooking() {
         setMovieLoading(true);
         setMovieError(null);
         const data = await moviesApi.getMovieById(movieId);
+
         setMovie(data);
       } catch (error) {
         console.error('Failed to fetch movie:', error);
@@ -71,128 +64,113 @@ export default function MovieBooking() {
       }
     };
 
-    if (movieId) {
-      fetchMovie();
-    }
+    if (movieId) fetchMovie();
   }, [movieId]);
 
-  // Fetch showtimes and process dates
+  // Fetch showtimes grouped by date
   useEffect(() => {
     const fetchShowtimes = async () => {
       try {
-        const data = await showtimesApi.getShowtimesByMovie(movieId);
-        setShowtimes(data || []);
+        const data = await moviesApi.getShowtimesByMovie(movieId);
+        console.log(data);
+        const byDate = data.showtimes_by_date ?? {};
+        setShowtimesByDate(byDate);
 
-        if (data && data.length > 0) {
-          const uniqueDates = new Set<string>();
-          const dates: BookingDate[] = [];
-          const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-          const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+        const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-          data.forEach((stime) => {
-            const date = new Date(stime.start_time);
-            const dateStr = date.toDateString();
-            if (!uniqueDates.has(dateStr)) {
-              uniqueDates.add(dateStr);
-              dates.push({
-                day: date.getDate(),
-                month: monthNames[date.getMonth()],
-                dayName: dayNames[date.getDay()],
-                fullDate: dateStr,
-              });
-            }
+        const dates: BookingDate[] = Object.keys(byDate)
+          .sort((a, b) => a.localeCompare(b))
+          .map((dateStr) => {
+            const d = new Date(dateStr);
+            return {
+              day: d.getUTCDate(),
+              month: monthNames[d.getUTCMonth()],
+              dayName: dayNames[d.getUTCDay()],
+              fullDate: dateStr,
+            };
           });
 
-          dates.sort((a, b) => new Date(a.fullDate || '').getTime() - new Date(b.fullDate || '').getTime());
-          setBookingDates(dates);
+        // Build summarized showtimes with date-specific time slots
+        const grouped: DateGroupShowtime[] = dates.map((date) => {
+          const cards: ShowtimeCard[] = byDate[date.fullDate || ''] ?? [];
+          const showtimes = cards.map((card: ShowtimeCard) => ({
+            time: card.start_time ?? 'N/A',
+            showtimeId: card.showtime_id,
+            status: 'available' as const,
+          }));
+          return { ...date, showtimes };
+        });
 
-          if (dates.length > 0) {
-            setSelectedDate(0);
-          }
-        }
+        setBookingDates(dates);
+        setSummarizedShowtimes(grouped);
+        setSelectedDate(0);
       } catch (error) {
         console.error('Failed to fetch showtimes:', error);
-        setShowtimes([]);
+        setShowtimesByDate({});
+        setSummarizedShowtimes([]);
       }
     };
 
-    if (movieId) {
-      fetchShowtimes();
-    }
+    if (movieId) fetchShowtimes();
   }, [movieId]);
 
-  // Update times when date changes
+  // Update available times when selected date changes
   useEffect(() => {
-    if (bookingDates.length > 0 && showtimes.length > 0) {
-      const selectedDateObj = bookingDates[selectedDate];
-      const timesForDate = showtimes
-        .filter((s) => new Date(s.start_time).toDateString() === selectedDateObj.fullDate)
-        .map((s) => {
-          const date = new Date(s.start_time);
-          return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-        })
-        .sort();
+    if (bookingDates.length === 0) return;
 
-      const uniqueTimes = Array.from(new Set(timesForDate));
+    const dateKey = bookingDates[selectedDate]?.fullDate;
+    if (!dateKey) return;
 
-      setBookingTimes(uniqueTimes);
-      if (uniqueTimes.length > 0) {
-        setSelectedTime(uniqueTimes[0]);
-      } else {
-        setSelectedTime('');
-      }
-    }
-  }, [selectedDate, bookingDates, showtimes]);
+    const cards = showtimesByDate[dateKey] ?? [];
+    const times = [...new Set(cards.map((c) => c.start_time ?? 'N/A'))].sort((a, b) => a.localeCompare(b));
+    setBookingTimes(times);
+    setSelectedTime(times[0] ?? '');
+  }, [selectedDate, bookingDates, showtimesByDate]);
 
-  // Find showtime ID and fetch seats when time changes
+  // Fetch sea map when showtime selection changes
   useEffect(() => {
     const fetchSeats = async () => {
       if (!selectedTime || bookingDates.length === 0) return;
 
-      const selectedDateObj = bookingDates[selectedDate];
+      const dateKey = bookingDates[selectedDate]?.fullDate;
+      if (!dateKey) return;
 
-      const showtime = showtimes.find((s) => {
-        const d = new Date(s.start_time);
-        const t = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-        return d.toDateString() === selectedDateObj.fullDate && t === selectedTime;
-      });
+      const card = (showtimesByDate[dateKey] ?? []).find(
+        (c) => (c.start_time ?? 'N/A') === selectedTime
+      );
+      if (!card) return;
 
-      if (showtime) {
-        setCurrentShowtimeId(showtime.id);
-        try {
-          const seatsData = await showtimesApi.getSeats(showtime.id);
-          if (seatsData && seatsData.length > 0) {
-            const mappedSeats = seatsData.map((s) => ({
-              id: s.seat_id,
-              row: s.row_label,
-              col: s.seat_number,
-              status: s.status?.toLowerCase() === 'available' ? 'available' as const : 'reserved' as const,
-              price: s.price,
-            }));
-            setSeats(mappedSeats);
-          } else {
-            setSeats([]);
-          }
-        } catch (error) {
-          console.error("Failed to fetch seats", error);
+      setCurrentShowtimeId(card.showtime_id);
+      try {
+        const seatsData: APISeat[] = await showtimesApi.getSeats(card.showtime_id);
+        if (seatsData && seatsData.length > 0) {
+          const mapped: Seat[] = seatsData.map((s) => ({
+            id: s.seat_id,
+            row: s.row_label,
+            col: s.seat_number,
+            status: s.status?.toLowerCase() === 'available' ? 'available' : 'reserved',
+            price: s.price ?? card.ticket_price_normal ?? undefined,
+          }));
+          setSeats(mapped);
+        } else {
+          setSeats([]);
         }
+      } catch (error) {
+        console.error('Failed to fetch seats', error);
+        setSeats([]);
       }
     };
 
     fetchSeats();
-  }, [selectedTime, selectedDate, bookingDates, showtimes]);
+  }, [selectedTime, selectedDate, bookingDates, showtimesByDate]);
 
   const toggleSeat = (row: string, col: number) => {
-    setSeats((prevSeats) =>
-      prevSeats.map((seat) => {
-        if (seat.row === row && seat.col === col) {
-          if (seat.status === 'reserved') return seat;
-          return {
-            ...seat,
-            status: seat.status === 'available' ? 'selected' : 'available',
-          };
-        }
-        return seat;
+    setSeats((prev) =>
+      prev.map((seat) => {
+        if (seat.row !== row || seat.col !== col) return seat;
+        if (seat.status === 'reserved') return seat;
+        return { ...seat, status: seat.status === 'available' ? 'selected' : 'available' };
       })
     );
   };
@@ -200,7 +178,7 @@ export default function MovieBooking() {
   const handleBooking = async () => {
     if (!currentShowtimeId || selectedSeats.length === 0) return;
 
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated) {
       alert('Please sign in to book tickets.');
       navigate('/login');
       return;
@@ -208,60 +186,27 @@ export default function MovieBooking() {
 
     try {
       setIsBooking(true);
-      const showtime = showtimes.find((s) => s.id === currentShowtimeId);
-      const screenId = showtime?.screen_id;
 
-      if (!screenId) {
-        alert('Error: Could not determine screen for booking.');
-        return;
-      }
-
-      const selectedSeatIds = seats
-        .filter(s => s.status === 'selected')
-        .map(s => s.id);
-
-      const pricePerSeat = seats.find(s => s.status === 'selected')?.price || 15;
-
-      const reserveResult = await bookingsApi.reserveSeats({
-        user_id: user.id,
-        showtime_id: currentShowtimeId,
-        seat_ids: selectedSeatIds,
-        price_per_seat: pricePerSeat,
-      });
-
-      if (!reserveResult.success || !reserveResult.booking_id) {
-        alert(`Reservation failed: ${reserveResult.error || 'Some seats are no longer available'}`);
-        const seatsData = await showtimesApi.getSeats(currentShowtimeId);
-        if (seatsData && seatsData.length > 0) {
-          setSeats(seatsData.map((s) => ({
-            id: s.seat_id,
-            row: s.row_label,
-            col: s.seat_number,
-            status: s.status?.toLowerCase() === 'available' ? 'available' as const : 'reserved' as const,
-            price: s.price,
-          })));
-        }
-        return;
-      }
+      const selectedSeatIds = seats.filter((s) => s.status === 'selected').map((s) => s.id);
+      const holdResult = await showtimesApi.holdSeats(currentShowtimeId, selectedSeatIds);
 
       const seatLabels = seats
-        .filter(s => s.status === 'selected')
-        .map(s => `${s.row}${s.col}`)
+        .filter((s) => s.status === 'selected')
+        .map((s) => `${s.row}${s.col}`)
         .join(',');
 
       const params = new URLSearchParams({
-        booking_id: String(reserveResult.booking_id),
-        movie_id: String(movieId),
+        hold_id: String(holdResult.hold_id ?? ''),
         showtime_id: String(currentShowtimeId),
         seats: seatLabels,
-        total: String(reserveResult.total_amount || seatsTotalPrice),
-        deadline: reserveResult.payment_deadline ? new Date(reserveResult.payment_deadline).toISOString() : '',
+        total: String(seatsTotalPrice),
+        expires_at: holdResult.expires_at ?? '',
       });
 
       navigate(`/payment?${params.toString()}`);
     } catch (error) {
       console.error('Booking failed', error);
-      alert('Booking failed. Please try again.');
+      alert('Could not hold seats. They may have been taken. Please try again.');
     } finally {
       setIsBooking(false);
     }
@@ -273,16 +218,16 @@ export default function MovieBooking() {
 
   const seatsTotalPrice = seats
     .filter((s) => s.status === 'selected')
-    .reduce((sum, s) => sum + (s.price || 15), 0);
+    .reduce((sum, s) => sum + (s.price ?? 0), 0);
 
   if (movieLoading) {
     return (
       <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
-        <div className="flex justify-center items-center py-20">
-          <Spinner/>
+        <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
+          <div className="flex justify-center items-center py-20">
+            <Spinner />
+          </div>
         </div>
-      </div>
       </div>
     );
   }
@@ -290,75 +235,72 @@ export default function MovieBooking() {
   if (movieError || !movie) {
     return (
       <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
-        <div className="flex justify-center items-center py-20">
-          <p className="text-lg text-red-600">{movieError || 'Movie not found'}</p>
+        <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
+          <div className="flex justify-center items-center py-20">
+            <p className="text-lg text-red-600">{movieError || 'Movie not found'}</p>
+          </div>
         </div>
-      </div>
       </div>
     );
   }
 
+  // Get the correct duration (runtime_minutes or duration_minutes)
+  const movieDuration = movie.duration_minutes;
+
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
-      {/* Hero Section - Movie Info */}
-      <section className=" px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-[300px_1fr] gap-8 lg:gap-12 items-start">
-            {/* Movie Poster */}
-            <div className="relative group hidden lg:block">
-              <div className="relative aspect-2/3 w-full h-full bg-neutral-900 rounded-lg overflow-hidden shadow-lg">
-                <img
-                  src={movie.poster_url}
-                  alt={movie.title}
-                  className="w-full h-full object-cover"
-                />
+        <section className="px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-[300px_1fr] gap-8 lg:gap-12 items-start">
+              <div className="relative group hidden lg:block">
+                <div className="relative aspect-2/3 w-full h-full bg-neutral-900 rounded-lg overflow-hidden shadow-lg">
+                  <img
+                    src={movie.poster_url ?? ''}
+                    alt={movie.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
+              {/* Pass duration as a prop or use in BookingMovieInfo if needed */}
+              <BookingMovieInfo movie={movie}/>
             </div>
-
-            {/* Movie Details */}
-            <BookingMovieInfo movie={movie} />
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Booking Section */}
-      <section className="py-8 sm:py-12 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          {/* Date & Time Selection */}
-          <DateTimeSelection
-            dates={bookingDates}
-            times={bookingTimes}
-            selectedDate={selectedDate}
-            selectedTime={selectedTime}
-            onDateChange={setSelectedDate}
-            onTimeChange={setSelectedTime}
-          />
-
-          {/* Seat Selection & Summary */}
-          <div className="flex justify-center gap-8 items-start">
-            {/* Ticket Summary - Left */}
-            <TicketSummary
-              selectedSeats={selectedSeats}
-              selectedDate={bookingDates[selectedDate]}
+        <section className="py-8 sm:py-12 px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto">
+            <DateTimeSelection
+              dates={bookingDates}
+              times={bookingTimes}
+              selectedDate={selectedDate}
               selectedTime={selectedTime}
-              totalPrice={seatsTotalPrice}
-              onBook={handleBooking}
-              isBooking={isBooking}
+              onDateChange={setSelectedDate}
+              onTimeChange={setSelectedTime}
+              summarizedShowtimes={summarizedShowtimes}
             />
 
-            {/* Seat Map - Right */}
-            {seats.length > 0 ? (
-              <SeatMap seats={seats} onSeatToggle={toggleSeat} />
-            ) : (
-              <div className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-300">
-                <Spinner/>
-              </div>
-            )}
+            <div className="flex justify-between gap-8">
+              <TicketSummary
+                selectedSeats={selectedSeats}
+                selectedDate={bookingDates[selectedDate]}
+                selectedTime={selectedTime}
+                totalPrice={seatsTotalPrice}
+                onBook={handleBooking}
+                isBooking={isBooking}
+
+              />
+
+              {seats.length > 0 ? (
+                <SeatMap seats={seats} onSeatToggle={toggleSeat} />
+              ) : (
+<div className="flex items-center justify-center bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-1/2">
+  <Spinner />
+</div>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       </div>
     </div>
   );

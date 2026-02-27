@@ -1,51 +1,41 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
-interface UseCountdownOptions {
-  deadline: Date | string;
+interface UseCountdownProps {
+  deadline: Date;
   onExpire?: () => void;
 }
 
-export function useCountdown({ deadline, onExpire }: UseCountdownOptions) {
-  const calculateTimeLeft = useCallback(() => {
-    const deadlineDate = typeof deadline === 'string' ? new Date(deadline) : deadline;
-    const now = new Date();
-    const diff = deadlineDate.getTime() - now.getTime();
-    return Math.max(0, Math.floor(diff / 1000));
-  }, [deadline]);
+interface UseCountdownReturn {
+  formatted: string;
+  isExpired: boolean;
+  secondsRemaining: number;
+}
 
-  const [timeLeft, setTimeLeft] = useState<number>(() => calculateTimeLeft());
-  const hasExpiredRef = useRef(false);
+export function useCountdown({ deadline, onExpire }: UseCountdownProps): UseCountdownReturn {
+  const [secondsRemaining, setSecondsRemaining] = useState(0);
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
-    hasExpiredRef.current = false;
-    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const deadlineTime = deadline.getTime();
+      const remaining = Math.max(0, Math.floor((deadlineTime - now) / 1000));
 
-    const interval = setInterval(() => {
-      const newTimeLeft = calculateTimeLeft();
-      setTimeLeft(newTimeLeft);
+      setSecondsRemaining(remaining);
 
-      if (newTimeLeft <= 0 && !hasExpiredRef.current) {
-        hasExpiredRef.current = true;
-        clearInterval(interval);
+      if (remaining === 0) {
+        setIsExpired(true);
+        clearInterval(timer);
         onExpire?.();
       }
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [calculateTimeLeft, onExpire]);
+    return () => clearInterval(timer);
+  }, [deadline, onExpire]);
 
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
+  const minutes = Math.floor(secondsRemaining / 60);
+  const seconds = secondsRemaining % 60;
   const formatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  const isExpired = timeLeft <= 0;
-  const isWarning = timeLeft <= 60 && timeLeft > 0;
 
-  return {
-    timeLeft,
-    minutes,
-    seconds,
-    formatted,
-    isExpired,
-    isWarning,
-  };
+  return { formatted, isExpired, secondsRemaining };
 }
