@@ -20,7 +20,7 @@ export function TicketSummary({
 }: TicketSummaryProps) {
 
   return (
-    <div className="w-full space-y-4 sm:space-y-6">
+    <div className="w-1/2 space-y-4 sm:space-y-6 ">
       <div className="bg-white rounded-xl p-4 sm:p-6 border border-neutral-300">
         <h3 className="text-black font-semibold text-base sm:text-lg mb-4 uppercase tracking-wider">
           Select Your Seats

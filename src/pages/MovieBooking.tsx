@@ -54,6 +54,7 @@ export default function MovieBooking() {
         setMovieLoading(true);
         setMovieError(null);
         const data = await moviesApi.getMovieById(movieId);
+
         setMovie(data);
       } catch (error) {
         console.error('Failed to fetch movie:', error);
@@ -279,7 +280,7 @@ export default function MovieBooking() {
               summarizedShowtimes={summarizedShowtimes}
             />
 
-            <div className="flex justify-center gap-8 items-start">
+            <div className="flex justify-between gap-8">
               <TicketSummary
                 selectedSeats={selectedSeats}
                 selectedDate={bookingDates[selectedDate]}
@@ -287,14 +288,15 @@ export default function MovieBooking() {
                 totalPrice={seatsTotalPrice}
                 onBook={handleBooking}
                 isBooking={isBooking}
+
               />
 
               {seats.length > 0 ? (
                 <SeatMap seats={seats} onSeatToggle={toggleSeat} />
               ) : (
-                <div className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-300">
-                  <Spinner />
-                </div>
+<div className="flex items-center justify-center bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-1/2">
+  <Spinner />
+</div>
               )}
             </div>
           </div>

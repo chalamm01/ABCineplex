@@ -127,7 +127,6 @@ export interface Movie {
   title: string;
   synopsis?: string;
   genres?: string[];
-  rate?: string
   runtime_minutes?: number;
   duration_minutes?: number;
   rating_tmdb?: number;
@@ -148,7 +147,7 @@ export interface Movie {
 }
 
 export interface MovieDetail extends Movie {
-  cast?: string[];
+  starring?: string[];
   content_rating?: string;
   banner_url?: string;
   audio_languages?: string[];

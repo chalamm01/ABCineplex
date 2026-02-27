@@ -74,14 +74,14 @@ export function SeatMap({ seats, onSeatToggle }: SeatMapProps) {
 
   if (seats.length === 0) {
     return (
-      <div className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-300">
+      <div className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-1/2">
         <p className="text-neutral-600 text-center">No seats available for this showtime.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-neutral-50 rounded-xl p-6 sm:p-8 border border-neutral-200">
+    <div className="bg-neutral-50 rounded-xl p-6 sm:p-8 border border-neutral-200 w-1/2">
       {/* Screen */}
       <div className="mb-8 sm:mb-12">
         <div className="w-full h-1.5 bg-gradient-to-r from-neutral-700 via-neutral-700 to-neutral-700 rounded-full mb-2" />

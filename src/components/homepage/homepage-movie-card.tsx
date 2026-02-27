@@ -43,7 +43,7 @@ export function HomepageMovieCard({ movie }: HomepageMovieCardProps) {
             </div>
             <div className="text-right">
               <p className="text-neutral-500 text-xs uppercase">Duration</p>
-              <p className="font-medium text-neutral-900">{formatDuration(movie.duration_minutes)}</p>
+              <p className="font-medium text-neutral-900">{formatDuration(movie.runtime_minutes)}</p>
             </div>
             <div>
               <p className="text-neutral-500 text-xs uppercase">Audio</p>
