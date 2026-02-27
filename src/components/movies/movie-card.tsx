@@ -8,8 +8,6 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, onClick }: MovieCardProps) {
-console.log(movie);
-
   return (
 
     <Link to={`/movie/${movie.id}`}>

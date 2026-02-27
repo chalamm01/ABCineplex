@@ -71,7 +71,6 @@ export default function MovieBooking() {
     const fetchShowtimes = async () => {
       try {
         const data = await moviesApi.getShowtimesByMovie(movieId);
-        console.log(data);
         const byDate = data.showtimes_by_date ?? {};
         setShowtimesByDate(byDate);
 
@@ -246,7 +245,6 @@ export default function MovieBooking() {
   }
 
   // Get the correct duration (runtime_minutes or duration_minutes)
-  const movieDuration = movie.duration_minutes;
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">

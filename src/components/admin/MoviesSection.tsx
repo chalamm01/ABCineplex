@@ -48,7 +48,6 @@ export default function MoviesSection() {
       .then((response: any) => {
         if (response && Array.isArray(response.movies)) {
           setMovies(response.movies);
-          console.log(response.movies);
         } else {
           setMovies([]);
         }

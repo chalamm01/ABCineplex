@@ -4,44 +4,14 @@ import { bookingsApi } from "@/services/api";
 import { Spinner } from "@/components/ui/spinner";
 import type { BookingSummary } from "@/types/api";
 
-interface BookingCardData {
-  id: string;
-  title: string;
-  cinema: string;
-  date: string;
-  showTime: string;
-  transactionNo: string;
-  posterUrl: string;
-  seats: string;
-}
-
-function toCardData(b: BookingSummary): BookingCardData {
-  const start = b.showtime_start ? new Date(b.showtime_start) : null;
-  return {
-    id: String(b.booking_id),
-    title: b.movie_title || "Unknown",
-    cinema: b.screen_name || "ABCineplex",
-    date: start
-      ? start.toLocaleDateString()
-      : new Date(b.created_at || Date.now()).toLocaleDateString(),
-    showTime: start
-      ? start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      : "-",
-    transactionNo: String(b.booking_id),
-    posterUrl: b.poster_url || "/posters/default.jpg",
-    seats: Array.isArray(b.seats) ? b.seats.join(", ") : "-",
-  };
-}
-
-export default function BookingHistoryPage() {
-  const [bookings, setBookings] = useState<BookingCardData[]>([]);
+  const [bookings, setBookings] = useState<BookingSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     bookingsApi
       .getUserBookings("confirmed")
-      .then((res) => setBookings(res.bookings.map(toCardData)))
+      .then((res) => setBookings(res.bookings))
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : "Failed to fetch booking history.")
       )

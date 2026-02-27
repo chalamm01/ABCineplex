@@ -9,7 +9,6 @@ interface BookingMovieInfoProps {
 
 export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
   const firstGenre = movie.genre;
-  console.log(movie);
   return (
     <div className="space-y-6">
       <div>
