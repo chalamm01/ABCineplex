@@ -9,10 +9,10 @@ import {
 
 const emptyMovie: MovieCreate = {
   title: '', release_date: '', duration_minutes: 0, content_rating: '',
-  release_status: 'coming_soon', poster_url: '', banner_url: '',
-  synopsis: '', director: '', starring: [], genres: [],
+  status: 'coming_soon', poster_url: '', banner_url: '',
+  synopsis: '', director: '', starring: [], genre: '',
   audio_languages: [], subtitle_languages: [], imdb_score: undefined,
-  trailer_url: '', tag_event: '',
+  trailer_url: '', tag_event: '', runtime_minutes: 0
 };
 
 type ModalMode = 'add' | 'edit' | null;
@@ -28,13 +28,24 @@ export default function MoviesSection() {
 
   const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
 
-  useEffect(() => {
-    setLoading(true);
-    moviesApi.getMovies(1, 100)
-      .then(setMovies)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [refreshKey]);
+useEffect(() => {
+  setLoading(true);
+  moviesApi.getMovies(1, 100)
+    .then((response: any) => {
+      // Extract the 'movies' array from the response object
+      if (response && Array.isArray(response.movies)) {
+        setMovies(response.movies);
+      } else {
+        console.error("Expected an array in response.movies, got:", response);
+        setMovies([]);
+      }
+    })
+    .catch((err) => {
+      console.error("Fetch error:", err);
+      setMovies([]);
+    })
+    .finally(() => setLoading(false));
+}, [refreshKey]);
 
   function openAdd() {
     setForm(emptyMovie);
@@ -55,7 +66,7 @@ export default function MoviesSection() {
       synopsis: m.synopsis ?? '',
       director: m.director ?? '',
       starring: m.starring ?? [],
-      genres: m.genres ?? [],
+      genres: m.genre ?? '',
       audio_languages: m.audio_languages ?? [],
       subtitle_languages: m.subtitle_languages ?? [],
       imdb_score: m.imdb_score,

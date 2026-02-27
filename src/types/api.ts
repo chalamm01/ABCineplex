@@ -494,6 +494,7 @@ export interface MovieCreate {
   title: string;
   release_date: string;
   imdb_score?: number;
+  runtime_minutes: number;
   duration_minutes: number;
   content_rating?: string;
   director?: string;
@@ -505,7 +506,7 @@ export interface MovieCreate {
   audio_languages?: string[];
   subtitle_languages?: string[];
   tag_event?: string;
-  release_status: string;
+  status: string;
   genre?: string;
 }
 
