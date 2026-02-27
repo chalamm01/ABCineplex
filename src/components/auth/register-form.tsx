@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { RegisterSchema } from '@/lib/validations/auth';
 import { authApi } from '@/services/api';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -41,7 +42,7 @@ export function RegisterForm() {
     setLoading(true);
     setError(null);
     try {
-      await authApi.register({
+      const response = await authApi.register({
         email: formData.email,
         password: formData.password,
         first_name: formData.first_name,
@@ -50,8 +51,18 @@ export function RegisterForm() {
         date_of_birth: formData.date_of_birth,
       });
 
-      // After successful registration, redirect to login
-      navigate('/login');
+      if (response.token && response.user) {
+        // Auto-login: store credentials and go to home
+        localStorage.setItem('token', response.token);
+        if (response.refresh_token) {
+          localStorage.setItem('refresh_token', response.refresh_token);
+        }
+        localStorage.setItem('user', JSON.stringify(response.user));
+        navigate('/');
+      } else {
+        // Email confirmation required — show message on login page
+        navigate('/login', { state: { message: response.message } });
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed';
       setError(message);
@@ -64,8 +75,16 @@ export function RegisterForm() {
     try {
       setError(null);
       setLoading(true);
-      const response = await authApi.getGoogleOAuthUrl();
-      window.location.href = response.url;
+      const supabase = createClient();
+      // signInWithOAuth handles PKCE verifier storage and redirect automatically
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+      // Browser will redirect to Google — no further action needed here
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to initiate Google sign up';
       setError(message);

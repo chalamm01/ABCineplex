@@ -26,6 +26,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string;
+  refresh_token: string;
   user: UserProfile;
 }
 
@@ -40,8 +41,21 @@ export interface RegisterRequest {
 
 export interface RegisterResponse {
   message: string;
-  user_id: string;
-  token: string;
+  token?: string;
+  refresh_token?: string;
+  user?: UserProfile;
+  requires_confirmation?: boolean;
+}
+
+export interface SetPasswordRequest {
+  password: string;
+}
+
+export interface SetupInfoRequest {
+  password: string;
+  user_name?: string;
+  phone?: string;
+  date_of_birth?: string;
 }
 
 // ============================================================================
@@ -62,6 +76,7 @@ export interface UserProfile {
   membership_tier: string;
   reward_points: number;
   attendance_streak: number;
+  has_password?: boolean;
 }
 
 export interface UserUpdate {

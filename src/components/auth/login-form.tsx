@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginSchema } from '@/lib/validations/auth';
 import { authApi } from '@/services/api';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -51,8 +52,16 @@ export function LoginForm() {
     try {
       setError(null);
       setLoading(true);
-      const response = await authApi.getGoogleOAuthUrl();
-      window.location.href = response.url;
+      const supabase = createClient();
+      // signInWithOAuth handles PKCE verifier storage and redirect automatically
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+      // Browser will redirect to Google — no further action needed here
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to initiate Google sign in';
       setError(message);

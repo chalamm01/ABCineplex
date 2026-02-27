@@ -21,8 +21,7 @@ interface HeaderProps {
 export function Header({ activeNav = 'home' }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
-  // Use initializer function to check auth on mount
-  const [isAuthenticated] = useState(() => !!localStorage.getItem('token'));
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -85,6 +84,7 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
 
       // Update state
       setUser(null);
+      setIsAuthenticated(false);
       setIsDropdownOpen(false);
 
       // Redirect to home
@@ -111,7 +111,7 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
       return user.first_name.slice(0, 2).toUpperCase();
     }
     if (user?.user_name) {
-      return user.user_name.slice(0, 2).toUpperCase();
+      return user.user_name;
     }
     if (user?.email) {
       return user.email[0].toUpperCase();
@@ -120,14 +120,18 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
   };
 
   // Get display name
+// Get only username or fallback to email prefix
   const getDisplayName = () => {
-    if (user?.first_name && user?.last_name) {
-      return `${user.first_name} ${user.last_name}`;
+    if (user?.user_name) {
+      return user.user_name;
     }
-    if (user?.first_name) {
-      return user.first_name;
+    
+    // Fallback: If no username exists, take the part of the email before the @
+    if (user?.email) {
+      return user.email.split('@')[0];
     }
-    return user?.user_name || user?.email || 'User';
+
+    return 'User';
   };
 
   return (

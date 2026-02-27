@@ -8,6 +8,8 @@ import type {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  SetPasswordRequest,
+  SetupInfoRequest,
   UserProfile,
   UserUpdate,
   UserBookingsResponse,
@@ -152,6 +154,12 @@ export const authApi = {
 
   getGoogleOAuthUrl: (): Promise<{ url: string }> =>
     request<{ url: string }>('GET', '/auth/google', undefined, false),
+
+  setPassword: (data: SetPasswordRequest): Promise<{ message: string }> =>
+    request<{ message: string }>('POST', '/auth/set-password', data),
+
+  setupInfo: (data: SetupInfoRequest): Promise<{ message: string }> =>
+    request<{ message: string }>('POST', '/auth/setup-info', data),
 };
 
 // ============================================================================

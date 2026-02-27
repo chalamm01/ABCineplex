@@ -1,6 +1,48 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@/lib/supabase/client';
+import { userApi } from '@/services/api';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// ── Token extraction helpers ──────────────────────────────────────────────────
+
+async function extractTokensPkce(supabase: SupabaseClient, code: string) {
+  console.log('[AuthCallback] PKCE flow — calling exchangeCodeForSession...');
+  const { error, data } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    console.error('[AuthCallback] exchangeCodeForSession error:', error.message);
+    throw error;
+  }
+  console.log('[AuthCallback] PKCE exchange success');
+  return {
+    accessToken:  data?.session?.access_token  ?? null,
+    refreshToken: data?.session?.refresh_token ?? null,
+  };
+}
+
+async function extractTokensImplicit(
+  supabase: SupabaseClient,
+  hashToken: string,
+  hashRefresh: string | null,
+) {
+  console.log('[AuthCallback] Implicit flow — using tokens from hash fragment');
+  if (!hashRefresh) {
+    return { accessToken: hashToken, refreshToken: null };
+  }
+  const { error, data } = await supabase.auth.setSession({
+    access_token:  hashToken,
+    refresh_token: hashRefresh,
+  });
+  if (error) {
+    console.warn('[AuthCallback] setSession warning (non-fatal):', error.message);
+  }
+  return {
+    accessToken:  data?.session?.access_token  ?? hashToken,
+    refreshToken: data?.session?.refresh_token ?? hashRefresh,
+  };
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -10,40 +52,60 @@ export default function AuthCallback() {
     const handleCallback = async () => {
       try {
         const supabase = createClient();
+        console.log('[AuthCallback] full URL:', globalThis.location.href);
 
-        const params = new URLSearchParams(globalThis.location.search);
-        const code = params.get('code');
+        const queryParams = new URLSearchParams(globalThis.location.search);
+        const hashParams  = new URLSearchParams(globalThis.location.hash.slice(1));
+
+        const code        = queryParams.get('code');
+        const hashToken   = hashParams.get('access_token');
+        const hashRefresh = hashParams.get('refresh_token');
+
+        console.log('[AuthCallback] code (PKCE):', code ? `${code.slice(0, 20)}...` : 'none');
+        console.log('[AuthCallback] hash token (implicit):', hashToken ? `${hashToken.slice(0, 20)}...` : 'none');
+
+        let accessToken: string | null = null;
+        let refreshToken: string | null = null;
+
         if (code) {
-          const { error: exchangeError, data } = await supabase.auth.exchangeCodeForSession(code);
-          if (exchangeError) {
-            setError(exchangeError.message);
-            return;
-          }
-
-          if (data?.session?.access_token) {
-            localStorage.setItem('token', data.session.access_token);
-          }
-
-          const { data: userData, error: userError } = await supabase.auth.getUser();
-          if (userError || !userData?.user?.email) {
-            setError(userError?.message || 'Failed to get user info');
-            return;
-          }
-
-          // Store basic user info from auth (will be enhanced when user profile loads)
-          const userInfo = {
-            id: userData.user.id,
-            email: userData.user.email,
-            first_name: userData.user.user_metadata?.first_name || '',
-            last_name: userData.user.user_metadata?.last_name || '',
-            user_name: userData.user.user_metadata?.user_name || userData.user.email.split('@')[0],
-          };
-          localStorage.setItem('user', JSON.stringify(userInfo));
+          ({ accessToken, refreshToken } = await extractTokensPkce(supabase, code));
+        } else if (hashToken) {
+          ({ accessToken, refreshToken } = await extractTokensImplicit(supabase, hashToken, hashRefresh));
+        } else {
+          console.warn('[AuthCallback] No auth data in URL — redirecting to /');
+          navigate('/', { replace: true });
+          return;
         }
 
-        // Auth callback completed, redirect to home
+        if (!accessToken) {
+          console.error('[AuthCallback] No access token after processing');
+          navigate('/login', { replace: true });
+          return;
+        }
+
+        localStorage.setItem('token', accessToken);
+        if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+        console.log('[AuthCallback] Token stored in localStorage');
+
+        try {
+          console.log('[AuthCallback] Fetching backend profile...');
+          const profile = await userApi.getProfile();
+          console.log('[AuthCallback] Profile:', { id: profile.id, has_password: profile.has_password });
+          localStorage.setItem('user', JSON.stringify(profile));
+
+          if (profile.has_password === false) {
+            console.log('[AuthCallback] has_password=false → /setup-password');
+            navigate('/setup-password', { replace: true });
+            return;
+          }
+        } catch (error_: unknown) {
+          console.error('[AuthCallback] Profile fetch failed:', error_);
+        }
+
+        console.log('[AuthCallback] Done — redirecting to /');
         navigate('/', { replace: true });
       } catch (err: unknown) {
+        console.error('[AuthCallback] Unexpected error:', err);
         setError(err instanceof Error ? err.message : 'Authentication failed');
       }
     };
