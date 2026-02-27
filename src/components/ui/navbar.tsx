@@ -32,211 +32,131 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
     { id: 'community', label: 'Community', icon: Users },
   ];
 
-  // Load user from localStorage on mount
-  useEffect(() => {
-    if (isAuthenticated) {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (err) {
-          console.error('Failed to parse user from localStorage:', err);
-        }
+  // Logic to sync auth state across the app without refresh
+  const syncAuth = () => {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    setIsAuthenticated(!!token);
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        console.error('Failed to parse user:', err);
       }
+    } else {
+      setUser(null);
     }
-  }, [isAuthenticated]);
+  };
 
-  // Close dropdown when clicking outside
+  useEffect(() => {
+    syncAuth();
+    // Listen for local changes and custom events from AuthCallback
+    window.addEventListener('storage', syncAuth);
+    window.addEventListener('auth-change', syncAuth);
+    return () => {
+      window.removeEventListener('storage', syncAuth);
+      window.removeEventListener('auth-change', syncAuth);
+    };
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSignIn = () => {
-    navigate('/login');
-    setIsDropdownOpen(false);
+  const getDisplayName = () => {
+    if (user?.user_name) return user.user_name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
   };
 
-  const handleRegister = () => {
-    navigate('/register');
-    setIsDropdownOpen(false);
+  const getInitials = () => {
+    const name = getDisplayName();
+    return name.slice(0, 2).toUpperCase();
   };
 
   const handleSignOut = async () => {
-    try {
-      // Call logout API
-      await authApi.logout();
-    } catch (err) {
-      console.error('Logout failed:', err);
-    } finally {
-      // Clear token from localStorage
+    try { await authApi.logout(); } catch (err) { console.error(err); }
+    finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-
-      // Update state
-      setUser(null);
-      setIsAuthenticated(false);
+      syncAuth();
       setIsDropdownOpen(false);
-
-      // Redirect to home
       navigate('/');
     }
   };
 
-  const handleProfile = () => {
-    setIsDropdownOpen(false);
-    navigate('/profile');
-  };
-
-  const handleMyBookings = () => {
-    setIsDropdownOpen(false);
-    navigate('/bookings');
-  };
-
-  // Get user initials for avatar
-  const getInitials = () => {
-    if (user?.first_name && user?.last_name) {
-      return (user.first_name[0] + user.last_name[0]).toUpperCase();
-    }
-    if (user?.first_name) {
-      return user.first_name.slice(0, 2).toUpperCase();
-    }
-    if (user?.user_name) {
-      return user.user_name;
-    }
-    if (user?.email) {
-      return user.email[0].toUpperCase();
-    }
-    return 'U';
-  };
-
-  // Get display name
-// Get only username or fallback to email prefix
-  const getDisplayName = () => {
-    if (user?.user_name) {
-      return user.user_name;
-    }
-    
-    // Fallback: If no username exists, take the part of the email before the @
-    if (user?.email) {
-      return user.email.split('@')[0];
-    }
-
-    return 'User';
-  };
-
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-neutral-200">
-      <div className="max-w-350 mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center">
-          </div>
+          <Link to="/" className="text-xl font-bold tracking-tighter no-underline text-black">
+            CINEPLEX
+          </Link>
 
-          {/* Main Navigation */}
           <div className="flex items-center gap-8">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeNav === item.id;
               return (
                 <Link
                   key={item.id}
                   to={`/${item.id}`}
-                  className={`flex items-center gap-2 transition-colors no-underline ${
-                    isActive
-                      ? 'text-black'
-                      : 'text-neutral-500 hover:text-black'
+                  className={`flex items-center gap-2 no-underline transition-colors ${
+                    activeNav === item.id ? 'text-black font-semibold' : 'text-neutral-500 hover:text-black'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span className="text-sm tracking-wide font-medium">{item.label}</span>
+                  <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               );
             })}
           </div>
 
-          {/* User Profile */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                isAuthenticated
-                  ? 'bg-black text-white hover:bg-neutral-800'
-                  : 'bg-neutral-100 hover:bg-neutral-200'
-              }`}
+              className="flex items-center gap-3 p-1 rounded-full hover:bg-neutral-50 transition-all group"
             >
-              {isAuthenticated ? (
-                <span className="text-xs font-bold">{getInitials()}</span>
-              ) : (
-                <User className="w-5 h-5 text-neutral-600" />
+              {isAuthenticated && user && (
+                <div className="hidden md:flex flex-col items-end mr-1">
+                  <span className="text-sm font-bold text-black leading-none">{getDisplayName()}</span>
+                  <span className="text-[11px] text-neutral-400 leading-tight mt-1">{user.email}</span>
+                </div>
               )}
+
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                isAuthenticated ? 'bg-black text-white shadow-md' : 'bg-neutral-100 text-neutral-600'
+              }`}>
+                {isAuthenticated ? <span className="text-xs font-bold">{getInitials()}</span> : <User className="w-5 h-5" />}
+              </div>
             </button>
 
-            {/* Dropdown Menu */}
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-neutral-200 z-50">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-neutral-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
                 {isAuthenticated ? (
                   <>
-                    {/* User info header */}
-                    <div className="px-4 py-3 border-b border-neutral-100">
-                      <p className="text-sm font-semibold text-black truncate">
-                        {getDisplayName()}
-                      </p>
-                      <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
-                    </div>
-                    {/* Profile */}
-                    <button
-                      onClick={handleProfile}
-                      className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 transition-colors text-neutral-700 hover:text-black border-b border-neutral-100"
-                    >
-                      <User className="w-4 h-4" />
-                      <span className="text-sm font-medium">My Profile</span>
+                    <button onClick={() => { navigate('/profile'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
+                      <User className="w-4 h-4" /> <span className="text-sm font-medium">My Profile</span>
                     </button>
-
-
-
-                    {/* My Bookings */}
-                    <button
-                      onClick={handleMyBookings}
-                      className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 transition-colors text-neutral-700 hover:text-black border-b border-neutral-100"
-                    >
-                      <Ticket className="w-4 h-4" />
-                      <span className="text-sm font-medium">My Bookings</span>
+                    <button onClick={() => { navigate('/bookings'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
+                      <Ticket className="w-4 h-4" /> <span className="text-sm font-medium">My Bookings</span>
                     </button>
-                    {/* Sign Out */}
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 transition-colors text-neutral-700 hover:text-red-600"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span className="text-sm font-medium">Sign Out</span>
+                    <button onClick={handleSignOut} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors">
+                      <LogOut className="w-4 h-4" /> <span className="text-sm font-medium">Sign Out</span>
                     </button>
                   </>
                 ) : (
-                  // Logged Out State - Sign In and Register
                   <>
-                    <button
-                      onClick={handleSignIn}
-                      className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 transition-colors text-neutral-700 hover:text-black border-b border-neutral-100"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      <span className="text-sm font-medium">Sign In</span>
+                    <button onClick={() => { navigate('/login'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
+                      <LogIn className="w-4 h-4" /> <span className="text-sm font-medium">Sign In</span>
                     </button>
-                    <button
-                      onClick={handleRegister}
-                      className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 transition-colors text-neutral-700 hover:text-black"
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      <span className="text-sm font-medium">Register</span>
+                    <button onClick={() => { navigate('/register'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 text-neutral-700">
+                      <UserPlus className="w-4 h-4" /> <span className="text-sm font-medium">Register</span>
                     </button>
                   </>
                 )}
