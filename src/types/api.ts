@@ -126,7 +126,7 @@ export interface Movie {
   id: number;
   title: string;
   synopsis?: string;
-  genres?: string[];
+  genre?: string;
   runtime_minutes?: number;
   duration_minutes?: number;
   rating_tmdb?: number;
@@ -153,7 +153,7 @@ export interface MovieDetail extends Movie {
   audio_languages?: string[];
   subtitle_languages?: string[];
   tag_event?: string;
-  genres?: string[];
+  genre?: string;
   rating_count?: number;
   duration_minutes?: number;
 }
@@ -491,7 +491,7 @@ export interface MovieCreate {
   subtitle_languages?: string[];
   tag_event?: string;
   release_status: string;
-  genres?: string[];
+  genre?: string;
 }
 
 export interface MovieUpdate {
@@ -510,7 +510,7 @@ export interface MovieUpdate {
   subtitle_languages?: string[];
   tag_event?: string;
   release_status?: string;
-  genres?: string[];
+  genre?: string;
 }
 
 export interface ShowtimeCreate {
