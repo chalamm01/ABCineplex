@@ -25,16 +25,7 @@ function Movies() {
         // Fetch movies from API
         const response = await movieApi.getMovies(page, limit, status);
         // Transform API data to match frontend Movie type
-        const movies = (response.movies || []).map((m: any) => ({
-          id: m.id,
-          title: m.title,
-          poster_url: m.poster_url,
-          release_status: m.status || m.release_status,
-          duration_minutes: m.runtime_minutes ?? m.duration_minutes,
-          genres: Array.isArray(m.genre) ? m.genre : (typeof m.genre === 'string' ? m.genre.split(',').map((g: string) => g.trim()) : []),
-          imdb_score: m.rating_tmdb ?? m.imdb_score,
-          // ...add other fields as needed
-        }));
+        const movies = (response.movies || [])
         setMovies(movies);
       } catch (err) {
         console.error('Failed to fetch movies:', err);

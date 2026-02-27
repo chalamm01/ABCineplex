@@ -8,9 +8,10 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, onClick }: MovieCardProps) {
-
+console.log(movie);
 
   return (
+
     <Link to={`/movie/${movie.id}`}>
       <div
         className="group cursor-pointer"
@@ -38,14 +39,14 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
         <div className="space-y-2 sm:space-y-3">
           {/* Title */}
           <h3 className="text-sm sm:text-base font-bold tracking-wide leading-tight line-clamp-2">
-            {movie.title}
+            {movie.title.toUpperCase()}
           </h3>
 
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Status</p>
-              <p className="font-medium text-neutral-900">{movie.release_status?.replace('_', ' ') ?? 'N/A'}</p>
+              <p className="font-medium text-neutral-900">{movie.status?.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase()) ?? 'N/A'}</p>
             </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Duration</p>
@@ -53,11 +54,11 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
             </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Genre</p>
-              <p className="font-medium text-neutral-900">{movie.genres?.join(', ') || 'N/A'}</p>
+              <p className="font-medium text-neutral-900">{movie.genre || 'N/A'}</p>
             </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Rating</p>
-              <p className="font-medium text-neutral-900">{movie.imdb_score != null ? `${movie.imdb_score}/10` : 'N/A'}</p>
+              <p className="font-medium text-neutral-900">{movie.content_rating || 'N/A'}</p>
             </div>
           </div>
         </div>
