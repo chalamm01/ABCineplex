@@ -3,25 +3,25 @@ import { ThumbsUp } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface Review {
-  id: string
-  movie: { title: string; year: number; poster: string }
-  author: { username: string; avatar: string }
-  rating: number
-  body: string
-  likes: number
+  readonly id: string
+  readonly movie: { title: string; year: number; poster: string }
+  readonly author: { username: string; avatar: string }
+  readonly rating: number
+  readonly body: string
+  readonly likes: number
 }
 
 interface ReviewCardProps {
-  review: Review
+  readonly review: Review
   onClick?: () => void
 }
 
-function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
+function StarRating({ rating, max = 5 }: { readonly rating: number; readonly max?: number }) {
   return (
     <div className="flex gap-0.5">
       {Array.from({ length: max }).map((_, i) => (
         <span
-          key={i}
+          key={`star-${rating}-${i}`}
           className={`text-lg ${i < rating ? "text-amber-400" : "text-gray-300"}`}
         >
           ★
@@ -31,14 +31,14 @@ function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
   )
 }
 
-export function ReviewCard({ review, onClick }: ReviewCardProps) {
+export function ReviewCard({ review, onClick }: Readonly<ReviewCardProps>) {
   return (
     <div
       className="flex gap-5 py-6 cursor-pointer group"
       onClick={onClick}
     >
       {/* Movie poster */}
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <img
           src={review.movie.poster}
           alt={review.movie.title}

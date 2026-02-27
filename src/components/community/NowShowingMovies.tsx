@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react"
 import type { Movie } from "@/types/api"
 
 interface NowShowingMoviesProps {
-  movies: Movie[]
+  readonly movies: Movie[]
 }
 
 export function NowShowingMovies({ movies }: NowShowingMoviesProps) {
