@@ -26,10 +26,10 @@ export function PromotionalSection({ events }: PromotionalSectionProps) {
   const displayEvents = events.some((e) => e.category) ? filteredEvents : events;
 
   return (
-    <section className="mt-6 px-6 bg-white/40 py-6 rounded-2xl">
+    <section className="p-6 bg-white/40 rounded-2xl">
       <div className="max-w-400 mx-auto p-6">
         {/* Section Header */}
-        <p className="text-xs tracking-widest text-neutral-500 uppercase mb-4">
+        <p className="text-xs tracking-widest text-neutral-500 uppercase mb-4 font-bold">
           Featured
         </p>
         <div className="flex gap-8">

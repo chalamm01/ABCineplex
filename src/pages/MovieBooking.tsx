@@ -71,6 +71,7 @@ export default function MovieBooking() {
     const fetchShowtimes = async () => {
       try {
         const data = await moviesApi.getShowtimesByMovie(movieId);
+        console.log(data);
         const byDate = data.showtimes_by_date ?? {};
         setShowtimesByDate(byDate);
 

@@ -32,8 +32,8 @@ export default function Home() {
         const limit = 10;
         const [heroData, nowScreeningRes, upcomingRes, promoData] = await Promise.all([
           publicApi.getHeroCarousel(),
-          moviesApi.getMoviesPublic(page, limit, 'now_showing'),
-          moviesApi.getMoviesPublic(page, limit, 'upcoming'),
+          moviesApi.getMovies(page, limit, 'now_showing'),
+          moviesApi.getMovies(page, limit, 'upcoming'),
           publicApi.getPromoEvents(),
         ]);
 
@@ -68,7 +68,7 @@ export default function Home() {
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen px-4 md:px-32 bg-white/70 backdrop-blur-md py-12">
+      <div className="min-h-screen p-4 md:px-4 bg-white/70 backdrop-blur-md py-12">
         <div className="flex justify-center items-center">
           {loading && <Spinner />}
           {error && <p className="text-lg text-red-500">{error}</p>}

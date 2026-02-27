@@ -210,26 +210,13 @@ export const movieApi = {
     page: number = 1,
     limit: number = 20,
     status?: string,
-    genre?: string,
-    search?: string,
   ): Promise<MovieListResponse> => {
     const params = new URLSearchParams();
-    if (status) params.append('status', status);
-    if (genre) params.append('genre', genre);
-    if (search) params.append('search', search);
+    if (status) params.append('release_status', status);
     params.append('page', page.toString());
     params.append('limit', limit.toString());
+    console.log("/movies/?",params.toString())
     return request<MovieListResponse>('GET', `/movies?${params.toString()}`, undefined, false);
-  },
-
-  getMoviesPublic: (
-    page: number = 1,
-    limit: number = 20,
-    status?: string,
-    genre?: string,
-    search?: string,
-  ): Promise<MovieListResponse> => {
-    return movieApi.getMovies(page, limit, status, genre, search);
   },
 
   getMovieById: (movieId: number): Promise<MovieDetail> =>

@@ -3,11 +3,12 @@ import { useEffect, useState } from "react"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ReviewCard } from "@/components/community/ReviewCard"
-import { PopularFilms } from "@/components/community/PopularFilms"
+import { NowShowingMovies } from "@/components/community/NowShowingMovies"
 import { PopularReviewers } from "@/components/community/PopularReviewers"
 import { ReviewModal } from "@/components/community/ReviewModal"
-// import type { Movie } from "@/types/api"
-// import { moviesApi } from "@/services/api"
+import type { Movie } from "@/types/api"
+import { moviesApi } from "@/services/api"
+import { Spinner } from "@/components/ui/spinner"
 
 // --- Mock data (replace with real API calls) ---
 const MOCK_REVIEWS = [
@@ -37,12 +38,6 @@ const MOCK_REVIEWS = [
   },
 ]
 
-const MOCK_POPULAR_FILMS = [
-  { id: "1", title: "Kokuho", poster: "https://placehold.co/90x130/1a1a2e/white?text=KOKUHO" },
-  { id: "2", title: "Film 2",  poster: "https://placehold.co/90x130/2d1b69/white?text=FILM+2" },
-  { id: "3", title: "Accident", poster: "https://placehold.co/90x130/0f3460/white?text=ACCIDENT" },
-]
-
 const MOCK_REVIEWERS = [
   { id: "1", username: "@Amjard Rotee", films: 1314, reviews: 1234, avatar: "" },
   { id: "2", username: "@Amjard Rotee", films: 1314, reviews: 1234, avatar: "" },
@@ -54,21 +49,39 @@ export default function CommunityPage() {
   const [search, setSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedReview, setSelectedReview] = useState<(typeof MOCK_REVIEWS)[0] | null>(null)
-
+const [error, setError] = useState<string | null>(null)
+  const [nowShowing, setNowShowing] = useState<Movie[]>([])
+  const [loading, setLoading] = useState(true)
   const handleOpenModal = (review: (typeof MOCK_REVIEWS)[0]) => {
     setSelectedReview(review)
     setModalOpen(true)
   }
 
+  useEffect(() => {
+    const fetchNowShowing = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await moviesApi.getMovies(1, 10, 'now_showing');
+        console.log("Response", response)
+        const movies = response?.movies || [];
+        setNowShowing(movies);
+      } catch (err) {
+        console.error('Failed to fetch sidebar movies:', err);
+        setError('Could not load movies.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNowShowing();
+  }, []);
   return (
-    <div
-      className="bg-cover bg-center min-h-screen"
-      style={{ backgroundImage: "url('/assets/background/bg.png')" }}
-    >
-      <div className="min-h-screen px-8 lg:px-20 bg-white/75 backdrop-blur-sm py-10">
-        {/* Header row */}
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+
+      <div className="min-h-screen p-6 bg-white/70 backdrop-blur-sm py-12">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-black tracking-widest uppercase">Popular Review</h1>
+          <h1 className="text-3xl font-semibold uppercase">Popular Review</h1>
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
@@ -95,7 +108,13 @@ export default function CommunityPage() {
 
           {/* Right: Sidebar */}
           <aside className="w-72 flex-shrink-0 flex flex-col gap-10">
-            <PopularFilms films={MOCK_POPULAR_FILMS} />
+            {loading ? (
+              <Spinner/>
+            ) : error ? (
+              <p className="text-sm text-red-500">{error}</p>
+            ) : (
+              <NowShowingMovies movies={nowShowing} />
+            )}
             <PopularReviewers reviewers={MOCK_REVIEWERS} />
           </aside>
         </div>

@@ -22,9 +22,6 @@ function Movies() {
 
         const response = await movieApi.getMovies(1, 40, statusParam);
 
-        // Ensure we handle both cases:
-        // 1. API filtered correctly (use as is)
-        // 2. API returned all (filter manually for safety)
         const allFetched = response?.movies || [];
         const filtered = allFetched.filter((m: Movie) => m.release_status === statusParam);
 
@@ -43,7 +40,7 @@ function Movies() {
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen px-4 md:px-32 py-6 bg-white/70 backdrop-blur-md">
+      <div className="min-h-screen px-6 py-12 bg-white/70 backdrop-blur-md">
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         {loading ? (

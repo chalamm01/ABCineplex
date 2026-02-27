@@ -12,14 +12,12 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   ];
 
   return (
-    <div className="">
-      <div className="max-w-[1600px] mx-auto px-8 py-8">
-        <div className="flex justify-start items-center gap-12">
+        <div className="flex justify-start items-center gap-12 mb-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`text-3xl font-semibold tracking-tight transition-all ${
+              className={`text-3xl font-semibold transition-all ${
                 activeTab === tab.id
                   ? 'text-black border-b-4 border-black pb-2'
                   : 'text-neutral-400 hover:text-neutral-600'
@@ -31,7 +29,5 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             </button>
           ))}
         </div>
-      </div>
-    </div>
   );
 }
