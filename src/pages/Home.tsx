@@ -13,6 +13,7 @@ interface PromotionalEvent {
   category: 'news' | 'promo';
 }
 
+// Home.tsx (Main Page)
 export default function Home() {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [nowScreeningData, setNowScreeningData] = useState<Movie[]>([]);
@@ -41,16 +42,17 @@ export default function Home() {
           .sort((a: HeroSlide, b: HeroSlide) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
         setSlides(activeSlides);
-        setNowScreeningData(nowScreeningRes.movies);
-        setUpcomingData(upcomingRes.movies);
+        // Correctly accessing the .movies array from your API response
+        setNowScreeningData(nowScreeningRes.movies || []);
+        setUpcomingData(upcomingRes.movies || []);
 
         const activePromotions = promoData
-          .filter((item: typeof promoData[0]) => item.is_active)
-          .map((item: typeof promoData[0]) => ({
+          .filter((item: any) => item.is_active)
+          .map((item: any) => ({
             id: item.id,
-           image: item.image_url ?? '',
+            image: item.image_url ?? '',
             title: item.title ?? '',
-            category: item.promo_type === 'news' ? ('news' as const) : ('promo' as const),
+            category: item.promo_type === 'news' ? 'news' : 'promo',
           }));
         setPromotions(activePromotions);
       } catch (err) {
@@ -66,27 +68,25 @@ export default function Home() {
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen px-32 bg-white/70 backdrop-blur-md py-12">
-      <div className="flex justify-center items-center">
-      {loading && (
-          <Spinner/>
-      )}
-      {error && (
-          <p className="text-lg text-red-500">{error}</p>
-      )}
-      </div>
-      {!loading && !error && (
-        <main>
-          <HeroCarousel slides={slides} />
+      <div className="min-h-screen px-4 md:px-32 bg-white/70 backdrop-blur-md py-12">
+        <div className="flex justify-center items-center">
+          {loading && <Spinner />}
+          {error && <p className="text-lg text-red-500">{error}</p>}
+        </div>
 
-          <MoviesSection
-            nowScreening={nowScreeningData}
-            comingSoon={upcomingData}
-          />
+        {!loading && !error && (
+          <main className="space-y-12">
+            <HeroCarousel slides={slides} />
 
-          <PromotionalSection events={promotions} />
-        </main>
-      )}
+            {/* FIXED PROPS: Changed comingSoon to upcoming to match MoviesSectionProps */}
+            <MoviesSection
+              nowScreening={nowScreeningData}
+              upcoming={upcomingData}
+            />
+
+            <PromotionalSection events={promotions} />
+          </main>
+        )}
       </div>
     </div>
   );

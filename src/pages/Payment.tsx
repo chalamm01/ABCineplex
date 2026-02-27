@@ -11,7 +11,7 @@ import {
   type BookingDetails,
 } from '@/components/payment';
 import { useCountdown } from '@/hooks/useCountdown';
-import { bookingsApi, moviesApi, showtimesApi, paymentsApi } from '@/services/api';
+import { bookingsApi, paymentsApi } from '@/services/api';
 import { Zap, CheckCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner'
 
@@ -21,8 +21,6 @@ export default function Payment() {
   const navigate = useNavigate();
 
   const bookingId = searchParams.get('booking_id');
-  const movieId = searchParams.get('movie_id');
-  const showtimeId = searchParams.get('showtime_id');
   const seatsParam = searchParams.get('seats');
   const totalParam = searchParams.get('total');
   const deadlineParam = searchParams.get('deadline');
@@ -56,102 +54,43 @@ export default function Payment() {
     }, [navigate, paymentSuccess]),
   });
 
-  // Fetch booking details
+  // Fetch booking details — all data comes from the booking endpoint
   useEffect(() => {
-    const fetchBookingDetails = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    if (!bookingId) {
+      setError('No booking ID provided');
+      setLoading(false);
+      return;
+    }
 
-        let movieTitle = 'Movie';
-        let posterUrl = '';
-        let showTime = '';
-        let endTime = '';
-        let seats: string[] = [];
-        let total = 0;
-
-        if (movieId) {
-          try {
-            const movie = await moviesApi.getMovieById(Number(movieId));
-            movieTitle = movie.title;
-            posterUrl = movie.poster_url ?? '';
-          } catch {
-            console.error('Failed to fetch movie');
-          }
+    bookingsApi.getBooking(bookingId)
+      .then((booking) => {
+        if (booking.payment_deadline) {
+          setPaymentDeadline(new Date(booking.payment_deadline));
         }
-
-        if (showtimeId) {
-          try {
-            const showtime = await showtimesApi.getShowtime(Number(showtimeId));
-            const startDate = new Date(showtime.start_time || new Date());
-            showTime = startDate.toLocaleString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            });
-            const endDate = new Date(startDate.getTime() + 150 * 60 * 1000);
-            endTime = endDate.toLocaleTimeString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
-            });
-          } catch {
-            console.error('Failed to fetch showtime');
-          }
-        }
-
-        if (bookingId) {
-          try {
-            const booking = await bookingsApi.getBooking(Number(bookingId));
-            if (booking.payment_deadline) {
-              setPaymentDeadline(new Date(booking.payment_deadline));
-            }
-            if (booking.movie_title) movieTitle = booking.movie_title;
-            if (booking.poster_url) posterUrl = booking.poster_url;
-            if (booking.showtime_start) {
-              showTime = new Date(booking.showtime_start).toLocaleString('en-GB', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-              });
-            }
-            if (booking.seats && booking.seats.length > 0) seats = booking.seats;
-            if (booking.total_amount) total = booking.total_amount;
-          } catch {
-            console.error('Failed to fetch booking from API, using URL params');
-          }
-        }
-
-        // Use URL params as fallback
-        if (seats.length === 0) {
-          seats = seatsParam ? seatsParam.split(',') : [];
-        }
-        if (total === 0) {
-          total = totalParam ? Number(totalParam) : 0;
-        }
+        const seats = booking.seats?.length
+          ? booking.seats
+          : seatsParam?.split(',') ?? [];
+        const total = booking.total_amount || Number(totalParam) || 0;
+        const start = booking.showtime_start ? new Date(booking.showtime_start) : null;
 
         setBookingDetails({
-          movieTitle,
-          posterUrl,
-          cinemaName: 'ABCineplex',
-          showTime: showTime || 'N/A',
-          endTime: endTime || 'N/A',
+          movieTitle: booking.movie_title || 'Movie',
+          posterUrl: booking.poster_url || '',
+          cinemaName: booking.screen_name || 'ABCineplex',
+          showTime: start
+            ? start.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            : 'N/A',
+          endTime: 'N/A',
           seats,
           subtotal: total,
           discount: 0,
           discountLabel: undefined,
           total,
         });
-      } catch (err) {
-        console.error('Failed to fetch booking details:', err);
-        setError('Failed to load booking details');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBookingDetails();
-  }, [bookingId, movieId, showtimeId, seatsParam, totalParam]);
+      })
+      .catch(() => setError('Failed to load booking details'))
+      .finally(() => setLoading(false));
+  }, [bookingId, seatsParam, totalParam]);
 
   const handlePayment = async () => {
     if (!bookingId) {
@@ -201,7 +140,7 @@ export default function Payment() {
     if (!shouldCancel) return;
 
     try {
-      if (bookingId) await bookingsApi.cancelBooking(Number(bookingId));
+      if (bookingId) await bookingsApi.cancelBooking(bookingId);
       navigate('/');
     } catch (err) {
       console.error('Cancel error:', err);

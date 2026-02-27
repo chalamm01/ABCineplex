@@ -7,12 +7,26 @@ import {
   inputCls, btnEdit, btnDanger, joinLines, splitLines,
 } from './AdminShared';
 
+// Aligned with the provided schema keys
 const emptyMovie: MovieCreate = {
-  title: '', release_date: '', duration_minutes: 0, content_rating: '',
-  status: 'coming_soon', poster_url: '', banner_url: '',
-  synopsis: '', director: '', starring: [], genre: '',
-  audio_languages: [], subtitle_languages: [], imdb_score: undefined,
-  trailer_url: '', tag_event: '', runtime_minutes: 0
+  title: '',
+  release_date: '',
+  runtime_minutes: 0,
+  duration_minutes: 0,
+  credits_duration_minutes: 0,
+  content_rating: '',
+  release_status: 'upcoming',
+  poster_url: '',
+  banner_url: '',
+  synopsis: '',
+  director: '',
+  starring: [],
+  genre: '', // Schema uses singular 'genre'
+  audio_languages: [],
+  subtitle_languages: [],
+  imdb_score: undefined,
+  trailer_url: '',
+  tag_event: '',
 };
 
 type ModalMode = 'add' | 'edit' | null;
@@ -28,24 +42,23 @@ export default function MoviesSection() {
 
   const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
 
-useEffect(() => {
-  setLoading(true);
-  moviesApi.getMovies(1, 100)
-    .then((response: any) => {
-      // Extract the 'movies' array from the response object
-      if (response && Array.isArray(response.movies)) {
-        setMovies(response.movies);
-      } else {
-        console.error("Expected an array in response.movies, got:", response);
+  useEffect(() => {
+    setLoading(true);
+    moviesApi.getMovies(1, 100, 'all')
+      .then((response: any) => {
+        if (response && Array.isArray(response.movies)) {
+          setMovies(response.movies);
+          console.log(response.movies);
+        } else {
+          setMovies([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
         setMovies([]);
-      }
-    })
-    .catch((err) => {
-      console.error("Fetch error:", err);
-      setMovies([]);
-    })
-    .finally(() => setLoading(false));
-}, [refreshKey]);
+      })
+      .finally(() => setLoading(false));
+  }, [refreshKey]);
 
   function openAdd() {
     setForm(emptyMovie);
@@ -57,21 +70,23 @@ useEffect(() => {
   function openEdit(m: Movie) {
     setForm({
       title: m.title,
-      release_date: m.release_date,
-      duration_minutes: m.duration_minutes,
-      content_rating: m.content_rating,
-      release_status: m.release_status,
-      poster_url: m.poster_url,
-      banner_url: m.banner_url,
-      synopsis: m.synopsis ?? '',
-      director: m.director ?? '',
-      starring: m.starring ?? [],
-      genres: m.genre ?? '',
-      audio_languages: m.audio_languages ?? [],
-      subtitle_languages: m.subtitle_languages ?? [],
+      release_date: m.release_date || '',
+      runtime_minutes: m.runtime_minutes || 0,
+      duration_minutes: m.duration_minutes || 0,
+      credits_duration_minutes: m.credits_duration_minutes || 0,
+      content_rating: m.content_rating || '',
+      release_status: m.release_status || 'upcoming',
+      poster_url: m.poster_url || '',
+      banner_url: m.banner_url || '',
+      synopsis: m.synopsis || '',
+      director: m.director || '',
+      starring: m.starring || [],
+      genre: m.genre || '', // Mapped from schema
+      audio_languages: m.audio_languages || [],
+      subtitle_languages: m.subtitle_languages || [],
       imdb_score: m.imdb_score,
-      trailer_url: m.trailer_url ?? '',
-      tag_event: m.tag_event ?? '',
+      trailer_url: m.trailer_url || '',
+      tag_event: m.tag_event || '',
     });
     setEditId(m.id);
     setModal('edit');
@@ -114,7 +129,7 @@ useEffect(() => {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <TableHead cols={['ID', 'Title', 'Status', 'Duration', 'Rating', 'Release Date', 'Actions']} />
+            <TableHead cols={['ID', 'Title', 'Status', 'Runtime', 'Rating', 'Release Date', 'Actions']} />
             <tbody>
               {movies.length === 0 && (
                 <tr><td colSpan={7} className="px-3 py-6 text-zinc-500 text-center">No movies found.</td></tr>
@@ -124,7 +139,7 @@ useEffect(() => {
                   <td className="px-3 py-2 text-zinc-400">{m.id}</td>
                   <td className="px-3 py-2 text-white font-medium">{m.title}</td>
                   <td className="px-3 py-2"><StatusBadge value={m.release_status} /></td>
-                  <td className="px-3 py-2 text-zinc-300">{m.duration_minutes}m</td>
+                  <td className="px-3 py-2 text-zinc-300">{m.runtime_minutes}m</td>
                   <td className="px-3 py-2 text-zinc-300">{m.content_rating}</td>
                   <td className="px-3 py-2 text-zinc-300">{m.release_date}</td>
                   <td className="px-3 py-2">
@@ -146,18 +161,21 @@ useEffect(() => {
             <Field label="Title">
               <input className={inputCls} value={form.title} onChange={e => f('title', e.target.value)} />
             </Field>
-            <Field label="Release Date (YYYY-MM-DD)">
+            <Field label="Release Date">
               <input className={inputCls} type="date" value={form.release_date} onChange={e => f('release_date', e.target.value)} />
             </Field>
-            <Field label="Duration (minutes)">
-              <input className={inputCls} type="number" min="1" value={form.duration_minutes} onChange={e => f('duration_minutes', +e.target.value)} />
+            <Field label="Runtime (minutes)">
+              <input className={inputCls} type="number" min="0" value={form.runtime_minutes} onChange={e => f('runtime_minutes', +e.target.value)} />
+            </Field>
+            <Field label="Total Duration (incl. ads)">
+              <input className={inputCls} type="number" min="0" value={form.duration_minutes} onChange={e => f('duration_minutes', +e.target.value)} />
             </Field>
             <Field label="Content Rating">
               <input className={inputCls} value={form.content_rating} placeholder="e.g. PG-13" onChange={e => f('content_rating', e.target.value)} />
             </Field>
-            <Field label="Release Status">
-              <select className={inputCls} value={form.release_status} onChange={e => f('release_status', e.target.value)}>
-                <option value="coming_soon">Coming Soon</option>
+            <Field label="Status">
+              <select className={inputCls} value={form.status} onChange={e => f('status', e.target.value)}>
+                <option value="upcoming">Coming Soon</option>
                 <option value="now_showing">Now Showing</option>
                 <option value="ended">Ended</option>
               </select>
@@ -169,11 +187,8 @@ useEffect(() => {
                 onChange={e => f('imdb_score', e.target.value ? +e.target.value : undefined)}
               />
             </Field>
-            <Field label="Director">
-              <input className={inputCls} value={form.director ?? ''} onChange={e => f('director', e.target.value)} />
-            </Field>
-            <Field label="Tag / Event">
-              <input className={inputCls} value={form.tag_event ?? ''} placeholder="e.g. IMAX, 4DX" onChange={e => f('tag_event', e.target.value)} />
+            <Field label="Credits Duration (mins)">
+              <input className={inputCls} type="number" min="0" value={form.credits_duration_minutes} onChange={e => f('credits_duration_minutes', +e.target.value)} />
             </Field>
             <div className="col-span-2">
               <Field label="Poster URL">
@@ -185,27 +200,31 @@ useEffect(() => {
                 <input className={inputCls} value={form.banner_url} onChange={e => f('banner_url', e.target.value)} />
               </Field>
             </div>
-            <div className="col-span-2">
-              <Field label="Trailer URL">
-                <input className={inputCls} value={form.trailer_url ?? ''} onChange={e => f('trailer_url', e.target.value)} />
-              </Field>
-            </div>
+            <Field label="Genre">
+              <input className={inputCls} value={form.genre ?? ''} onChange={e => f('genre', e.target.value)} />
+            </Field>
+            <Field label="Director">
+              <input className={inputCls} value={form.director ?? ''} onChange={e => f('director', e.target.value)} />
+            </Field>
             <div className="col-span-2">
               <Field label="Synopsis">
                 <textarea className={inputCls} rows={3} value={form.synopsis ?? ''} onChange={e => f('synopsis', e.target.value)} />
               </Field>
             </div>
-            <Field label="Genres (one per line)">
-              <textarea className={inputCls} rows={2} value={joinLines(form.genres)} onChange={e => f('genres', splitLines(e.target.value))} />
-            </Field>
             <Field label="Starring (one per line)">
-              <textarea className={inputCls} rows={2} value={joinLines(form.starring)} onChange={e => f('starring', splitLines(e.target.value))} />
+              <textarea className={inputCls} rows={2} value={joinLines(form.starring || [])} onChange={e => f('starring', splitLines(e.target.value))} />
             </Field>
             <Field label="Audio Languages (one per line)">
-              <textarea className={inputCls} rows={2} value={joinLines(form.audio_languages)} onChange={e => f('audio_languages', splitLines(e.target.value))} />
+              <textarea className={inputCls} rows={2} value={joinLines(form.audio_languages || [])} onChange={e => f('audio_languages', splitLines(e.target.value))} />
             </Field>
             <Field label="Subtitle Languages (one per line)">
-              <textarea className={inputCls} rows={2} value={joinLines(form.subtitle_languages)} onChange={e => f('subtitle_languages', splitLines(e.target.value))} />
+              <textarea className={inputCls} rows={2} value={joinLines(form.subtitle_languages || [])} onChange={e => f('subtitle_languages', splitLines(e.target.value))} />
+            </Field>
+            <Field label="Tag / Event">
+              <input className={inputCls} value={form.tag_event ?? ''} placeholder="e.g. IMAX" onChange={e => f('tag_event', e.target.value)} />
+            </Field>
+            <Field label="Trailer URL">
+              <input className={inputCls} value={form.trailer_url ?? ''} onChange={e => f('trailer_url', e.target.value)} />
             </Field>
           </div>
           <ModalActions

@@ -258,13 +258,13 @@ export const movieApi = {
     movieApi.getMovieShowtimes(movieId),
 
   createMovie: (movie: MovieCreate): Promise<Movie> =>
-    requestWithAuth<Movie>('POST', '/movies', movie),
+    requestWithAuth<Movie>('POST', '/admin/movies', movie),
 
   updateMovie: (movieId: number, movie: MovieUpdate): Promise<Movie> =>
-    requestWithAuth<Movie>('PATCH', `/movies/${movieId}`, movie),
+    requestWithAuth<Movie>('PATCH', `/admin/movies/${movieId}`, movie),
 
   deleteMovie: (movieId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/movies/${movieId}`),
+    requestWithAuth<{ message: string }>('DELETE', `/admin/movies/${movieId}`),
 };
 
 export const moviesApi = movieApi; // Alias for backward compatibility
@@ -300,19 +300,19 @@ export const showtimeApi = {
   getShowtimesByMovie: (movieId: number): Promise<Showtime[]> =>
     request<Showtime[]>('GET', `/showtimes/movie/${movieId}`, undefined, false),
 
-  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_in_seconds: number }> =>
-    request<{ hold_id: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
+  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
+    request<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
       seat_ids: seatIds,
     }),
 
   createShowtime: (showtime: ShowtimeCreate): Promise<Showtime> =>
-    requestWithAuth<Showtime>('POST', '/showtimes', showtime),
+    requestWithAuth<Showtime>('POST', '/admin/showtimes', showtime),
 
   updateShowtime: (showtimeId: number, showtime: ShowtimeUpdate): Promise<Showtime> =>
-    requestWithAuth<Showtime>('PATCH', `/showtimes/${showtimeId}`, showtime),
+    requestWithAuth<Showtime>('PATCH', `/admin/showtimes/${showtimeId}`, showtime),
 
   deleteShowtime: (showtimeId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/showtimes/${showtimeId}`),
+    requestWithAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
 };
 
 export const showtimesApi = showtimeApi; // Alias
@@ -322,8 +322,8 @@ export const showtimesApi = showtimeApi; // Alias
 // ============================================================================
 
 export const seatApi = {
-  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_in_seconds: number }> =>
-    request<{ hold_id: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
+  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
+    request<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
       seat_ids: seatIds,
     }),
 
@@ -353,26 +353,26 @@ export const bookingApi = {
   confirmPayment: (request: ConfirmPaymentRequest): Promise<ConfirmPaymentResponse> =>
     requestWithAuth<ConfirmPaymentResponse>('POST', '/bookings/confirm-payment', request),
 
-  getBookingById: (bookingId: number): Promise<BookingDetail> =>
+  getBookingById: (bookingId: string): Promise<BookingDetail> =>
     requestWithAuth<BookingDetail>('GET', `/bookings/${bookingId}`),
 
-  getBooking: (bookingId: number): Promise<BookingDetail> =>
+  getBooking: (bookingId: string): Promise<BookingDetail> =>
     bookingApi.getBookingById(bookingId),
 
-  getBookingTickets: (bookingId: number): Promise<{ tickets: any[] }> =>
+  getBookingTickets: (bookingId: string): Promise<{ tickets: any[] }> =>
     requestWithAuth<{ tickets: any[] }>('GET', `/bookings/${bookingId}/tickets`),
 
   getUserBookings: (status?: string, page: number = 1, limit: number = 10): Promise<UserBookingsResponse> =>
     requestWithAuth<UserBookingsResponse>(
       'GET',
-      `/bookings/user/bookings?status=${status || ''}&page=${page}&limit=${limit}`,
+      `/users/me/bookings?status=${status || ''}&page=${page}&limit=${limit}`,
     ),
 
-  cancelBooking: (bookingId: number): Promise<CancelBookingResponse> =>
+  cancelBooking: (bookingId: string): Promise<CancelBookingResponse> =>
     requestWithAuth<CancelBookingResponse>('DELETE', `/bookings/${bookingId}`),
 
   changeShowtime: (
-    bookingId: number,
+    bookingId: string,
     newShowtimeId: number,
     newSeatIds: number[],
   ): Promise<{ message: string }> =>
@@ -381,7 +381,7 @@ export const bookingApi = {
       new_seat_ids: newSeatIds,
     }),
 
-  changeSeat: (bookingId: number, newSeatIds: number[]): Promise<{ message: string }> =>
+  changeSeat: (bookingId: string, newSeatIds: number[]): Promise<{ message: string }> =>
     requestWithAuth<{ message: string }>('POST', `/bookings/${bookingId}/change-seat`, {
       new_seat_ids: newSeatIds,
     }),
