@@ -82,7 +82,7 @@ const [error, setError] = useState<string | null>(null)
       <div className="min-h-screen p-6 bg-white/70 backdrop-blur-sm py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-semibold uppercase">Popular Review</h1>
-          <div className="relative w-64">
+          {/* <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="find a film"
@@ -90,7 +90,7 @@ const [error, setError] = useState<string | null>(null)
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 rounded-full bg-white border-gray-300 text-sm"
             />
-          </div>
+          </div> */}
         </div>
 
         {/* Main layout */}
@@ -107,7 +107,7 @@ const [error, setError] = useState<string | null>(null)
           </div>
 
           {/* Right: Sidebar */}
-          <aside className="w-72 flex-shrink-0 flex flex-col gap-10">
+          <aside className="w-72 shrink-0 flex flex-col gap-10">
             {loading ? (
               <Spinner/>
             ) : error ? (
