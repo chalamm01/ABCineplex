@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThumbsUp } from "lucide-react";
 
 
 // MockData
@@ -201,55 +202,65 @@ function ReviewCard({ reviews }: { reviews: typeof reviews.items }) {
               <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`} />
               <AvatarFallback>{review.username.charAt(0)}</AvatarFallback>
             </Avatar>
-            <span className="font-semibold">{review.username}</span>
-            <span className="text-sm text-gray-500">{<RatingStars rating={review.rating} />} {review.rating} stars</span>
+            <div>
+              <span className="font-semibold">{review.username}</span>
+              <span className="text-sm text-gray-500">{<RatingStars rating={review.rating} />} {review.rating} stars</span>
+            </div>
           </div>
           <p className="font-medium text-gray-700">{review.review_text}</p>
+          <div className="flex items-center gap-2 mt-2">
+            <ThumbsUp className="w-4 h-4 text-gray-500" />
+            <span className="text-sm text-gray-500">{review.like_count} likes</span>
+          </div>
         </div>
       ))}
     </div>
   );
 }
 
-function MovieCard({ movie }: { movie: typeof movies[0] }){
-    return (
-    <div className="flex cursor-pointer group items-center ml-4">
-      <div className="flex  rounded-sm shadow-sm">
+function MovieCard({ movie }: { movie: typeof movies[0] }) {
+  return (
+    <div className="flex cursor-pointer group items-center ml-4 my-5">
+      <div className="flex gap-4 rounded-sm max-w-[100vw]">
+        {/* Poster */}
         <img
           src={movie.poster_url}
           alt={movie.title}
-          className="w-50 h-80 object-cover transition-transform duration-200 group-hover:scale-105 rounded-sm"
+          className="w-50 h-80 object-cover transition-transform duration-200 group-hover:scale-105 rounded-sm flex-shrink-0"
         />
-        <h1 className="text-3xl font-bold mt-1 ml-2 block">
-          {movie.title}
-          <div className="inline ml-1 text-black/40">
-            {movie.release_date.substring(0, 4)}
-          </div>
-        </h1>
-        <div className="overflow-auto max-h-40 max-w-[100vh] mt-2">
-            <ReviewCard reviews={reviews.items
-              .filter(r => r.movie_id === movie.id)
+
+        {/* Title + Review stacked vertically */}
+        <div className="flex flex-col gap-4">
+          <h1 className="text-3xl font-bold mt-1">
+            {movie.title}
+            <span className="ml-1 text-black/40 font-normal">
+              {movie.release_date.substring(0, 4)}
+            </span>
+          </h1>
+
+          <ReviewCard
+            reviews={reviews.items
+              .filter((r) => r.movie_id === movie.id)
               .sort((a, b) => b.like_count - a.like_count)
               .slice(0, 1)}
-            />
-          </div>
+          />
+        </div>
       </div>
     </div>
   );
 }
-
 export default function CommunityPage() {
   return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 bg-white/70 backdrop-blur-md py-12">
         <Card>
-          <div className="overflow-y-auto max-h-[80vh] max-w-[100vh]">
-          {movies.map((movie) => (
-            <>
-            <MovieCard key={movie.id} movie={movie} />
-            <Separator className="my-2" />
-            </>
-          ))}
+          <div className="overflow-y-auto max-h-[80vh] max-w-[100vh] p-6">
+            {movies.map((movie) => (
+              <>
+              <MovieCard key={movie.id} movie={movie} />
+              <Separator className="my-2" />
+              </>
+            ))}
           </div>
         </Card>
       </div>
