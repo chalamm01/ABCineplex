@@ -1,132 +1,144 @@
-// src/pages/CommunityPage.tsx
-import { useEffect, useState } from "react"
-import { Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { ReviewCard } from "@/components/community/ReviewCard"
-import { NowShowingMovies } from "@/components/community/NowShowingMovies"
-import { PopularReviewers } from "@/components/community/PopularReviewers"
-import { ReviewModal } from "@/components/community/ReviewModal"
-import type { Movie } from "@/types/api"
-import { moviesApi } from "@/services/api"
-import { Spinner } from "@/components/ui/spinner"
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
-// --- Mock data (replace with real API calls) ---
-const MOCK_REVIEWS = [
-  {
-    id: "1",
-    movie: { title: "Kokuho", year: 2025, poster: "https://placehold.co/80x110/1a1a2e/white?text=KOKUHO" },
-    author: { username: "@Amjard Rotee", avatar: "" },
-    rating: 5,
-    body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc eget elementum neque, at tincidunt lacus. Praesent eleifend ligula a sem pulvinar facilisis.",
-    likes: 162,
-  },
-  {
-    id: "2",
-    movie: { title: "Kokuho", year: 2025, poster: "https://placehold.co/80x110/1a1a2e/white?text=KOKUHO" },
-    author: { username: "@Amjard Rotee", avatar: "" },
-    rating: 5,
-    body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc eget elementum neque, at tincidunt lacus. Praesent eleifend ligula a sem pulvinar facilisis.",
-    likes: 162,
-  },
-  {
-    id: "3",
-    movie: { title: "Kokuho", year: 2025, poster: "https://placehold.co/80x110/1a1a2e/white?text=KOKUHO" },
-    author: { username: "@Amjard Rotee", avatar: "" },
-    rating: 5,
-    body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc eget elementum neque, at tincidunt lacus. Praesent eleifend ligula a sem pulvinar facilisis.",
-    likes: 162,
-  },
-]
 
-const MOCK_REVIEWERS = [
-  { id: "1", username: "@Amjard Rotee", films: 1314, reviews: 1234, avatar: "" },
-  { id: "2", username: "@Amjard Rotee", films: 1314, reviews: 1234, avatar: "" },
-  { id: "3", username: "@Amjard Rotee", films: 1314, reviews: 1234, avatar: "" },
-  { id: "4", username: "@Amjard Rotee", films: 1314, reviews: 1234, avatar: "" },
-]
+// MockData
+const movies = [
+  {
+    id: 1,
+    title: "Human Resource",
+    genre: "Drama",
+    runtime_minutes: 122,
+    rating_tmdb: 7,
+    starring: [
+      "Prapamonton Eiamchan",
+      "Paopetch Charoensook",
+      "Chanakan Rattanaudom",
+    ],
+    poster_url: "/assets/background/bg.png",
+    banner_url: "/assets/background/bg.png",
+    release_date: "2026-02-27",
+    content_rating: "16+",
+    audio_languages: ["TH"],
+    subtitle_languages: ["TH", "EN"],
+    status: "now_showing",
+  },
+  {
+    id: 2,
+    title: "Bangkok Noir",
+    genre: "Thriller",
+    runtime_minutes: 110,
+    rating_tmdb: 7.5,
+    starring: ["Mario Maurer", "Urassaya Sperbund", "Aokbab Chutimon"],
+    poster_url: "/assets/background/bg.png",
+    banner_url: "",
+    release_date: "2026-01-15",
+    content_rating: "18+",
+    audio_languages: ["TH"],
+    subtitle_languages: ["TH", "EN"],
+    status: "now_showing",
+  },
+  {
+    id: 3,
+    title: "Muay Legacy",
+    genre: "Action",
+    runtime_minutes: 118,
+    rating_tmdb: 7.9,
+    starring: ["Tony Jaa", "Petchtai Wongkamlao", "Jija Yanin"],
+    poster_url: "/assets/background/bg.png",
+    banner_url: "/assets/background/bg.png",
+    release_date: "2026-02-14",
+    content_rating: "13+",
+    audio_languages: ["TH"],
+    subtitle_languages: ["TH", "EN", "ZH", "KO"],
+    status: "now_showing",
+  },
+  {
+    id: 4,
+    title: "Ghost of the North",
+    genre: "Horror",
+    runtime_minutes: 98,
+    rating_tmdb: 6.8,
+    starring: ["Apinya Sakuljaroensuk", "Ananda Everingham"],
+    poster_url: "/assets/background/bg.png",
+    banner_url: "/assets/background/bg.png",
+    release_date: "2025-10-31",
+    content_rating: "18+",
+    audio_languages: ["TH"],
+    subtitle_languages: ["TH"],
+    status: "ended",
+  },
+  {
+    id: 5,
+    title: "The Last Horizon",
+    genre: "Sci-Fi",
+    runtime_minutes: 138,
+    rating_tmdb: 8,
+    starring: ["Nattawut Poonpiriya", "Davika Hoorne", "Sunny Suwanmethanon"],
+    poster_url: "/assets/background/bg.png",
+    banner_url: "/assets/background/bg.png",
+    release_date: "2026-03-05",
+    content_rating: "13+",
+    audio_languages: ["TH", "EN"],
+    subtitle_languages: ["TH", "EN", "ZH"],
+    status: "coming_soon",
+  },
+  {
+    id: 6,
+    title: "Summer in Chiang Mai",
+    genre: "Romance",
+    runtime_minutes: 105,
+    rating_tmdb: 7.2,
+    starring: ["Baifern Pimchanok", "Mario Maurer", "Violette Wautier"],
+    poster_url: "/assets/background/bg.png",
+    banner_url: "/assets/background/bg.png",
+    release_date: "2026-04-10",
+    content_rating: "G",
+    audio_languages: ["TH", "EN"],
+    subtitle_languages: ["TH", "EN", "JA"],
+    status: "coming_soon",
+  },
+];
+
+
+function MovieCard({ movie }: { movie: typeof movies[0] }){
+    return (
+    <div className="flex-shrink-0 cursor-pointer group bg-black">
+      <div className="flex overflow-hidden rounded-sm shadow-sm">
+        <img
+          src={movie.poster_url}
+          alt={movie.title}
+          className="w-[100px] h-[150px] object-cover transition-transform duration-200 group-hover:scale-105 rounded-sm"
+        />
+        <h1 className="text-xl font-bold text-white mt-1 ml-2">
+          {movie.title}
+          <div className="inline ml-1 text-white/70">
+            {movie.release_date.substring(0, 4)}
+          </div>
+        </h1>
+      </div>
+    </div>
+  );
+}
+
+
+
 
 export default function CommunityPage() {
-  const [search, setSearch] = useState("")
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedReview, setSelectedReview] = useState<(typeof MOCK_REVIEWS)[0] | null>(null)
-const [error, setError] = useState<string | null>(null)
-  const [nowShowing, setNowShowing] = useState<Movie[]>([])
-  const [loading, setLoading] = useState(true)
-  const handleOpenModal = (review: (typeof MOCK_REVIEWS)[0]) => {
-    setSelectedReview(review)
-    setModalOpen(true)
-  }
-
-  useEffect(() => {
-    const fetchNowShowing = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await moviesApi.getMovies(1, 10, 'now_showing');
-        console.log("Response", response)
-        const movies = response?.movies || [];
-        setNowShowing(movies);
-      } catch (err) {
-        console.error('Failed to fetch sidebar movies:', err);
-        setError('Could not load movies.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNowShowing();
-  }, []);
-  return (
+  return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-
-      <div className="min-h-screen p-6 bg-white/70 backdrop-blur-sm py-12">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-semibold uppercase">Popular Review</h1>
-          {/* <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="find a film"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 rounded-full bg-white border-gray-300 text-sm"
-            />
-          </div> */}
-        </div>
-
-        {/* Main layout */}
-        <div className="flex gap-10">
-          {/* Left: Review Feed */}
-          <div className="flex-1 flex flex-col gap-0 divide-y divide-gray-200">
-            {MOCK_REVIEWS.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                onClick={() => handleOpenModal(review)}
-              />
-            ))}
+      <div className="min-h-screen px-32 bg-white/70 backdrop-blur-md py-12">
+        <Card>
+          <div className="overflow-y-auto max-h-[70vh] max-w-3xl">
+          {movies.map((movie) => (
+            <>
+            <MovieCard key={movie.id} movie={movie} />
+            <Separator className="my-2" />
+            </>
+          ))}
           </div>
-
-          {/* Right: Sidebar */}
-          <aside className="w-72 shrink-0 flex flex-col gap-10">
-            {loading ? (
-              <Spinner/>
-            ) : error ? (
-              <p className="text-sm text-red-500">{error}</p>
-            ) : (
-              <NowShowingMovies movies={nowShowing} />
-            )}
-            <PopularReviewers reviewers={MOCK_REVIEWERS} />
-          </aside>
-        </div>
+        </Card>
       </div>
-
-      {/* Review Modal */}
-      {modalOpen && selectedReview && (
-        <ReviewModal
-          review={selectedReview}
-          onClose={() => setModalOpen(false)}
-        />
-      )}
     </div>
-  )
-}
+
+)};

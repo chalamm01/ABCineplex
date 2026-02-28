@@ -5,6 +5,7 @@ import { DateTimeSelection } from '@/components/movies/date-time-selection';
 import { SeatMap } from '@/components/movies/seat-map';
 import { TicketSummary } from '@/components/movies/ticket-summary';
 import { moviesApi, showtimesApi } from '@/services/api';
+import type { APISeat } from '@/services/api';
 import type { MovieDetail, ShowtimeCard } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -142,15 +143,14 @@ export default function MovieBooking() {
 
       setCurrentShowtimeId(card.showtime_id);
       try {
-        const response = await showtimesApi.getSeats(card.showtime_id);
-        const seatsData = response.seats ?? [];
-        if (seatsData.length > 0) {
+        const seatsData: APISeat[] = await showtimesApi.getSeats(card.showtime_id);
+        if (seatsData && seatsData.length > 0) {
           const mapped: Seat[] = seatsData.map((s) => ({
             id: s.seat_id,
             row: s.row_label,
             col: s.seat_number,
             status: s.status?.toLowerCase() === 'available' ? 'available' : 'reserved',
-            price: card.ticket_price_normal ?? undefined,
+            price: s.price ?? card.ticket_price_normal ?? undefined,
           }));
           setSeats(mapped);
         } else {
@@ -196,12 +196,11 @@ export default function MovieBooking() {
         .join(',');
 
       const params = new URLSearchParams({
-        booking_id: String(holdResult.hold_id ?? ''),
-        movie_id: String(movieId),
+        hold_id: String(holdResult.hold_id ?? ''),
         showtime_id: String(currentShowtimeId),
         seats: seatLabels,
         total: String(seatsTotalPrice),
-        deadline: holdResult.expires_at ?? '',
+        expires_at: holdResult.expires_at ?? '',
       });
 
       navigate(`/payment?${params.toString()}`);
@@ -246,6 +245,7 @@ export default function MovieBooking() {
   }
 
   // Get the correct duration (runtime_minutes or duration_minutes)
+  const movieDuration = movie.duration_minutes;
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">

@@ -58,7 +58,6 @@ export function RegisterForm() {
           localStorage.setItem('refresh_token', response.refresh_token);
         }
         localStorage.setItem('user', JSON.stringify(response.user));
-        globalThis.dispatchEvent(new Event('auth-change'));
         navigate('/');
       } else {
         // Email confirmation required — show message on login page

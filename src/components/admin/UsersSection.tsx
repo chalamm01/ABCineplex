@@ -48,7 +48,7 @@ export default function UsersSection() {
 
   useEffect(() => {
     setLoading(true);
-    adminApi.getUsers(undefined, 0, 100)
+    adminApi.getUsers(0, 100)
       .then(setUsers)
       .catch(() => {})
       .finally(() => setLoading(false));

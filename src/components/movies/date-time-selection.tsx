@@ -29,30 +29,16 @@ export function DateTimeSelection({
   onTimeChange,
   summarizedShowtimes,
 }: DateTimeSelectionProps) {
-  const rawGroups: DateGroupShowtime[] = summarizedShowtimes ?? dates.map((date, index) => ({
+  const groupedShowtimes: DateGroupShowtime[] = summarizedShowtimes || dates.map((date, index) => ({
     ...date,
     showtimes: times.map((time) => ({
       time,
       showtimeId: index,
-      status: 'available',
+      status:
+        selectedDate === index && selectedTime === time
+          ? 'selected'
+          : 'available',
     })),
-  }));
-
-  // Always derive selected state from props so clicking registers visually
-  const groupedShowtimes = rawGroups.map((dateGroup, dateIndex) => ({
-    ...dateGroup,
-    showtimes: dateGroup.showtimes.map((showtime) => {
-      const isSelected = selectedDate === dateIndex && selectedTime === showtime.time;
-      let resolvedStatus: ShowtimeInfo['status'];
-      if (isSelected) {
-        resolvedStatus = 'selected';
-      } else if (showtime.status === 'selected') {
-        resolvedStatus = 'available';
-      } else {
-        resolvedStatus = showtime.status;
-      }
-      return { ...showtime, status: resolvedStatus };
-    }),
   }));
 
   return (

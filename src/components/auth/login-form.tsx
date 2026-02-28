@@ -39,8 +39,6 @@ export function LoginForm() {
     try {
       const response = await authApi.login(formData);
       localStorage.setItem('token', response.token);
-      if (response.user) localStorage.setItem('user', JSON.stringify(response.user));
-      globalThis.dispatchEvent(new Event('auth-change'));
       navigate('/');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid credentials';

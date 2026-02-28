@@ -55,7 +55,7 @@ import type {
 // CONFIGURATION
 // ============================================================================
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 // ============================================================================
 // UTILITIES
@@ -210,13 +210,26 @@ export const movieApi = {
     page: number = 1,
     limit: number = 20,
     status?: string,
+    genre?: string,
+    search?: string,
   ): Promise<MovieListResponse> => {
     const params = new URLSearchParams();
-    if (status) params.append('release_status', status);
+    if (status) params.append('status', status);
+    if (genre) params.append('genre', genre);
+    if (search) params.append('search', search);
     params.append('page', page.toString());
     params.append('limit', limit.toString());
-    console.log("/movies/?",params.toString())
     return request<MovieListResponse>('GET', `/movies?${params.toString()}`, undefined, false);
+  },
+
+  getMoviesPublic: (
+    page: number = 1,
+    limit: number = 20,
+    status?: string,
+    genre?: string,
+    search?: string,
+  ): Promise<MovieListResponse> => {
+    return movieApi.getMovies(page, limit, status, genre, search);
   },
 
   getMovieById: (movieId: number): Promise<MovieDetail> =>
@@ -245,13 +258,13 @@ export const movieApi = {
     movieApi.getMovieShowtimes(movieId),
 
   createMovie: (movie: MovieCreate): Promise<Movie> =>
-    requestWithAuth<Movie>('POST', '/admin/movies', movie),
+    requestWithAuth<Movie>('POST', '/movies', movie),
 
   updateMovie: (movieId: number, movie: MovieUpdate): Promise<Movie> =>
-    requestWithAuth<Movie>('PATCH', `/admin/movies/${movieId}`, movie),
+    requestWithAuth<Movie>('PATCH', `/movies/${movieId}`, movie),
 
   deleteMovie: (movieId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/admin/movies/${movieId}`),
+    requestWithAuth<{ message: string }>('DELETE', `/movies/${movieId}`),
 };
 
 export const moviesApi = movieApi; // Alias for backward compatibility
@@ -287,19 +300,19 @@ export const showtimeApi = {
   getShowtimesByMovie: (movieId: number): Promise<Showtime[]> =>
     request<Showtime[]>('GET', `/showtimes/movie/${movieId}`, undefined, false),
 
-  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
-    request<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
+  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_in_seconds: number }> =>
+    request<{ hold_id: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
       seat_ids: seatIds,
     }),
 
   createShowtime: (showtime: ShowtimeCreate): Promise<Showtime> =>
-    requestWithAuth<Showtime>('POST', '/admin/showtimes', showtime),
+    requestWithAuth<Showtime>('POST', '/showtimes', showtime),
 
   updateShowtime: (showtimeId: number, showtime: ShowtimeUpdate): Promise<Showtime> =>
-    requestWithAuth<Showtime>('PATCH', `/admin/showtimes/${showtimeId}`, showtime),
+    requestWithAuth<Showtime>('PATCH', `/showtimes/${showtimeId}`, showtime),
 
   deleteShowtime: (showtimeId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
+    requestWithAuth<{ message: string }>('DELETE', `/showtimes/${showtimeId}`),
 };
 
 export const showtimesApi = showtimeApi; // Alias
@@ -309,8 +322,8 @@ export const showtimesApi = showtimeApi; // Alias
 // ============================================================================
 
 export const seatApi = {
-  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
-    request<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
+  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_in_seconds: number }> =>
+    request<{ hold_id: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
       seat_ids: seatIds,
     }),
 
@@ -340,26 +353,26 @@ export const bookingApi = {
   confirmPayment: (request: ConfirmPaymentRequest): Promise<ConfirmPaymentResponse> =>
     requestWithAuth<ConfirmPaymentResponse>('POST', '/bookings/confirm-payment', request),
 
-  getBookingById: (bookingId: string): Promise<BookingDetail> =>
+  getBookingById: (bookingId: number): Promise<BookingDetail> =>
     requestWithAuth<BookingDetail>('GET', `/bookings/${bookingId}`),
 
-  getBooking: (bookingId: string): Promise<BookingDetail> =>
+  getBooking: (bookingId: number): Promise<BookingDetail> =>
     bookingApi.getBookingById(bookingId),
 
-  getBookingTickets: (bookingId: string): Promise<{ tickets: any[] }> =>
+  getBookingTickets: (bookingId: number): Promise<{ tickets: any[] }> =>
     requestWithAuth<{ tickets: any[] }>('GET', `/bookings/${bookingId}/tickets`),
 
   getUserBookings: (status?: string, page: number = 1, limit: number = 10): Promise<UserBookingsResponse> =>
     requestWithAuth<UserBookingsResponse>(
       'GET',
-      `/users/me/bookings?status=${status || ''}&page=${page}&limit=${limit}`,
+      `/bookings/user/bookings?status=${status || ''}&page=${page}&limit=${limit}`,
     ),
 
-  cancelBooking: (bookingId: string): Promise<CancelBookingResponse> =>
+  cancelBooking: (bookingId: number): Promise<CancelBookingResponse> =>
     requestWithAuth<CancelBookingResponse>('DELETE', `/bookings/${bookingId}`),
 
   changeShowtime: (
-    bookingId: string,
+    bookingId: number,
     newShowtimeId: number,
     newSeatIds: number[],
   ): Promise<{ message: string }> =>
@@ -368,7 +381,7 @@ export const bookingApi = {
       new_seat_ids: newSeatIds,
     }),
 
-  changeSeat: (bookingId: string, newSeatIds: number[]): Promise<{ message: string }> =>
+  changeSeat: (bookingId: number, newSeatIds: number[]): Promise<{ message: string }> =>
     requestWithAuth<{ message: string }>('POST', `/bookings/${bookingId}/change-seat`, {
       new_seat_ids: newSeatIds,
     }),

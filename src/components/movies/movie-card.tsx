@@ -8,6 +8,8 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, onClick }: MovieCardProps) {
+console.log(movie);
+
   return (
 
     <Link to={`/movie/${movie.id}`}>
@@ -43,12 +45,9 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
             <div>
-  <p className="text-neutral-500 uppercase font-semibold mb-0.5">Status</p>
-  <p className="font-medium text-neutral-900">
-    {/* Fixed: Use release_status from your API schema */}
-    {movie.release_status?.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase()) ?? 'N/A'}
-  </p>
-</div>
+              <p className="text-neutral-500 uppercase font-semibold mb-0.5">Status</p>
+              <p className="font-medium text-neutral-900">{movie.status?.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase()) ?? 'N/A'}</p>
+            </div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Duration</p>
               <p className="font-medium text-neutral-900">{formatDuration(movie.runtime_minutes)}</p>

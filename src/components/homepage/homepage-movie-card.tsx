@@ -12,15 +12,15 @@ export function HomepageMovieCard({ movie }: HomepageMovieCardProps) {
   if (!imageSrc) return null;
 
   return (
-<Link to={`/movie/${movie.id}`}>
-      <div className="cursor-pointer">
+    <Link to={`/movie/${movie.id}`}>
+      <div className="group cursor-pointer">
         <div className="relative overflow-hidden rounded-sm mb-4 aspect-video">
           <img
             src={imageSrc}
             alt={movie.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-300" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
         </div>
 
         <div className="space-y-3">

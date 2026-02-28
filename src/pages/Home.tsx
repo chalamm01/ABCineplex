@@ -13,7 +13,6 @@ interface PromotionalEvent {
   category: 'news' | 'promo';
 }
 
-// Home.tsx (Main Page)
 export default function Home() {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [nowScreeningData, setNowScreeningData] = useState<Movie[]>([]);
@@ -32,8 +31,8 @@ export default function Home() {
         const limit = 10;
         const [heroData, nowScreeningRes, upcomingRes, promoData] = await Promise.all([
           publicApi.getHeroCarousel(),
-          moviesApi.getMovies(page, limit, 'now_showing'),
-          moviesApi.getMovies(page, limit, 'upcoming'),
+          moviesApi.getMoviesPublic(page, limit, 'now_showing'),
+          moviesApi.getMoviesPublic(page, limit, 'upcoming'),
           publicApi.getPromoEvents(),
         ]);
 
@@ -42,17 +41,16 @@ export default function Home() {
           .sort((a: HeroSlide, b: HeroSlide) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
         setSlides(activeSlides);
-        // Correctly accessing the .movies array from your API response
-        setNowScreeningData(nowScreeningRes.movies || []);
-        setUpcomingData(upcomingRes.movies || []);
+        setNowScreeningData(nowScreeningRes.movies);
+        setUpcomingData(upcomingRes.movies);
 
         const activePromotions = promoData
-          .filter((item: any) => item.is_active)
-          .map((item: any) => ({
+          .filter((item: typeof promoData[0]) => item.is_active)
+          .map((item: typeof promoData[0]) => ({
             id: item.id,
-            image: item.image_url ?? '',
+           image: item.image_url ?? '',
             title: item.title ?? '',
-            category: item.promo_type === 'news' ? 'news' : 'promo',
+            category: item.promo_type === 'news' ? ('news' as const) : ('promo' as const),
           }));
         setPromotions(activePromotions);
       } catch (err) {
@@ -68,25 +66,27 @@ export default function Home() {
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen p-4 md:px-4 bg-white/70 backdrop-blur-md py-12">
-        <div className="flex justify-center items-center">
-          {loading && <Spinner />}
-          {error && <p className="text-lg text-red-500">{error}</p>}
-        </div>
+      <div className="min-h-screen px-32 bg-white/70 backdrop-blur-md py-12">
+      <div className="flex justify-center items-center">
+      {loading && (
+          <Spinner/>
+      )}
+      {error && (
+          <p className="text-lg text-red-500">{error}</p>
+      )}
+      </div>
+      {!loading && !error && (
+        <main>
+          <HeroCarousel slides={slides} />
 
-        {!loading && !error && (
-          <main className="space-y-12">
-            <HeroCarousel slides={slides} />
+          <MoviesSection
+            nowScreening={nowScreeningData}
+            comingSoon={upcomingData}
+          />
 
-            {/* FIXED PROPS: Changed comingSoon to upcoming to match MoviesSectionProps */}
-            <MoviesSection
-              nowScreening={nowScreeningData}
-              upcoming={upcomingData}
-            />
-
-            <PromotionalSection events={promotions} />
-          </main>
-        )}
+          <PromotionalSection events={promotions} />
+        </main>
+      )}
       </div>
     </div>
   );

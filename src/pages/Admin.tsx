@@ -41,6 +41,7 @@ export default function Admin() {
         const profile = await userApi.getProfile();
         setUser(profile);
         if (!profile.is_admin) {
+          console.warn('Access denied: user is not an admin', profile);
           navigate('/', { replace: true });
         }
       } catch (error) {
