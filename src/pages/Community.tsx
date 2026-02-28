@@ -196,7 +196,7 @@ function ReviewCard({ reviews }: { reviews: typeof reviews.items }) {
   return (
     <div className="flex flex-col gap-4 max-w-[100vw]">
       {reviews.map((review) => (
-        <div key={review.id} className="bg-white rounded-lg shadow-md p-4">
+        <div key={review.id} className="bg-white rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <Avatar className="w-8 h-8">
               <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`} />
