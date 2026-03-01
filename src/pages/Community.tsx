@@ -253,15 +253,18 @@ export default function CommunityPage() {
   return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 bg-white/70 backdrop-blur-md py-12">
-        <Card>
-          <div className="overflow-y-auto max-h-[80vh] max-w-[100vh] p-6">
-            {movies.map((movie) => (
-              <>
-              <MovieCard key={movie.id} movie={movie} />
-              <Separator className="my-2" />
-              </>
-            ))}
-          </div>
+        <Card className="grid grid-cols-2 gap-0">
+            <div className="overflow-y-auto max-h-[80vh] max-w-[100vh] p-6">
+              {movies.map((movie) => (
+                <>
+                <MovieCard key={movie.id} movie={movie} />
+                <Separator className="my-2" />
+                </>
+              ))}
+            </div>
+            <div className="bg-green-500 size-full p-6">
+
+            </div>
         </Card>
       </div>
     </div>
