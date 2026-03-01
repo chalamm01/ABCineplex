@@ -3,6 +3,12 @@ import { Separator } from "@/components/ui/separator";
 import { Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThumbsUp } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel"
+import type { Movie } from "@/types/api";
 
 
 // MockData
@@ -249,6 +255,37 @@ function MovieCard({ movie }: { movie: typeof movies[0] }) {
     </div>
   );
 }
+
+function CarouselItemComponent({ movies }: { movies: Movie[] }) {
+  return (
+    <div>
+      <Carousel>
+        <CarouselContent className="">
+          {movies
+            .sort((a, b) => (b.rating_tmdb ?? 0) - (a.rating_tmdb ?? 0))
+            .slice(0, 6)
+            .map((movie) => (
+              <CarouselItem
+                key={movie.id}
+                className="basis-1/4"
+              >
+                <Card className="w-50 h-80 overflow-hidden rounded-xl shadow-md p-0">
+                  <img
+                    src={movie.poster_url}
+                    alt={movie.title}
+                    className="w-full h-full object-cover"
+                  />
+                </Card>
+              </CarouselItem>
+            ))}
+        </CarouselContent>
+      </Carousel>
+    </div>
+    )
+}
+
+
+
 export default function CommunityPage() {
   return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
@@ -262,8 +299,9 @@ export default function CommunityPage() {
                 </>
               ))}
             </div>
-            <div className="bg-green-500 size-full p-6">
-
+            <div className="size-full p-6">
+              <h1 className="text-3xl font-bold mb-4">Top Movies</h1>
+              <CarouselItemComponent movies={movies} />
             </div>
         </Card>
       </div>
