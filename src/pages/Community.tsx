@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThumbsUp } from "lucide-react";
 import { ChevronRight } from "lucide-react";
+import { useRef, useState } from "react";
 
 // MockData
 const movies = [
@@ -174,7 +175,6 @@ const reviews = {
   ],
 };
 
-
 //star rating component
 function RatingStars({ rating }: { rating: number }) {
   return (
@@ -197,28 +197,53 @@ function RatingStars({ rating }: { rating: number }) {
 //review card
 function ReviewCard({ reviews }: { reviews: typeof reviews.items }) {
   return (
-    <div className="flex flex-col gap-4 w-[600px]">
+    <div className="flex flex-col gap-6 w-[600px]">
       {reviews.map((review) => (
-        <div key={review.id} className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-6 transition hover:shadow-[0_12px_40px_rgba(0,0,0,0.1)]">
-          <div className="flex items-center gap-2 mb-2">
-            <Avatar className="w-8 h-8">
-              <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`} />
-              <AvatarFallback>{review.username.charAt(0)}</AvatarFallback>
+        <Card
+          key={review.id}
+          className="p-6 rounded-2xl border-0 shadow-[0_10px_35px_rgba(0,0,0,0.06)] hover:shadow-[0_14px_45px_rgba(0,0,0,0.1)] transition duration-300"
+        >
+          {/* Top Section */}
+          <div className="flex items-start gap-3">
+            <Avatar className="w-9 h-9">
+              <AvatarImage
+                src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`}
+              />
+              <AvatarFallback>
+                {review.username.charAt(0)}
+              </AvatarFallback>
             </Avatar>
-            <div>
-              <span className="font-semibold">{review.username}</span>
-              <span className="text-sm text-gray-500">{<RatingStars rating={review.rating} />} {review.rating} stars</span>
+
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm">
+                {review.username}
+              </span>
+
+              <div className="flex items-center gap-2 text-yellow-500">
+                <RatingStars rating={review.rating} />
+                <span className="text-xs text-gray-500">
+                  {review.rating} stars
+                </span>
+              </div>
             </div>
           </div>
-          <p className="font-medium text-gray-700">{review.review_text}</p>
-          <div className="flex items-center gap-2 mt-2">
-            <ThumbsUp className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-500">{review.like_count} likes</span>
+
+          {/* Review Text */}
+          <p className="mt-4 text-gray-700 leading-relaxed">
+            {review.review_text}
+          </p>
+
+          {/* Like Section */}
+          <div className="flex items-center gap-2 mt-4 text-gray-500">
+            <ThumbsUp className="w-4 h-4" />
+            <span className="text-sm">
+              {review.like_count} likes
+            </span>
           </div>
-        </div>
+        </Card>
       ))}
     </div>
-  );
+  )
 }
 
 //movie card
@@ -257,93 +282,112 @@ function MovieCard({ movie }: { movie: typeof movies[0] }) {
 
 //main
 export default function CommunityPage() {
-  return(
-    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="py-12 flex justify-center">
-        <div className="w-[1200px] bg-white/90 backdrop-blur-xl rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.08)] p-16">
-          <div className="grid grid-cols-3 gap-16">
+  const [currentIndex, setCurrentIndex] = useState(0)
 
-            {/* left side  */}
-            <div className="col-span-2 space-y-10">
-              <h1 className="text-5xl font-black tracking-tight">
-                POPULAR REVIEW
-              </h1>
+  const nextSlide = () => {
+    setCurrentIndex((prev) =>
+      prev === movies.length - 1 ? 0 : prev + 1
+  )
+  }
+  const filmScrollRef = useRef<HTMLDivElement>(null)
 
-              {movies.map((movie) => (
-                <div key={movie.id}>
-                  <MovieCard movie = {movie} />
-                  <Separator className="my-6"/>
+  const scrollRight = () => {
+    filmScrollRef.current?.scrollBy({
+      left: 200,
+      behavior: "smooth",
+    })
+  }
+
+  return (
+    <div className="min-h-screen flex justify-center py-12 bg-gray-100">
+      <div className="w-[1200px] bg-white rounded-3xl shadow-xl p-16">
+        <div className="grid grid-cols-3 gap-16">
+
+          {/* LEFT SIDE */}
+          <div className="col-span-2 space-y-10 max-h-[750px] overflow-y-auto overflow-x-hidden pr-4">
+            <h1 className="text-5xl font-black tracking-tight">
+              POPULAR REVIEW
+            </h1>
+
+            {movies.map((movie) => (
+              <div key={movie.id}>
+                <MovieCard movie={movie} />
+                <Separator className="my-6" />
+              </div>
+            ))}
+          </div>
+
+          {/* RIGHT SIDE */}
+          <div className="space-y-8">
+
+            {/* Popular Films */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold">
+                  POPULAR FILMS
+                </h3>
+
+                <button onClick={nextSlide}>
+                  <ChevronRight className="w-5 h-5 hover:scale-110 transition" />
+                </button>
+              </div>
+
+              <div className="overflow-hidden w-[260px]">
+                <div 
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{
+                    transform: `translateX(-${currentIndex * 90}px)`
+                  }}
+                >
+                {movies.map((movie) => (
+                  <img
+                    key={movie.id}
+                    src={movie.poster_url}
+                    alt={movie.title}
+                    className="w-[80px] h-[120px] object-cover rounded-lg shadow-md mr-2"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+            {/* Popular Reviewers */}
+            <div>
+              <h2 className="text-sm font-semibold tracking-widest">
+                POPULAR REVIEWERS
+              </h2>
+            </div>
+
+            <div className="space-y-6 max-h-[300px] overflow-y-auto pr-2">
+              {reviews.items.map((review) => (
+                <div
+                  key={review.id}
+                  className="flex items-start gap-3 border-b pb-4"
+                >
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage
+                      src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`}
+                    />
+                    <AvatarFallback>
+                      {review.username.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="text-sm">
+                    <p className="font-medium">
+                      {review.username}
+                    </p>
+                    <p className="text-gray-500 line-clamp-2">
+                      {review.review_text}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* right side */}
-            <div className="space-y-8">
-
-            {/* popular film */}
-            <div className="space-y-4">
-
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold tracking-wide">
-                  POPULAR FILMS
-                </h3>
-              
-              <ChevronRight className="w-5 h-5"/>
-            </div>
-
-            <div className="flex gap-4">
-              {movies.slice(0, 3).map((movie) => (
-                <img
-                  key={movie.id}
-                  src={movie.poster_url}
-                  alt={movie.title}
-                  className="w-[80px] h-[120px] oblect-cover rounded-lg shadow-md"/>
-              ))}
-              </div>
-            </div>
-
-            {/* popular review */}
-            <div>
-              <p className="text-xs tracking-[0.3em] text-gray-500">
-              </p>
-              <h2 className="mt-2 text-sm font-semibold tracking-widest">
-                SIDE - POPULAR REVIEWS
-              </h2>
-              <p className="text-xs tracking-[0.3] text-gray-500 mt-2">
-
-              </p>
-            </div>
-
-            {/* sidebar review list */}
-            <div className="space-y-6">
-              {reviews.items
-                .sort((a,b) => b.like_count - a.like_count)
-                .slice(0, 4)
-                .map((review) => (
-                  <div 
-                    key={review.id}
-                    className="flex items-start gap-3 border-b pb-4">
-
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage
-                        src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`}/>
-                      <AvatarFallback>
-                        {review.username.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="text-sm">
-                      <p className="font-medim">{review.username}</p>
-                      <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">{review.review_text}</p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-            </div>
           </div>
         </div>
-     
       </div>
     </div>
-
-)};
+  )
+}
