@@ -49,6 +49,7 @@ import type {
   SnackMenuItem,
   SnackOrderItem,
   SnackOrder,
+  OrderResponse,
 } from '@/types/api';
 
 // ============================================================================
@@ -464,6 +465,17 @@ export const productsApi = {
 
   deleteProduct: (productId: string): Promise<{ message: string }> =>
     requestWithAuth<{ message: string }>('DELETE', `/products/${productId}`),
+};
+
+export const ordersApi = {
+  createOrder: (items: { product_id: string; quantity: number }[]): Promise<OrderResponse> =>
+    requestWithAuth<OrderResponse>('POST', '/orders', { items }),
+
+  getOrders: (): Promise<OrderResponse[]> =>
+    requestWithAuth<OrderResponse[]>('GET', '/orders'),
+
+  getOrder: (orderId: string): Promise<OrderResponse> =>
+    requestWithAuth<OrderResponse>('GET', `/orders/${orderId}`),
 };
 
 export const snacksApi = {

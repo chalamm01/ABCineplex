@@ -16,7 +16,7 @@ function Snacks() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      productsApi.getProducts(0, 100),
+      productsApi.getAllProducts(100),
       productsApi.getCategories(),
     ])
       .then(([prods, cats]) => {
@@ -34,7 +34,7 @@ function Snacks() {
   const { addToCart } = context;
 
   // Group products by category
-  const grouped = categories
+  const grouped = [...categories]
     .sort((a, b) => a.display_order - b.display_order)
     .map((cat) => ({
       category: cat,

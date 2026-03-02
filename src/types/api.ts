@@ -454,6 +454,24 @@ export interface ProductCategory {
   description?: string;
   image_url?: string;
   is_active: boolean;
+  display_order: number;
+}
+
+export interface OrderItemResponse {
+  id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+}
+
+export interface OrderResponse {
+  id: string;
+  user_id: string;
+  status: string;
+  total_amount: number;
+  items: OrderItemResponse[];
+  created_at: string;
 }
 
 export interface Product {
