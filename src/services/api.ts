@@ -390,11 +390,11 @@ export const paymentApi = {
   initiate: (request: InitiatePaymentRequest): Promise<InitiatePaymentResponse> =>
     paymentApi.initiatePayment(request),
 
-  confirmPayment: (paymentId: string, mockResult: boolean): Promise<PaymentResponse> =>
-    requestWithAuth<PaymentResponse>('POST', `/payments/${paymentId}/confirm`, { mock_result: mockResult }),
+  confirmPayment: (paymentId: string, mockResult: boolean, pointsRedeemed: number = 0): Promise<PaymentResponse> =>
+    requestWithAuth<PaymentResponse>('POST', `/payments/${paymentId}/confirm`, { mock_result: mockResult, points_redeemed: pointsRedeemed }),
 
-  confirm: (paymentId: string, mockResult: boolean): Promise<PaymentResponse> =>
-    paymentApi.confirmPayment(paymentId, mockResult),
+  confirm: (paymentId: string, mockResult: boolean, pointsRedeemed: number = 0): Promise<PaymentResponse> =>
+    paymentApi.confirmPayment(paymentId, mockResult, pointsRedeemed),
 
   getPaymentStatus: (paymentId: string): Promise<PaymentResponse> =>
     requestWithAuth<PaymentResponse>('GET', `/payments/${paymentId}`),

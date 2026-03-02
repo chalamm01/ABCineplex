@@ -5,6 +5,7 @@ interface ShowtimeInfo {
   showtimeId: number;
   status: 'available' | 'selected' | 'sold_out' | 'past';
   raqs?: number;
+  ttc?: number;
 }
 
 interface DateGroupShowtime extends BookingDate {
@@ -97,6 +98,9 @@ export function DateTimeSelection({
                   <span className="block">{showtime.time}</span>
                   {showtime.raqs != null && (
                     <span className="block text-[10px] mt-0.5 opacity-75">⭐ {showtime.raqs.toFixed(1)}</span>
+                  )}
+                  {showtime.ttc != null && (
+                    <span className="block text-[10px] mt-0.5 opacity-60">⏱ {Math.floor(showtime.ttc / 60)}h {showtime.ttc % 60}m</span>
                   )}
                 </button>
               ))}

@@ -7,7 +7,7 @@ import {
 } from './AdminShared';
 
 const emptyProduct: ProductCreate = {
-  name: '', category_id: '', price: 0, description: '', image_url: '', in_stock: true,
+  name: '', category_id: '', price: 0, description: '', image_url: '', is_active: true, stock_quantity: 0,
 };
 
 type ModalMode = 'add' | 'edit' | null;
@@ -47,7 +47,8 @@ export default function ProductsSection() {
       price: Number.parseFloat(p.price),
       description: p.description ?? '',
       image_url: p.image_url ?? '',
-      in_stock: p.in_stock,
+      is_active: p.is_active,
+      stock_quantity: p.stock_quantity,
     });
     setEditId(p.id);
     setModal('edit');
@@ -102,7 +103,7 @@ export default function ProductsSection() {
                   <td className="px-3 py-2 text-white font-medium">{p.name}</td>
                   <td className="px-3 py-2 text-zinc-300">{catName(p.category_id)}</td>
                   <td className="px-3 py-2 text-zinc-300">฿{p.price}</td>
-                  <td className="px-3 py-2"><ActiveIcon active={p.in_stock} /></td>
+                  <td className="px-3 py-2"><ActiveIcon active={p.is_active} /></td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
                       <button className={btnEdit} onClick={() => openEdit(p)}>Edit</button>
@@ -131,11 +132,14 @@ export default function ProductsSection() {
             <Field label="Price (฿)">
               <input className={inputCls} type="number" step="0.01" min="0" value={form.price} onChange={e => f('price', +e.target.value)} />
             </Field>
-            <Field label="In Stock">
-              <select className={inputCls} value={form.in_stock ? '1' : '0'} onChange={e => f('in_stock', e.target.value === '1')}>
+            <Field label="Active">
+              <select className={inputCls} value={form.is_active ? '1' : '0'} onChange={e => f('is_active', e.target.value === '1')}>
                 <option value="1">Yes</option>
                 <option value="0">No</option>
               </select>
+            </Field>
+            <Field label="Stock Qty">
+              <input className={inputCls} type="number" min="0" value={form.stock_quantity} onChange={e => f('stock_quantity', +e.target.value)} />
             </Field>
             <div className="col-span-2">
               <Field label="Image URL">

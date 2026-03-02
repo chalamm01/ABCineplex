@@ -21,7 +21,7 @@ type Seat = {
   price?: number;
 };
 
-type DateGroupShowtime = ApiDateGroupShowtime & { showtimes: { time: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past'; raqs?: number }[] };
+type DateGroupShowtime = ApiDateGroupShowtime & { showtimes: { time: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past'; raqs?: number; ttc?: number }[] };
 
 export default function MovieBooking() {
   const { id } = useParams<{ id: string }>();
@@ -108,6 +108,7 @@ export default function MovieBooking() {
             showtimeId: card.showtime_id,
             status: 'available' as const,
             raqs: card.risk_adjusted_quality_score,
+            ttc: card.total_time_commitment_minutes,
           }));
           return { ...date, showtimes };
         });

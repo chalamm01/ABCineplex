@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import { CartContext } from "@/providers/CartContextDef";
 import { ordersApi } from "@/services/api";
 import type { OrderResponse } from "@/types/api";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 

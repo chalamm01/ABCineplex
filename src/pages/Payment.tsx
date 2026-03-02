@@ -11,7 +11,7 @@ import {
   type BookingDetails,
 } from '@/components/payment';
 import { useCountdown } from '@/hooks/useCountdown';
-import { bookingsApi, paymentsApi, showtimesApi } from '@/services/api';
+import { bookingsApi, paymentsApi, showtimesApi, userApi } from '@/services/api';
 import { Zap, CheckCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner'
 
@@ -34,6 +34,10 @@ export default function Payment() {
   const [saveInfo, setSaveInfo] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  // Points redemption state
+  const [userPoints, setUserPoints] = useState(0);
+  const [redeemPoints, setRedeemPoints] = useState(false);
 
   // Booking data state
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
@@ -104,6 +108,14 @@ export default function Payment() {
           discountLabel: undefined,
           total,
         });
+
+        // Fetch user's loyalty points for redemption
+        try {
+          const profile = await userApi.getProfile();
+          setUserPoints(profile.reward_points ?? 0);
+        } catch {
+          // best-effort
+        }
       })
       .catch(() => setError('Failed to load booking details'))
       .finally(() => setLoading(false));
@@ -117,6 +129,10 @@ export default function Payment() {
 
     try {
       setIsProcessing(true);
+
+      const pointsDiscount = redeemPoints
+        ? Math.min(userPoints, Math.floor((bookingDetails?.subtotal ?? 0) * 0.5))
+        : 0;
 
       // Map UI payment method to backend mock method (§5.7)
       const mockMethod = paymentMethod === 'card' ? 'mock_card' : 'mock_qr';
@@ -132,7 +148,7 @@ export default function Payment() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Step 2: Confirm mock payment
-      const result = await paymentsApi.confirm(initiated.payment_id, true);
+      const result = await paymentsApi.confirm(initiated.payment_id, true, pointsDiscount);
 
       if (result.status === 'success') {
         setPaymentSuccess(true);
@@ -256,6 +272,45 @@ export default function Payment() {
                 Cancel
               </button>
             </div>
+
+            {/* EP-25: Redeem Loyalty Points */}
+            {userPoints > 0 && bookingDetails && (() => {
+              const maxDiscount = Math.min(userPoints, Math.floor(bookingDetails.subtotal * 0.5));
+              return (
+                <div className="mb-6 p-4 bg-violet-50 border-2 border-violet-200 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-violet-900">Redeem Loyalty Points</p>
+                      <p className="text-xs text-violet-600 mt-0.5">
+                        You have <strong>{userPoints.toLocaleString()} pts</strong>. Redeem {maxDiscount} pts = -{maxDiscount} THB
+                      </p>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={redeemPoints}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setRedeemPoints(checked);
+                          setBookingDetails((prev) => {
+                            if (!prev) return prev;
+                            const discount = checked ? maxDiscount : 0;
+                            return {
+                              ...prev,
+                              discount,
+                              discountLabel: checked ? `${maxDiscount} loyalty pts` : undefined,
+                              total: prev.subtotal - discount,
+                            };
+                          });
+                        }}
+                        className="w-5 h-5 accent-violet-700"
+                      />
+                      <span className="text-sm font-medium text-violet-900">Use points</span>
+                    </label>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Mock Payment Button - Quick checkout for testing */}
             <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-xl">

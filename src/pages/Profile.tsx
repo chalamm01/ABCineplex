@@ -181,6 +181,23 @@ export default function ProfilePage() {
                 {profile.attendance_streak} Days 🔥
               </p>
             </div>
+
+            <div className="md:col-span-2 bg-violet-50 rounded-xl p-4 border border-violet-200">
+              <p className="text-xs text-violet-600 uppercase tracking-wider font-semibold mb-2">Your Referral Code</p>
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-lg font-bold text-violet-900 tracking-widest">{profile.user_name}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(profile.user_name || '');
+                    alert('Referral code copied!');
+                  }}
+                  className="text-xs bg-violet-900 hover:bg-violet-800 text-white px-3 py-1 rounded-lg"
+                >
+                  Copy
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Share this code. You’ll both earn 50 bonus points when they register.</p>
+            </div>
           </div>
 
           <div className="flex justify-end gap-4 pt-4">

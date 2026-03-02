@@ -34,8 +34,10 @@ export function Login({
 }: Readonly<SocialLoginProps>) {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +58,8 @@ export function Login({
       await authApi.register({
         email,
         password,
-        first_name: 'User',
-        last_name: '',
+        full_name: fullName.trim() || 'User',
+        ...(referralCode.trim() ? { referral_code: referralCode.trim() } : {}),
       });
       navigate('/login');
     } catch (err: unknown) {
@@ -91,6 +93,22 @@ export function Login({
 
           {/* Email Login Form */}
           <form onSubmit={handleEmailSubmit} className="space-y-4">
+            {/* Full Name Field */}
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-sm font-medium text-foreground">
+                Full Name
+              </Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="border-border/50 focus:border-primary/50 transition-colors"
+                required
+              />
+            </div>
+
             {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-foreground">
@@ -172,10 +190,25 @@ export function Login({
 
             </div>
 
+            {/* Referral code (optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="referralCode" className="text-sm font-medium text-foreground">
+                Referral Code <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Input
+                id="referralCode"
+                type="text"
+                placeholder="Enter a friend's referral code"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value)}
+                className="border-border/50 focus:border-primary/50 transition-colors"
+              />
+            </div>
+
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || !email || !password || !confirmPassword}
+              disabled={loading || !email || !password || !confirmPassword || !fullName}
             >
               {loading ? (<><Spinner className="mr-2" /> Signing up...</>) : 'Sign up with email'}
             </Button>

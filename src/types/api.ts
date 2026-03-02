@@ -33,10 +33,10 @@ export interface LoginResponse {
 export interface RegisterRequest {
   email: string;
   password: string;
-  first_name: string;
-  last_name: string;
+  full_name: string;
   phone?: string;
   date_of_birth?: string;
+  referral_code?: string;
 }
 
 export interface RegisterResponse {
@@ -481,7 +481,8 @@ export interface Product {
   description?: string;
   price: number;
   image_url?: string;
-  is_available: boolean;
+  is_active: boolean;
+  stock_quantity: number;
 }
 
 export interface SnackMenuItem {
