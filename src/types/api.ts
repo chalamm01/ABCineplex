@@ -410,6 +410,11 @@ export interface ReviewResponse extends ReviewBase {
   movie_id: number;
   created_at: string;
   points_awarded: boolean;
+  // Fields returned by backend
+  username?: string;
+  like_count?: number;
+  user_liked?: boolean;
+  updated_at?: string;
 }
 
 // ============================================================================

@@ -12,6 +12,9 @@ interface BookingCardProps {
   showTime: string;
   transactionNo: string;
   posterUrl: string;
+  status?: string;
+  onCancel?: () => void;
+  onChangeShowtime?: () => void;
 }
 
 export function BookingCard({
@@ -22,6 +25,9 @@ export function BookingCard({
   transactionNo,
   posterUrl,
   seats,
+  status,
+  onCancel,
+  onChangeShowtime,
 }: BookingCardProps) {
   return (
     <Card className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
@@ -75,6 +81,26 @@ export function BookingCard({
             <Ticket className="mr-2 h-4 w-4" />
             View Ticket
           </Button>
+          {onCancel && status === 'confirmed' && (
+            <Button
+              variant="outline"
+              className="rounded-2xl border-red-300 text-red-600 hover:bg-red-50 mt-2"
+              size="sm"
+              onClick={onCancel}
+            >
+              Cancel Booking
+            </Button>
+          )}
+          {onChangeShowtime && status === 'confirmed' && (
+            <Button
+              variant="outline"
+              className="rounded-2xl border-blue-300 text-blue-600 hover:bg-blue-50 mt-2"
+              size="sm"
+              onClick={onChangeShowtime}
+            >
+              Change Showtime
+            </Button>
+          )}
         </div>
         <div className="w-32 h-32">
         <img src="qr.jpg"

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminApi, type UserProfile } from '@/services/api';
+import { adminApi } from '@/services/api';
+import type { AdminUserResponse } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
@@ -7,12 +8,11 @@ import {
 } from './AdminShared';
 
 interface UserEditForm {
-  first_name: string;
-  last_name: string;
-  membership_tier: 'none' | 'free' | 'paid';
+  full_name: string;
+  membership_tier: string;
   is_student: boolean;
   student_id_verified: boolean;
-  reward_points: number;
+  loyalty_points: number;
   is_admin: boolean;
 }
 
@@ -31,15 +31,15 @@ function TierBadge({ tier }: Readonly<{ tier: string }>) {
 }
 
 export default function UsersSection() {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<AdminUserResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState<UserEditForm>({
-    first_name: '', last_name: '',
+    full_name: '',
     membership_tier: 'free', is_student: false,
-    student_id_verified: false, reward_points: 0, is_admin: false,
+    student_id_verified: false, loyalty_points: 0, is_admin: false,
   });
-  const [editUser, setEditUser] = useState<UserProfile | null>(null);
+  const [editUser, setEditUser] = useState<AdminUserResponse | null>(null);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -54,14 +54,27 @@ export default function UsersSection() {
       .finally(() => setLoading(false));
   }, [refreshKey]);
 
-  function openEdit(u: UserProfile) {
+  async function handleDeactivate(u: AdminUserResponse) {
+    if (!confirm(`${u.is_active ? 'Deactivate' : 'Reactivate'} user ${u.email}?`)) return;
+    try {
+      if (u.is_active) {
+        await adminApi.deleteUser(u.user_id);
+      } else {
+        await adminApi.updateUser(u.user_id, { is_active: true });
+      }
+      refresh();
+    } catch (e) {
+      alert(String(e));
+    }
+  }
+
+  function openEdit(u: AdminUserResponse) {
     setForm({
-      first_name: u.first_name,
-      last_name: u.last_name,
+      full_name: u.full_name || '',
       membership_tier: u.membership_tier,
       is_student: u.is_student,
       student_id_verified: u.student_id_verified,
-      reward_points: u.reward_points,
+      loyalty_points: u.loyalty_points,
       is_admin: u.is_admin,
     });
     setEditUser(u);
@@ -73,7 +86,7 @@ export default function UsersSection() {
     if (!editUser) return;
     setError('');
     try {
-      await adminApi.updateUser(editUser.id, form);
+      await adminApi.updateUser(editUser.user_id, form);
       setModal(false);
       refresh();
     } catch (e: unknown) {
@@ -88,8 +101,7 @@ export default function UsersSection() {
     const q = search.toLowerCase();
     return (
       u.email.toLowerCase().includes(q) ||
-      u.first_name.toLowerCase().includes(q) ||
-      u.last_name.toLowerCase().includes(q) ||
+      (u.full_name ?? '').toLowerCase().includes(q) ||
       (u.user_name ?? '').toLowerCase().includes(q)
     );
   });
@@ -114,26 +126,37 @@ export default function UsersSection() {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <TableHead cols={['Name', 'Email', 'Membership', 'Student', 'Verified', 'Points', 'Admin', 'Actions']} />
+            <TableHead cols={['Name', 'Email', 'Membership', 'Student', 'Verified', 'Points', 'Admin', 'Active', 'Actions']} />
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-3 py-6 text-zinc-500 text-center">No users found.</td></tr>
+                <tr><td colSpan={9} className="px-3 py-6 text-zinc-500 text-center">No users found.</td></tr>
               )}
               {filtered.map(u => (
-                <tr key={u.id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
+                <tr key={u.user_id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
                   <td className="px-3 py-2 text-white font-medium whitespace-nowrap">
-                    {u.first_name} {u.last_name}
+                    {u.full_name || <span className="text-zinc-500 italic">—</span>}
                   </td>
                   <td className="px-3 py-2 text-zinc-300 max-w-[180px] truncate">{u.email}</td>
                   <td className="px-3 py-2"><TierBadge tier={u.membership_tier} /></td>
                   <td className="px-3 py-2"><ActiveIcon active={u.is_student} /></td>
                   <td className="px-3 py-2"><ActiveIcon active={u.student_id_verified} /></td>
-                  <td className="px-3 py-2 text-zinc-300">{u.reward_points}</td>
+                  <td className="px-3 py-2 text-zinc-300">{u.loyalty_points}</td>
                   <td className="px-3 py-2">
                     {u.is_admin && <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full">admin</span>}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2"><ActiveIcon active={u.is_active} /></td>
+                  <td className="px-3 py-2 flex gap-1">
                     <button className={btnEdit} onClick={() => openEdit(u)}>Edit</button>
+                    <button
+                      className={`text-xs px-2 py-1 rounded font-medium transition-colors ${
+                        u.is_active
+                          ? 'bg-red-900/60 text-red-300 hover:bg-red-800'
+                          : 'bg-green-900/60 text-green-300 hover:bg-green-800'
+                      }`}
+                      onClick={() => handleDeactivate(u)}
+                    >
+                      {u.is_active ? 'Deactivate' : 'Reactivate'}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -145,12 +168,11 @@ export default function UsersSection() {
       {modal && editUser && (
         <Modal title={`Edit User — ${editUser.email}`} onClose={() => setModal(false)}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="First Name">
-              <input className={inputCls} value={form.first_name} onChange={e => f('first_name', e.target.value)} />
-            </Field>
-            <Field label="Last Name">
-              <input className={inputCls} value={form.last_name} onChange={e => f('last_name', e.target.value)} />
-            </Field>
+            <div className="col-span-2">
+              <Field label="Full Name">
+                <input className={inputCls} value={form.full_name} onChange={e => f('full_name', e.target.value)} />
+              </Field>
+            </div>
             <Field label="Membership Tier">
               <select className={inputCls} value={form.membership_tier} onChange={e => f('membership_tier', e.target.value)}>
                 <option value="none">None</option>
@@ -158,8 +180,8 @@ export default function UsersSection() {
                 <option value="paid">Paid</option>
               </select>
             </Field>
-            <Field label="Reward Points">
-              <input className={inputCls} type="number" min="0" value={form.reward_points} onChange={e => f('reward_points', +e.target.value)} />
+            <Field label="Loyalty Points">
+              <input className={inputCls} type="number" min="0" value={form.loyalty_points} onChange={e => f('loyalty_points', +e.target.value)} />
             </Field>
             <Field label="Is Student">
               <select className={inputCls} value={form.is_student ? '1' : '0'} onChange={e => f('is_student', e.target.value === '1')}>

@@ -4,7 +4,7 @@ import { BookingMovieInfo } from '@/components/movies/booking-movie-info';
 import { DateTimeSelection } from '@/components/movies/date-time-selection';
 import { SeatMap } from '@/components/movies/seat-map';
 import { TicketSummary } from '@/components/movies/ticket-summary';
-import { moviesApi, showtimesApi } from '@/services/api';
+import { moviesApi, showtimesApi, userApi } from '@/services/api';
 import type { MovieDetail, ShowtimeCard } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -21,7 +21,7 @@ type Seat = {
   price?: number;
 };
 
-type DateGroupShowtime = ApiDateGroupShowtime & { showtimes: { time: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past' }[] };
+type DateGroupShowtime = ApiDateGroupShowtime & { showtimes: { time: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past'; raqs?: number }[] };
 
 export default function MovieBooking() {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +45,16 @@ export default function MovieBooking() {
   const [bookingDates, setBookingDates] = useState<BookingDate[]>([]);
   const [bookingTimes, setBookingTimes] = useState<string[]>([]);
   const [summarizedShowtimes, setSummarizedShowtimes] = useState<DateGroupShowtime[]>([]);
+  const [ticketType, setTicketType] = useState<'normal' | 'student'>('normal');
+  const [isStudentEligible, setIsStudentEligible] = useState(false);
+
+  // Fetch user profile for student eligibility check
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    userApi.getProfile()
+      .then(p => setIsStudentEligible(!!(p.is_student && p.student_id_verified)))
+      .catch(() => {});
+  }, [isAuthenticated]);
 
   // Fetch movie details
   useEffect(() => {
@@ -93,10 +103,11 @@ export default function MovieBooking() {
         // Build summarized showtimes with date-specific time slots
         const grouped: DateGroupShowtime[] = dates.map((date) => {
           const cards: ShowtimeCard[] = byDate[date.fullDate || ''] ?? [];
-          const showtimes = cards.map((card: ShowtimeCard) => ({
+        const showtimes = cards.map((card: ShowtimeCard) => ({
             time: card.start_time ?? 'N/A',
             showtimeId: card.showtime_id,
             status: 'available' as const,
+            raqs: card.risk_adjusted_quality_score,
           }));
           return { ...date, showtimes };
         });
@@ -188,7 +199,7 @@ export default function MovieBooking() {
       setIsBooking(true);
 
       const selectedSeatIds = seats.filter((s) => s.status === 'selected').map((s) => s.id);
-      const holdResult = await showtimesApi.holdSeats(currentShowtimeId, selectedSeatIds);
+      const holdResult = await showtimesApi.holdSeats(currentShowtimeId, selectedSeatIds, ticketType);
 
       const seatLabels = seats
         .filter((s) => s.status === 'selected')
@@ -202,6 +213,7 @@ export default function MovieBooking() {
         seats: seatLabels,
         total: String(seatsTotalPrice),
         deadline: holdResult.expires_at ?? '',
+        ticket_type: ticketType,
       });
 
       navigate(`/payment?${params.toString()}`);
@@ -217,9 +229,18 @@ export default function MovieBooking() {
     .filter((s) => s.status === 'selected')
     .map((s) => `${s.row}${s.col}`);
 
-  const seatsTotalPrice = seats
-    .filter((s) => s.status === 'selected')
-    .reduce((sum, s) => sum + (s.price ?? 0), 0);
+  // Current showtime card for pricing
+  const currentCard = (() => {
+    const dateKey = bookingDates[selectedDate]?.fullDate;
+    if (!dateKey) return null;
+    return (showtimesByDate[dateKey] ?? []).find(c => (c.start_time ?? 'N/A') === selectedTime) ?? null;
+  })();
+
+  const pricePerSeat = ticketType === 'student'
+    ? (currentCard?.ticket_price_student ?? currentCard?.ticket_price_normal ?? 0)
+    : (currentCard?.ticket_price_normal ?? 0);
+
+  const seatsTotalPrice = seats.filter(s => s.status === 'selected').length * pricePerSeat;
 
   if (movieLoading) {
     return (
@@ -288,7 +309,9 @@ export default function MovieBooking() {
                 totalPrice={seatsTotalPrice}
                 onBook={handleBooking}
                 isBooking={isBooking}
-
+                ticketType={ticketType}
+                isStudentEligible={isStudentEligible}
+                onTicketTypeChange={setTicketType}
               />
 
               {seats.length > 0 ? (

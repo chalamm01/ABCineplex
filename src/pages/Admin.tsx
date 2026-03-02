@@ -10,8 +10,9 @@ import ProductsSection from '@/components/admin/ProductsSection';
 import HeroCarouselSection from '@/components/admin/HeroCarouselSection';
 import PromoEventsSection from '@/components/admin/PromoEventsSection';
 import UsersSection from '@/components/admin/UsersSection';
+import BookingsSection from '@/components/admin/BookingsSection';
 
-type Tab = 'movies' | 'showtimes' | 'categories' | 'products' | 'hero' | 'promos' | 'users';
+type Tab = 'movies' | 'showtimes' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'movies',     label: 'Movies' },
@@ -21,6 +22,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'hero',       label: 'Hero Carousel' },
   { id: 'promos',     label: 'Promo Events' },
   { id: 'users',      label: 'Users' },
+  { id: 'bookings',   label: 'Bookings' },
 ];
 
 export default function Admin() {
@@ -96,6 +98,7 @@ export default function Admin() {
           {tab === 'hero'       && <HeroCarouselSection />}
           {tab === 'promos'     && <PromoEventsSection />}
           {tab === 'users'      && <UsersSection />}
+          {tab === 'bookings'   && <BookingsSection />}
         </div>
       </div>
     </div>

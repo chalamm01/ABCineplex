@@ -287,9 +287,10 @@ export const showtimeApi = {
   getShowtimesByMovie: (movieId: number): Promise<Showtime[]> =>
     request<Showtime[]>('GET', `/showtimes/movie/${movieId}`, undefined, false),
 
-  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
+  holdSeats: (showtimeId: number, seatIds: number[], ticketType: 'normal' | 'student' = 'normal'): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
     request<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
       seat_ids: seatIds,
+      ticket_type: ticketType,
     }),
 
   createShowtime: (showtime: ShowtimeCreate): Promise<Showtime> =>
@@ -309,9 +310,10 @@ export const showtimesApi = showtimeApi; // Alias
 // ============================================================================
 
 export const seatApi = {
-  holdSeats: (showtimeId: number, seatIds: number[]): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
+  holdSeats: (showtimeId: number, seatIds: number[], ticketType: 'normal' | 'student' = 'normal'): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
     request<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
       seat_ids: seatIds,
+      ticket_type: ticketType,
     }),
 
   releaseHold: (showtimeId: number, holdId: string): Promise<{ message: string }> =>
@@ -410,11 +412,17 @@ export const reviewApi = {
   updateReview: (reviewId: number, review: Partial<ReviewCreate>): Promise<ReviewResponse> =>
     requestWithAuth<ReviewResponse>('PATCH', `/reviews/${reviewId}`, review),
 
-  getMovieReviews: (movieId: number): Promise<ReviewResponse[]> =>
-    request<ReviewResponse[]>('GET', `/reviews/movie/${movieId}`, undefined, false),
+  getMovieReviews: (movieId: number): Promise<{ total: number; items: ReviewResponse[] }> =>
+    request<{ total: number; items: ReviewResponse[] }>('GET', `/reviews/movie/${movieId}`, undefined, false),
 
   deleteReview: (reviewId: number): Promise<{ message: string }> =>
     requestWithAuth<{ message: string }>('DELETE', `/reviews/${reviewId}`),
+
+  likeReview: (reviewId: number): Promise<{ status: string }> =>
+    requestWithAuth<{ status: string }>('POST', `/reviews/${reviewId}/likes`),
+
+  unlikeReview: (reviewId: number): Promise<{ status: string }> =>
+    requestWithAuth<{ status: string }>('DELETE', `/reviews/${reviewId}/likes`),
 };
 
 // ============================================================================

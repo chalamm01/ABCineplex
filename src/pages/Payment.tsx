@@ -11,7 +11,7 @@ import {
   type BookingDetails,
 } from '@/components/payment';
 import { useCountdown } from '@/hooks/useCountdown';
-import { bookingsApi, paymentsApi } from '@/services/api';
+import { bookingsApi, paymentsApi, showtimesApi } from '@/services/api';
 import { Zap, CheckCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner'
 
@@ -63,7 +63,7 @@ export default function Payment() {
     }
 
     bookingsApi.getBooking(bookingId)
-      .then((booking) => {
+      .then(async (booking) => {
         if (booking.payment_deadline) {
           setPaymentDeadline(new Date(booking.payment_deadline));
         }
@@ -73,6 +73,23 @@ export default function Payment() {
         const total = booking.total_amount || Number(totalParam) || 0;
         const start = booking.showtime_start ? new Date(booking.showtime_start) : null;
 
+        // EP10-UC003: fetch estimated end time from showtime detail
+        let endTimeStr = 'N/A';
+        if (booking.showtime_id) {
+          try {
+            const showtimeDetail = await showtimesApi.getShowtimeById(booking.showtime_id);
+            const endIso = showtimeDetail.estimated_end_with_credits ?? showtimeDetail.end_time;
+            if (endIso) {
+              endTimeStr = new Date(endIso).toLocaleString('en-GB', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              });
+            }
+          } catch {
+            // best-effort; leave as N/A
+          }
+        }
+
         setBookingDetails({
           movieTitle: booking.movie_title || 'Movie',
           posterUrl: booking.poster_url || '',
@@ -80,7 +97,7 @@ export default function Payment() {
           showTime: start
             ? start.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
             : 'N/A',
-          endTime: 'N/A',
+          endTime: endTimeStr,
           seats,
           subtotal: total,
           discount: 0,

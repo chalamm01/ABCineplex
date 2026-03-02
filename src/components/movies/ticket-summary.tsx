@@ -8,6 +8,9 @@ interface TicketSummaryProps {
   readonly totalPrice: number;
   readonly onBook: () => void;
   readonly isBooking?: boolean;
+  readonly ticketType?: 'normal' | 'student';
+  readonly isStudentEligible?: boolean;
+  readonly onTicketTypeChange?: (type: 'normal' | 'student') => void;
 }
 
 export function TicketSummary({
@@ -17,6 +20,9 @@ export function TicketSummary({
   totalPrice,
   onBook,
   isBooking = false,
+  ticketType = 'normal',
+  isStudentEligible = false,
+  onTicketTypeChange,
 }: TicketSummaryProps) {
 
   return (
@@ -25,6 +31,27 @@ export function TicketSummary({
         <h3 className="text-black font-semibold text-base sm:text-lg mb-4 uppercase tracking-wider">
           Select Your Seats
         </h3>
+
+        {/* Ticket Type Selector */}
+        {isStudentEligible && onTicketTypeChange && (
+          <div className="mb-4">
+            <p className="text-xs text-neutral-500 uppercase tracking-wider mb-2">Ticket Type</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onTicketTypeChange('normal')}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${ticketType === 'normal' ? 'bg-black text-white border-black' : 'bg-white text-black border-neutral-300 hover:border-black'}`}
+              >
+                Normal
+              </button>
+              <button
+                onClick={() => onTicketTypeChange('student')}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${ticketType === 'student' ? 'bg-black text-white border-black' : 'bg-white text-black border-neutral-300 hover:border-black'}`}
+              >
+                Student
+              </button>
+            </div>
+          </div>
+        )}
         <div className="flex gap-2 mb-6 flex-wrap">
           {selectedSeats.map((seat) => (
             <button key={seat} className="px-3 sm:px-4 py-2 bg-black text-white font-semibold rounded-lg text-xs sm:text-sm">
@@ -46,7 +73,7 @@ export function TicketSummary({
           </div>
           <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">TICKETS</span>
-            <span className="text-black font-medium"></span>
+            <span className="text-black font-medium capitalize">{ticketType}</span>
           </div>
           <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">TOTAL</span>
