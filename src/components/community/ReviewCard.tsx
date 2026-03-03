@@ -8,6 +8,7 @@ interface ReviewCardProps {
   readonly isLiked?: boolean
   readonly isAuthenticated?: boolean
   onLike?: (review: ReviewWithMovie) => void
+  onMovieClick?: (movieId: number) => void
 }
 
 function StarRating({ rating, max = 5 }: { readonly rating: number; readonly max?: number }) {
@@ -27,12 +28,13 @@ function StarRating({ rating, max = 5 }: { readonly rating: number; readonly max
 
 const POSTER_PLACEHOLDER = "https://placehold.co/80x110/1a1a2e/white?text=?"
 
-export function ReviewCard({ review, isLiked, isAuthenticated, onLike }: Readonly<ReviewCardProps>) {
+export function ReviewCard({ review, isLiked, isAuthenticated, onLike, onMovieClick }: Readonly<ReviewCardProps>) {
   const posterUrl = review.movie?.poster_url || POSTER_PLACEHOLDER
   const movieTitle = review.movie?.title ?? "Unknown Movie"
   const releaseYear = review.movie?.release_date?.slice(0, 4) ?? ""
   const displayName = review.username ?? "Anonymous"
   const likeCount = review.like_count ?? 0
+  const canClickMovie = !!onMovieClick && !!review.movie?.id
 
   return (
     <div className="flex gap-5 py-6 group">
@@ -41,7 +43,8 @@ export function ReviewCard({ review, isLiked, isAuthenticated, onLike }: Readonl
         <img
           src={posterUrl}
           alt={movieTitle}
-          className="w-20 h-28 object-cover rounded shadow-md group-hover:scale-[1.02] transition-transform"
+          onClick={() => canClickMovie && onMovieClick!(review.movie!.id)}
+          className={`w-20 h-28 object-cover rounded shadow-md group-hover:scale-[1.02] transition-transform ${canClickMovie ? "cursor-pointer hover:ring-2 hover:ring-primary" : ""}`}
           onError={(e) => { (e.target as HTMLImageElement).src = POSTER_PLACEHOLDER }}
         />
       </div>
@@ -50,7 +53,12 @@ export function ReviewCard({ review, isLiked, isAuthenticated, onLike }: Readonl
       <div className="flex-1 flex flex-col gap-2">
         {/* Title + year */}
         <div className="flex items-baseline gap-2">
-          <h2 className="text-xl font-bold">{movieTitle}</h2>
+          <h2
+            onClick={() => canClickMovie && onMovieClick!(review.movie!.id)}
+            className={`text-xl font-bold ${canClickMovie ? "cursor-pointer hover:text-primary hover:underline transition-colors" : ""}`}
+          >
+            {movieTitle}
+          </h2>
           {releaseYear && <span className="text-gray-400 font-medium">{releaseYear}</span>}
         </div>
 

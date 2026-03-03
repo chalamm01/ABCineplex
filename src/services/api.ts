@@ -82,9 +82,9 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const data = isJson ? await response.json() : null;
 
   if (!response.ok) {
-    // Try to extract error message from standardized format
-    const errorData: ErrorResponse = data || {
-      message: `HTTP ${response.status}`,
+    // Try to extract error message from standardized format or FastAPI detail field
+    const errorData: ErrorResponse = {
+      message: data?.message || data?.detail || `HTTP ${response.status}`,
     };
     throw new APIError(response.status, errorData);
   }

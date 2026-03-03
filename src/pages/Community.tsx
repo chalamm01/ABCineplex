@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { ReviewCard } from "@/components/community/ReviewCard"
 import { NowShowingMovies } from "@/components/community/NowShowingMovies"
+import { MovieModal } from "@/components/movies/MovieModal"
 import { Spinner } from "@/components/ui/spinner"
 import type { Movie, ReviewWithMovie } from "@/types/api"
 import { moviesApi, reviewApi } from "@/services/api"
@@ -52,6 +53,7 @@ export default function CommunityPage() {
   // Write review dialog
   const [writeOpen, setWriteOpen] = useState(false)
   const [selectedMovieId, setSelectedMovieId] = useState<number | "">("")
+  const [modalMovieId, setModalMovieId] = useState<number | null>(null)
   const [formRating, setFormRating] = useState(5)
   const [formText, setFormText] = useState("")
   const [formError, setFormError] = useState("")
@@ -114,7 +116,12 @@ export default function CommunityPage() {
       setWriteOpen(false)
       fetchFeed()
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "Failed to submit review.")
+      const msg = err instanceof Error ? err.message : "Failed to submit review."
+      setFormError(
+        msg.toLowerCase().includes("already reviewed") || msg === "HTTP 409"
+          ? "You have already reviewed this movie. Find it in My Reviews to edit it."
+          : msg
+      )
     } finally {
       setSubmitting(false)
     }
@@ -152,6 +159,7 @@ export default function CommunityPage() {
                   isLiked={likedIds.has(review.id)}
                   isAuthenticated={isAuthenticated}
                   onLike={handleLike}
+                  onMovieClick={(id) => setModalMovieId(id)}
                 />
               ))
             )}
@@ -210,6 +218,11 @@ export default function CommunityPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Letterboxd-style Movie Modal */}
+      {modalMovieId !== null && (
+        <MovieModal movieId={modalMovieId} onClose={() => setModalMovieId(null)} />
+      )}
     </div>
   )
 }

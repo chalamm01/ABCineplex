@@ -24,17 +24,19 @@ import {
 import { Heart, Star, Plus } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useSearchParams, Link } from "react-router-dom"
+import { reviewApi } from "@/services/api"
+import type { ReviewWithMovie } from "@/types/api"
+import { Spinner } from "@/components/ui/spinner"
+import { MovieModal } from "@/components/movies/MovieModal"
 
 function RatingStars({ rating }: { rating: number }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
           className={`w-4 h-4 ${
-            star <= rating
-              ? "fill-yellow-400 text-yellow-400"
-              : "text-gray-300"
+            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
           }`}
         />
       ))}
@@ -69,18 +71,22 @@ function StarSelector({
   )
 }
 
+// ── Main Reviews page ─────────────────────────────────────────────────────────
 export default function Reviews() {
   const [searchParams] = useSearchParams()
   const movieId = Number(searchParams.get("movie_id") ?? 0)
   const isMyReviews = movieId === 0
 
-  const isAuthenticated = !!localStorage.getItem('token')
-  const currentUserId = localStorage.getItem('user_id')
+  const isAuthenticated = !!localStorage.getItem("token")
+  const currentUserId = localStorage.getItem("user_id")
 
   const [reviews, setReviews] = useState<ReviewWithMovie[]>([])
   const [total, setTotal] = useState(0)
   const [loadError, setLoadError] = useState("")
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set())
+
+  // Movie modal state
+  const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null)
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -96,19 +102,30 @@ export default function Reviews() {
 
   const submitLabel = editingReview ? "Save Changes" : "Post Review"
 
-  // Load reviews from API
+  // In movie-specific mode, find if the current user already has a review
+  const userExistingReview = !isMyReviews && currentUserId
+    ? reviews.find((r) => r.user_id === currentUserId) ?? null
+    : null
+
+  // Load reviews
   useEffect(() => {
     if (isMyReviews) {
       if (!isAuthenticated) return
-      reviewApi.getMyReviews().then(data => {
-        setReviews(data.items ?? [])
-        setTotal(data.total ?? 0)
-      }).catch(() => setLoadError("Failed to load your reviews."))
+      reviewApi
+        .getMyReviews()
+        .then((data) => {
+          setReviews(data.items ?? [])
+          setTotal(data.total ?? 0)
+        })
+        .catch(() => setLoadError("Failed to load your reviews."))
     } else {
-      reviewApi.getMovieReviews(movieId).then(data => {
-        setReviews(data.items ?? [])
-        setTotal(data.total ?? 0)
-      }).catch(() => setLoadError("Failed to load reviews."))
+      reviewApi
+        .getMovieReviews(movieId)
+        .then((data) => {
+          setReviews(data.items ?? [])
+          setTotal(data.total ?? 0)
+        })
+        .catch(() => setLoadError("Failed to load reviews."))
     }
   }, [movieId])
 
@@ -140,14 +157,16 @@ export default function Reviews() {
           rating: formRating,
           review_text: formText,
         })
-        setReviews(prev => prev.map(r => r.id === editingReview.id ? { ...r, ...updated } : r))
+        setReviews((prev) =>
+          prev.map((r) => (r.id === editingReview.id ? { ...r, ...updated } : r))
+        )
       } else {
         const created = await reviewApi.createReview(movieId, {
           rating: formRating,
           review_text: formText,
         })
-        setReviews(prev => [created, ...prev])
-        setTotal(prev => prev + 1)
+        setReviews((prev) => [created as ReviewWithMovie, ...prev])
+        setTotal((prev) => prev + 1)
       }
       setDialogOpen(false)
       setFormText("")
@@ -165,8 +184,8 @@ export default function Reviews() {
     setDeleting(true)
     try {
       await reviewApi.deleteReview(deleteTarget.id)
-      setReviews(prev => prev.filter(r => r.id !== deleteTarget.id))
-      setTotal(prev => prev - 1)
+      setReviews((prev) => prev.filter((r) => r.id !== deleteTarget.id))
+      setTotal((prev) => prev - 1)
       setDeleteTarget(null)
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Failed to delete review.")
@@ -181,12 +200,16 @@ export default function Reviews() {
     try {
       if (isLiked) {
         await reviewApi.unlikeReview(review.id)
-        setLikedIds(prev => { const s = new Set(prev); s.delete(review.id); return s })
-        setReviews(prev => prev.map(r => r.id === review.id ? { ...r, like_count: (r.like_count ?? 0) - 1 } : r))
+        setLikedIds((prev) => { const s = new Set(prev); s.delete(review.id); return s })
+        setReviews((prev) =>
+          prev.map((r) => r.id === review.id ? { ...r, like_count: (r.like_count ?? 0) - 1 } : r)
+        )
       } else {
         await reviewApi.likeReview(review.id)
-        setLikedIds(prev => new Set([...prev, review.id]))
-        setReviews(prev => prev.map(r => r.id === review.id ? { ...r, like_count: (r.like_count ?? 0) + 1 } : r))
+        setLikedIds((prev) => new Set([...prev, review.id]))
+        setReviews((prev) =>
+          prev.map((r) => r.id === review.id ? { ...r, like_count: (r.like_count ?? 0) + 1 } : r)
+        )
       }
     } catch {
       // ignore like failures silently
@@ -194,176 +217,209 @@ export default function Reviews() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 p-6 flex justify-center">
-      <div className="w-full max-w-3xl space-y-6">
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen p-6 flex justify-center bg-white/70 backdrop-blur-md">
+        <div className="w-full max-w-3xl space-y-6">
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">
-              {isMyReviews ? "My Reviews" : `Reviews (${total})`}
-            </h1>
-            {isMyReviews && <p className="text-sm text-muted-foreground">{total} review{total !== 1 ? 's' : ''}</p>}
-          </div>
-          {isAuthenticated && !isMyReviews && (
-            <Button onClick={openCreateDialog}>
-              <Plus className="w-4 h-4 mr-2" />
-              Write a Review
-            </Button>
-          )}
-          {isMyReviews && (
-            <Link to="/community">
-              <Button variant="outline">Browse Community</Button>
-            </Link>
-          )}
-        </div>
-
-        <Separator />
-
-        {loadError && (
-          <Card>
-            <CardContent className="p-6 text-center text-red-500">{loadError}</CardContent>
-          </Card>
-        )}
-
-        {/* Empty State */}
-        {!loadError && reviews.length === 0 && (
-          <Card>
-            <CardContent className="p-6 text-center text-muted-foreground">
-              {isMyReviews
-                ? isAuthenticated
-                  ? "You haven't written any reviews yet."
-                  : "Please log in to see your reviews."
-                : "No reviews yet. Be the first to write one!"}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Review List */}
-        {reviews.map((review) => {
-          const displayName = review.username ?? "Anonymous"
-          const isOwner = !!currentUserId && review.user_id === currentUserId
-          const isLiked = likedIds.has(review.id)
-          return (
-            <Card key={review.id} className="hover:shadow-md transition">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{displayName}</p>
-                    {isMyReviews && review.movie && (
-                      <p className="text-sm font-medium text-primary">{review.movie.title}</p>
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(review.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="secondary">
-                  <RatingStars rating={review.rating} />
-                </Badge>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <p className="text-sm">{review.review_text}</p>
-                <div className="flex justify-between items-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`gap-2 ${isLiked ? "text-red-500" : ""}`}
-                    onClick={() => handleLike(review)}
-                    disabled={!isAuthenticated}
-                  >
-                    <Heart className={`w-4 h-4 ${isLiked ? "fill-red-500" : ""}`} />
-                    {review.like_count ?? 0}
-                  </Button>
-                  {isOwner && (
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(review)}>
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive"
-                        onClick={() => setDeleteTarget(review)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      {/* Create / Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingReview ? "Edit Review" : "Write a Review"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium mb-2">Rating</p>
-              <StarSelector value={formRating} onChange={setFormRating} />
+              <h1 className="text-3xl font-bold">
+                {isMyReviews ? "My Reviews" : `Reviews (${total})`}
+              </h1>
+              {isMyReviews && (
+                <p className="text-sm text-muted-foreground">
+                  {total} review{total !== 1 ? "s" : ""}
+                </p>
+              )}
             </div>
-            <div>
-              <p className="text-sm font-medium mb-2">Your Review</p>
-              <Textarea
-                placeholder="Share your thoughts about this movie..."
-                value={formText}
-                onChange={(e) => setFormText(e.target.value)}
-                rows={5}
-              />
-            </div>
-            {formError && (
-              <p className="text-sm text-destructive">{formError}</p>
+            {isAuthenticated && !isMyReviews && (
+              <Button onClick={openCreateDialog}>
+                <Plus className="w-4 h-4 mr-2" />
+                Write a Review
+              </Button>
+            )}
+            {isMyReviews && (
+              <Link to="/community">
+                <Button variant="outline">Browse Community</Button>
+              </Link>
             )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? "Saving..." : submitLabel}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <Separator />
 
-      {/* Delete Confirm Dialog */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Review</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this review? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          {loadError && (
+            <Card>
+              <CardContent className="p-6 text-center text-red-500">{loadError}</CardContent>
+            </Card>
+          )}
+
+          {/* Empty state */}
+          {!loadError && reviews.length === 0 && (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                {isMyReviews
+                  ? isAuthenticated
+                    ? "You haven't written any reviews yet."
+                    : "Please log in to see your reviews."
+                  : "No reviews yet. Be the first to write one!"}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Review list */}
+          {reviews.map((review) => {
+            const displayName = review.username ?? "Anonymous"
+            const isOwner = !!currentUserId && review.user_id === currentUserId
+            const isLiked = likedIds.has(review.id)
+            return (
+              <Card key={review.id} className="hover:shadow-md transition">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <div className="flex items-center gap-4">
+                    <Avatar>
+                      <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{displayName}</p>
+
+                      {/* Clickable movie — opens Letterboxd-style modal */}
+                      {isMyReviews && review.movie && (
+                        <button
+                          className="flex items-center gap-2 mt-1 group text-left"
+                          onClick={() => setSelectedMovieId(review.movie!.id)}
+                        >
+                          {review.movie.poster_url && (
+                            <img
+                              src={review.movie.poster_url}
+                              alt={review.movie.title}
+                              className="w-8 h-11 object-cover rounded shadow group-hover:ring-2 group-hover:ring-primary transition"
+                            />
+                          )}
+                          <span className="text-sm font-medium text-primary group-hover:underline">
+                            {review.movie.title}
+                          </span>
+                        </button>
+                      )}
+
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary">
+                    <RatingStars rating={review.rating} />
+                  </Badge>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <p className="text-sm">{review.review_text}</p>
+                  <div className="flex justify-between items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`gap-2 ${isLiked ? "text-red-500" : ""}`}
+                      onClick={() => handleLike(review)}
+                      disabled={!isAuthenticated}
+                    >
+                      <Heart className={`w-4 h-4 ${isLiked ? "fill-red-500" : ""}`} />
+                      {review.like_count ?? 0}
+                    </Button>
+                    {isOwner && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(review)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={() => setDeleteTarget(review)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
+        {/* Create / Edit dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editingReview ? "Edit Review" : "Write a Review"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium mb-2">Rating</p>
+                <StarSelector value={formRating} onChange={setFormRating} />
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-2">Your Review</p>
+                <Textarea
+                  placeholder="Share your thoughts about this movie..."
+                  value={formText}
+                  onChange={(e) => setFormText(e.target.value)}
+                  rows={5}
+                />
+              </div>
+              {formError && <p className="text-sm text-destructive">{formError}</p>}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} disabled={submitting}>
+                {submitting ? "Saving..." : submitLabel}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete confirm dialog */}
+        <AlertDialog
+          open={!!deleteTarget}
+          onOpenChange={(open) => !open && setDeleteTarget(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Review</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this review? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
+      {/* Letterboxd-style Movie Modal */}
+      {selectedMovieId !== null && (
+        <MovieModal
+          movieId={selectedMovieId}
+          onClose={() => setSelectedMovieId(null)}
+        />
+      )}
     </div>
   )
 }

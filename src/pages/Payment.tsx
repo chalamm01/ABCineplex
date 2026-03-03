@@ -240,9 +240,9 @@ export default function Payment() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-center">
-         <Spinner/>
+      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+        <div className="min-h-screen flex items-center justify-center bg-white/70 backdrop-blur-md">
+          <Spinner />
         </div>
       </div>
     );
@@ -250,15 +250,17 @@ export default function Payment() {
 
   if (error || !bookingDetails) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg text-red-600 mb-4">{error || 'Booking not found'}</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-2 bg-black text-white rounded-lg"
-          >
-            Return Home
-          </button>
+      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+        <div className="min-h-screen flex items-center justify-center bg-white/70 backdrop-blur-md">
+          <div className="text-center">
+            <p className="text-lg text-red-600 mb-4">{error || 'Booking not found'}</p>
+            <button
+              onClick={() => navigate('/')}
+              className="px-6 py-2 bg-black text-white rounded-lg"
+            >
+              Return Home
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -270,7 +272,8 @@ export default function Payment() {
     if (isSnackMode) {
       const pointsEarned = Math.max(1, Math.floor((snackState?.total ?? 0) / 10));
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+        <div className="min-h-screen flex items-center justify-center p-6 bg-white/70 backdrop-blur-md">
           <Card className="border-none shadow-2xl bg-white max-w-md w-full">
             <CardContent className="p-10 text-center">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -291,12 +294,14 @@ export default function Payment() {
             </CardContent>
           </Card>
         </div>
+        </div>
       );
     }
 
     // Booking success screen
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-white/70 backdrop-blur-md">
         <Card className="border-none shadow-2xl bg-white max-w-md w-full">
           <CardContent className="p-10 text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -319,31 +324,33 @@ export default function Payment() {
           </CardContent>
         </Card>
       </div>
+      </div>
     );
   }
 
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg text-red-600 mb-4">Payment time has expired. Your reserved seats have been released.</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-2 bg-black text-white rounded-lg"
-          >
-            Return Home
-          </button>
+      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+        <div className="min-h-screen flex items-center justify-center bg-white/70 backdrop-blur-md">
+          <div className="text-center">
+            <p className="text-lg text-red-600 mb-4">Payment time has expired. Your reserved seats have been released.</p>
+            <button
+              onClick={() => navigate('/')}
+              className="px-6 py-2 bg-black text-white rounded-lg"
+            >
+              Return Home
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[url('/bg-cinema.jpg')] bg-cover bg-center flex items-center justify-center p-6 font-sans">
-      {/* Blurred Overlay Background */}
-      <div className="absolute inset-0 bg-white/60 backdrop-blur-md" />
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-white/70 backdrop-blur-md">
 
-      <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Section: Payment Method */}
         <Card className="border-none shadow-xl bg-white/90">
           <CardContent className="p-8">
@@ -464,6 +471,7 @@ export default function Payment() {
             <BookingSummary booking={bookingDetails} countdown={countdown} />
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

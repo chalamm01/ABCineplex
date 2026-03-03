@@ -99,7 +99,8 @@ export default function AuthCallback() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen bg-white/70 backdrop-blur-md">
         <div className="text-center">
           <h1 className="text-2xl font-semibold mb-2 text-red-600">Sign in failed</h1>
           <p className="text-gray-600 mb-4">{error}</p>
@@ -110,15 +111,18 @@ export default function AuthCallback() {
             Back to login
           </button>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-white/70 backdrop-blur-md">
       <div className="text-center">
         <h1 className="text-2xl font-semibold mb-2">Completing sign in...</h1>
         <p className="text-gray-600">Please wait while we finalize your authentication.</p>
+      </div>
       </div>
     </div>
   );

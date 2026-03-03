@@ -71,8 +71,10 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted/40 flex justify-center items-center p-6">
-        <Spinner />
+      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+        <div className="min-h-screen flex justify-center items-center p-6 bg-white/70 backdrop-blur-md">
+          <Spinner />
+        </div>
       </div>
     );
   }
@@ -80,8 +82,10 @@ export default function ProfilePage() {
   // Fallback if no profile is found
   if (!profile) {
     return (
-      <div className="min-h-screen bg-muted/40 flex justify-center items-center p-6">
-        <p>Profile not found. Please log in.</p>
+      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+        <div className="min-h-screen flex justify-center items-center p-6 bg-white/70 backdrop-blur-md">
+          <p>Profile not found. Please log in.</p>
+        </div>
       </div>
     );
   }
@@ -89,7 +93,8 @@ export default function ProfilePage() {
   const initials = `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""}`.toUpperCase() || "U";
 
   return (
-    <div className="bg-muted/40 flex justify-center p-6 min-h-screen">
+    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
+      <div className="min-h-screen flex justify-center p-6 bg-white/70 backdrop-blur-md">
       <Card className="w-full max-w-3xl h-fit">
         <CardHeader className="flex flex-row items-center gap-6">
           <Avatar className="h-20 w-20">
@@ -217,6 +222,7 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }
