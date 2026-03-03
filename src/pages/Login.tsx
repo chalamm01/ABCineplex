@@ -35,6 +35,7 @@ export function SocialLogin({
   className
 }: Readonly<SocialLoginProps>) {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -51,10 +52,7 @@ export function SocialLogin({
       setError(null);
       setLoading(true);
       const response = await authApi.login({ email, password });
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      // Dispatch event to notify navbar and other components of auth change
-      window.dispatchEvent(new Event('auth-change'));
+      login(response.user, response.token, response.refresh_token);
       navigate('/');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
