@@ -107,8 +107,8 @@ export default function ProductsSection() {
                   <td className="px-3 py-2.5"><ActiveIcon active={p.is_active} /></td>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">
-                      <button className={btnEdit} onClick={() => openEdit(p)}>Edit</button>
-                      <button className={btnDanger} onClick={() => handleDelete(p.id)}>Delete</button>
+                      <EditButton onClick={() => openEdit(p)} />
+                      <DeleteButton onClick={() => handleDelete(p.id)} />
                     </div>
                   </td>
                 </tr>
