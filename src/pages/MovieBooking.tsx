@@ -7,6 +7,7 @@ import { TicketSummary } from '@/components/movies/ticket-summary';
 import { moviesApi, showtimesApi, userApi } from '@/services/api';
 import type { MovieDetail, ShowtimeCard, DateGroupShowtime as ApiDateGroupShowtime  } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
+import { CalendarX } from 'lucide-react';
 import type { BookingDate } from '@/lib/constants/movies';
 
 type Seat = {
@@ -41,6 +42,7 @@ export default function MovieBooking() {
   const [bookingDates, setBookingDates] = useState<BookingDate[]>([]);
   const [bookingTimes, setBookingTimes] = useState<string[]>([]);
   const [summarizedShowtimes, setSummarizedShowtimes] = useState<DateGroupShowtime[]>([]);
+  const [showtimesLoading, setShowtimesLoading] = useState(true);
   const [ticketType, setTicketType] = useState<'normal' | 'student'>('normal');
   const [isStudentEligible, setIsStudentEligible] = useState(false);
 
@@ -116,6 +118,8 @@ export default function MovieBooking() {
         console.error('Failed to fetch showtimes:', error);
         setShowtimesByDate({});
         setSummarizedShowtimes([]);
+      } finally {
+        setShowtimesLoading(false);
       }
     };
 
@@ -288,37 +292,69 @@ export default function MovieBooking() {
 
         <section className="py-8 sm:py-12 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
-            <DateTimeSelection
-              dates={bookingDates}
-              times={bookingTimes}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              onDateChange={setSelectedDate}
-              onTimeChange={setSelectedTime}
-              summarizedShowtimes={summarizedShowtimes}
-            />
+            {showtimesLoading ? (
+              <div className="bg-white rounded-xl p-12 border border-neutral-300 flex items-center justify-center">
+                <Spinner />
+              </div>
+            ) : bookingDates.length === 0 ? (
+              <div className="bg-white rounded-xl p-12 border border-neutral-300">
+                <div className="flex flex-col items-center justify-center gap-4 text-center">
+                  <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center">
+                    <CalendarX className="w-8 h-8 text-neutral-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold uppercase tracking-wider text-neutral-800 mb-1">
+                      No Showtimes Available
+                    </h3>
+                    <p className="text-sm text-neutral-500">
+                      There are currently no scheduled screenings for this movie.<br />
+                      Check back soon or explore other films.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate('/movies')}
+                    className="mt-2 px-6 py-2.5 bg-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+                  >
+                    Browse Other Movies
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <DateTimeSelection
+                  dates={bookingDates}
+                  times={bookingTimes}
+                  selectedDate={selectedDate}
+                  selectedTime={selectedTime}
+                  onDateChange={setSelectedDate}
+                  onTimeChange={setSelectedTime}
+                  summarizedShowtimes={summarizedShowtimes}
+                />
 
-            <div className="flex justify-between gap-8">
-              <TicketSummary
-                selectedSeats={selectedSeats}
-                selectedDate={bookingDates[selectedDate]}
-                selectedTime={selectedTime}
-                totalPrice={seatsTotalPrice}
-                onBook={handleBooking}
-                isBooking={isBooking}
-                ticketType={ticketType}
-                isStudentEligible={isStudentEligible}
-                onTicketTypeChange={setTicketType}
-              />
+                <div className="flex justify-between gap-8">
+                  <TicketSummary
+                    selectedSeats={selectedSeats}
+                    selectedDate={bookingDates[selectedDate]}
+                    selectedTime={selectedTime}
+                    totalPrice={seatsTotalPrice}
+                    onBook={handleBooking}
+                    isBooking={isBooking}
+                    ticketType={ticketType}
+                    isStudentEligible={isStudentEligible}
+                    onTicketTypeChange={setTicketType}
+                    endTime={currentCard?.end_time}
+                  />
 
-              {seats.length > 0 ? (
-                <SeatMap seats={seats} onSeatToggle={toggleSeat} />
-              ) : (
-<div className="flex items-center justify-center bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-1/2">
-  <Spinner />
-</div>
-              )}
-            </div>
+                  {seats.length > 0 ? (
+                    <SeatMap seats={seats} onSeatToggle={toggleSeat} />
+                  ) : (
+                    <div className="flex items-center justify-center bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-1/2">
+                      <Spinner />
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </section>
       </div>

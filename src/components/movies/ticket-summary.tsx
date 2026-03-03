@@ -11,6 +11,19 @@ interface TicketSummaryProps {
   readonly ticketType?: 'normal' | 'student';
   readonly isStudentEligible?: boolean;
   readonly onTicketTypeChange?: (type: 'normal' | 'student') => void;
+  readonly endTime?: string;
+}
+
+function formatEndTime(endTime?: string): string {
+  if (!endTime) return '—';
+  try {
+    const d = new Date(endTime);
+    const h = d.getHours().toString().padStart(2, '0');
+    const m = d.getMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
+  } catch {
+    return endTime;
+  }
 }
 
 export function TicketSummary({
@@ -23,6 +36,7 @@ export function TicketSummary({
   ticketType = 'normal',
   isStudentEligible = false,
   onTicketTypeChange,
+  endTime,
 }: TicketSummaryProps) {
 
   return (
@@ -64,12 +78,12 @@ export function TicketSummary({
           <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">DATE & TIME</span>
             <span className="text-black font-medium">
-              {selectedDate ? `${selectedDate.day} ${selectedDate.month} 2026 ${selectedTime}` : 'Select date & time'}
+              {selectedDate ? `${selectedDate.day} ${selectedDate.month} ${selectedDate.date?.slice(0, 4) ?? ''} ${selectedTime}` : 'Select date & time'}
             </span>
           </div>
           <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">END TIME</span>
-            <span className="text-black font-medium">22:30 PM</span>
+            <span className="text-black font-medium">{formatEndTime(endTime)}</span>
           </div>
           <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">TICKETS</span>
@@ -77,7 +91,7 @@ export function TicketSummary({
           </div>
           <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">TOTAL</span>
-            <span className="text-black font-medium">$</span>
+            <span className="text-black font-medium">{totalPrice.toLocaleString()} THB</span>
           </div>
         </div>
 

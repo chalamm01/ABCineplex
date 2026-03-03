@@ -228,9 +228,14 @@ export interface Showtime {
   movie_id: number;
   theatre_id: number;
   start_time?: string;
+  end_time?: string;
   base_price: number;
+  audio_language?: string;
+  subtitle_language?: string;
   language?: string;
   format?: string;
+  ticket_price_normal?: number;
+  ticket_price_student?: number;
   created_at?: string;
 }
 
@@ -582,6 +587,8 @@ export interface ShowtimeCreate {
   theatre_id: number;
   start_time: string;
   base_price: number;
+  audio_language?: string;
+  subtitle_language?: string;
   language?: string;
   format?: string;
   ticket_price_normal?: number;
@@ -594,6 +601,8 @@ export interface ShowtimeUpdate {
   theatre_id?: number;
   start_time?: string;
   base_price?: number;
+  audio_language?: string;
+  subtitle_language?: string;
   language?: string;
   format?: string;
   ticket_price_normal?: number;
