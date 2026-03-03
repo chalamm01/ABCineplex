@@ -18,7 +18,20 @@ type Seat = {
   price?: number;
 };
 
-type DateGroupShowtime = ApiDateGroupShowtime & { showtimes: { time: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past'; raqs?: number; ttc?: number }[] };
+type DateGroupShowtime = ApiDateGroupShowtime & { showtimes: { time: string; endTime: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past'; raqs?: number; ttc?: number }[] };
+
+const extractTime = (datetime?: string): string => {
+  if (!datetime) return 'N/A';
+  try {
+    const date = new Date(datetime);
+    if (isNaN(date.getTime())) {
+      return datetime.split('T')[1]?.substring(0, 5) || datetime;
+    }
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  } catch {
+    return datetime;
+  }
+};
 
 export default function MovieBooking() {
   const { id } = useParams<{ id: string }>();
@@ -101,16 +114,21 @@ export default function MovieBooking() {
         // Build summarized showtimes with date-specific time slots
         const grouped: DateGroupShowtime[] = dates.map((date) => {
           const cards: ShowtimeCard[] = byDate[date.fullDate || ''] ?? [];
-        const showtimes = cards.map((card: ShowtimeCard) => ({
-            time: card.start_time ?? 'N/A',
-            showtimeId: card.showtime_id,
-            status: 'available' as const,
-            raqs: card.risk_adjusted_quality_score,
-            ttc: card.total_time_commitment_minutes,
-          }));
+          console.log(cards);
+          const showtimes = cards.map((card: ShowtimeCard) => {
+            const startTime = extractTime(card.start_time);
+            const endTime = extractTime(card.end_time);
+            return {
+              time: startTime,
+              endTime: endTime,
+              showtimeId: card.showtime_id,
+              status: 'available' as const,
+              raqs: card.risk_adjusted_quality_score,
+              ttc: card.total_time_commitment_minutes,
+            };
+          });
           return { ...date, showtimes };
         });
-        console.log(grouped)
         setBookingDates(dates);
         setSummarizedShowtimes(grouped);
         setSelectedDate(0);
@@ -134,7 +152,7 @@ export default function MovieBooking() {
     if (!dateKey) return;
 
     const cards = showtimesByDate[dateKey] ?? [];
-    const times = [...new Set(cards.map((c) => c.start_time ?? 'N/A'))].sort((a, b) => a.localeCompare(b));
+    const times = [...new Set(cards.map((c) => extractTime(c.start_time)))].sort((a, b) => a.localeCompare(b));
     setBookingTimes(times);
     setSelectedTime(times[0] ?? '');
   }, [selectedDate, bookingDates, showtimesByDate]);
@@ -148,7 +166,7 @@ export default function MovieBooking() {
       if (!dateKey) return;
 
       const card = (showtimesByDate[dateKey] ?? []).find(
-        (c) => (c.start_time ?? 'N/A') === selectedTime
+        (c) => extractTime(c.start_time) === selectedTime
       );
       if (!card) return;
 
@@ -230,12 +248,13 @@ export default function MovieBooking() {
     .filter((s) => s.status === 'selected')
     .map((s) => `${s.row}${s.col}`);
 
-  // Current showtime card for pricing
   const currentCard = (() => {
     const dateKey = bookingDates[selectedDate]?.fullDate;
     if (!dateKey) return null;
-    return (showtimesByDate[dateKey] ?? []).find(c => (c.start_time ?? 'N/A') === selectedTime) ?? null;
+    return (showtimesByDate[dateKey] ?? []).find(c => extractTime(c.start_time) === selectedTime) ?? null;
   })();
+
+  const currentCardEndTime = currentCard ? extractTime(currentCard.end_time) : undefined;
 
   const pricePerSeat = ticketType === 'student'
     ? (currentCard?.ticket_price_student ?? currentCard?.ticket_price_normal ?? 0)
@@ -342,7 +361,7 @@ export default function MovieBooking() {
                     ticketType={ticketType}
                     isStudentEligible={isStudentEligible}
                     onTicketTypeChange={setTicketType}
-                    endTime={currentCard?.end_time}
+                    endTime={currentCardEndTime}
                   />
 
                   {seats.length > 0 ? (
