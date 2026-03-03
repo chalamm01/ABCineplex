@@ -5,6 +5,7 @@ import type { UserProfile } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import MoviesSection from '@/components/admin/MoviesSection';
 import ShowtimesSection from '@/components/admin/ShowtimesSection';
+import TheatresSection from '@/components/admin/TheatresSection';
 import CategoriesSection from '@/components/admin/CategoriesSection';
 import ProductsSection from '@/components/admin/ProductsSection';
 import HeroCarouselSection from '@/components/admin/HeroCarouselSection';
@@ -12,11 +13,12 @@ import PromoEventsSection from '@/components/admin/PromoEventsSection';
 import UsersSection from '@/components/admin/UsersSection';
 import BookingsSection from '@/components/admin/BookingsSection';
 
-type Tab = 'movies' | 'showtimes' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings';
+type Tab = 'movies' | 'showtimes' | 'theatres' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'movies',     label: 'Movies' },
   { id: 'showtimes',  label: 'Showtimes' },
+  { id: 'theatres',   label: 'Theatres' },
   { id: 'categories', label: 'Categories' },
   { id: 'products',   label: 'Products' },
   { id: 'hero',       label: 'Hero Carousel' },
@@ -96,6 +98,7 @@ export default function Admin() {
           <div className="bg-white/80 rounded-xl p-6 border border-neutral-200 shadow-sm">
             {tab === 'movies'     && <MoviesSection />}
             {tab === 'showtimes'  && <ShowtimesSection />}
+            {tab === 'theatres'   && <TheatresSection />}
             {tab === 'categories' && <CategoriesSection />}
             {tab === 'products'   && <ProductsSection />}
             {tab === 'hero'       && <HeroCarouselSection />}

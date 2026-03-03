@@ -9,6 +9,7 @@ import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { authApi } from '@/services/api';
 import { Spinner } from '@/components/ui/spinner'
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/context/AuthContext';
 
 export interface SocialProvider {
   id: string;
@@ -52,6 +53,8 @@ export function SocialLogin({
       const response = await authApi.login({ email, password });
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
+      // Dispatch event to notify navbar and other components of auth change
+      window.dispatchEvent(new Event('auth-change'));
       navigate('/');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');

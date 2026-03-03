@@ -1,7 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '@/services/api';
+import type { Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import { SectionHeader, TableHead, inputCls, fmtDT, useSort, SortableTableHead } from './AdminShared';
+
+// Format seats for display - handles both string and object formats
+const formatSeats = (seats?: Array<{ seat_id?: number; row_label?: string; seat_number?: number } | string>) => {
+  if (!seats || seats.length === 0) return '—';
+  return seats
+    .map((seat) => {
+      if (typeof seat === 'string') return seat;
+      if (typeof seat === 'object' && seat && 'row_label' in seat && 'seat_number' in seat) {
+        return `${seat.row_label}${seat.seat_number}`;
+      }
+      return '—';
+    })
+    .join(', ');
+};
 
 // Matches the booking_details view + payments merge returned by the backend
 interface AdminBookingRow {
@@ -13,11 +28,11 @@ interface AdminBookingRow {
   ticket_type?: string;
   num_tickets?: number;
   movie_title?: string;
+  movie_id?: number;
   showtime_start?: string;
-  seats?: string[];
+  seats?: Array<{ seat_id?: number; row_label?: string; seat_number?: number } | string>;
   created_at?: string;
   updated_at?: string;
-  // from payments table (merged by backend)
   paid_at?: string;
   payment_method?: string;
   payment_status?: string;
@@ -41,13 +56,19 @@ function StatusBadge({ status }: Readonly<{ status: string }>) {
 const STATUS_OPTIONS = ['', 'confirmed', 'pending', 'cancelled', 'changed'];
 
 export default function BookingsSection() {
+  const [movies, setMovies] = useState<Movie[]>([]);
   const [bookings, setBookings] = useState<AdminBookingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
+  const [movieFilter, setMovieFilter] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
+
+  useEffect(() => {
+    adminApi.listMovies().then(setMovies).catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -58,6 +79,7 @@ export default function BookingsSection() {
   }, [refreshKey, statusFilter]);
 
   const filtered = bookings.filter(b => {
+    if (movieFilter !== null && b.movie_id !== movieFilter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -75,6 +97,17 @@ export default function BookingsSection() {
 
       {/* Filters */}
       <div className="flex gap-3 mb-4 flex-wrap">
+        <select
+          className={inputCls}
+          style={{ maxWidth: '200px' }}
+          value={movieFilter ?? ''}
+          onChange={e => setMovieFilter(e.target.value ? +e.target.value : null)}
+        >
+          <option value="">All Movies</option>
+          {movies.map(m => (
+            <option key={m.id} value={m.id}>{m.title}</option>
+          ))}
+        </select>
         <input
           className={inputCls}
           style={{ maxWidth: '260px' }}
@@ -134,7 +167,7 @@ export default function BookingsSection() {
                     {fmtDT(b.showtime_start)}
                   </td>
                   <td className="px-3 py-2.5 text-neutral-600">
-                    {b.seats && b.seats.length > 0 ? b.seats.join(', ') : '—'}
+                    {formatSeats(b.seats)}
                   </td>
                   <td className="px-3 py-2.5 text-neutral-900 font-medium">฿{b.total_amount?.toLocaleString() ?? '—'}</td>
                   <td className="px-3 py-2.5"><StatusBadge status={b.booking_status} /></td>

@@ -97,7 +97,7 @@ export interface BookingSummary {
   poster_url?: string;
   screen_name?: string;
   showtime_start?: string;
-  seats?: string[];
+  seats?: Array<{ seat_id?: number; row_label?: string; seat_number?: number } | string>;
 }
 
 export interface UserBookingsResponse {
@@ -296,6 +296,50 @@ export interface SeatMapResponse {
   theatre_id?: number;
   layout: SeatLayout;
   seats: SeatInMap[];
+}
+
+// ============================================================================
+// THEATRE & SEAT TYPES
+// ============================================================================
+
+export interface Theatre {
+  id: number;
+  name: string;
+  total_seats: number;
+  layout_json?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TheatreCreate {
+  name: string;
+  columns: number;
+  rows: number;
+}
+
+export interface TheatreUpdate {
+  name?: string;
+  columns?: number;
+  rows?: number;
+}
+
+export interface Seat {
+  id: number;
+  theatre_id: number;
+  row_label: string;
+  seat_number: number;
+  is_active: boolean;
+}
+
+export interface SeatCreate {
+  theatre_id: number;
+  row_label: string;
+  seat_number: number;
+  is_active?: boolean;
+}
+
+export interface SeatUpdate {
+  is_active?: boolean;
 }
 
 // ============================================================================
@@ -586,6 +630,7 @@ export interface ShowtimeCreate {
   movie_id: number;
   theatre_id: number;
   start_time: string;
+  end_time?: string;
   base_price: number;
   audio_language?: string;
   subtitle_language?: string;
@@ -600,6 +645,7 @@ export interface ShowtimeUpdate {
   movie_id?: number;
   theatre_id?: number;
   start_time?: string;
+  end_time?: string;
   base_price?: number;
   audio_language?: string;
   subtitle_language?: string;

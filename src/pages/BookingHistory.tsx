@@ -4,6 +4,20 @@ import { bookingsApi, showtimesApi, moviesApi } from "@/services/api";
 import { Spinner } from "@/components/ui/spinner";
 import type { BookingSummary, ShowtimeCard } from "@/types/api";
 
+// Format seats for display - handles both string and object formats
+const formatSeats = (seats?: Array<{ seat_id?: number; row_label?: string; seat_number?: number } | string>) => {
+  if (!seats || seats.length === 0) return "N/A";
+  return seats
+    .map((seat) => {
+      if (typeof seat === "string") return seat;
+      if (typeof seat === "object" && seat && "row_label" in seat && "seat_number" in seat) {
+        return `${seat.row_label}${seat.seat_number}`;
+      }
+      return "N/A";
+    })
+    .join(", ");
+};
+
 export default function BookingHistoryPage() {
   const [bookings, setBookings] = useState<BookingSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +36,7 @@ export default function BookingHistoryPage() {
     setError(null);
     bookingsApi
       .getUserBookings(undefined, 1, 50)
-      .then((res) => setBookings(res.bookings))
+      .then((res) => setBookings(res.bookings.filter((b) => b.booking_status === "confirmed")))
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : "Failed to fetch booking history.")
       )
@@ -98,7 +112,7 @@ export default function BookingHistoryPage() {
     b.booking_status === "confirmed" &&
     isWithin30Min(b) &&
     (b.change_count ?? 0) < 1;
-
+  console.log(bookings)
   return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <main className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
@@ -124,7 +138,7 @@ export default function BookingHistoryPage() {
                   showTime={formatTime(b.showtime_start)}
                   transactionNo={b.booking_id.toString()}
                   posterUrl={b.poster_url || ""}
-                  seats={b.seats?.join(", ") || "N/A"}
+                  seats={formatSeats(b.seats)}
                   status={b.booking_status}
                   onCancel={canCancel(b) ? () => handleCancel(b.booking_id.toString()) : undefined}
                   onChangeShowtime={canChange(b) ? () => openChangeShowtime(b) : undefined}

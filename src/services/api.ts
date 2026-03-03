@@ -41,6 +41,12 @@ import type {
   MovieUpdate,
   ShowtimeCreate,
   ShowtimeUpdate,
+  Theatre,
+  TheatreCreate,
+  TheatreUpdate,
+  Seat,
+  SeatCreate,
+  SeatUpdate,
   AdminUserResponse,
   AdminUserUpdate,
   DashboardStats,
@@ -571,6 +577,35 @@ export const adminApi = {
 
   deleteShowtime: (showtimeId: number): Promise<{ message: string }> =>
     requestWithAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
+
+  // Theatres
+  listTheatres: (): Promise<Theatre[]> =>
+    requestWithAuth<Theatre[]>('GET', '/admin/theatres'),
+
+  getTheatre: (theatreId: number): Promise<Theatre> =>
+    requestWithAuth<Theatre>('GET', `/admin/theatres/${theatreId}`),
+
+  createTheatre: (theatre: TheatreCreate): Promise<Theatre> =>
+    requestWithAuth<Theatre>('POST', '/admin/theatres', theatre),
+
+  updateTheatre: (theatreId: number, theatre: TheatreUpdate): Promise<Theatre> =>
+    requestWithAuth<Theatre>('PATCH', `/admin/theatres/${theatreId}`, theatre),
+
+  deleteTheatre: (theatreId: number): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/admin/theatres/${theatreId}`),
+
+  // Seats
+  listSeats: (theatreId: number): Promise<Seat[]> =>
+    requestWithAuth<Seat[]>('GET', `/admin/theatres/${theatreId}/seats`),
+
+  createSeat: (theatreId: number, seat: SeatCreate): Promise<Seat> =>
+    requestWithAuth<Seat>('POST', `/admin/theatres/${theatreId}/seats`, seat),
+
+  updateSeat: (theatreId: number, seatId: number, seat: SeatUpdate): Promise<Seat> =>
+    requestWithAuth<Seat>('PATCH', `/admin/theatres/${theatreId}/seats/${seatId}`, seat),
+
+  deleteSeat: (theatreId: number, seatId: number): Promise<{ message: string }> =>
+    requestWithAuth<{ message: string }>('DELETE', `/admin/theatres/${theatreId}/seats/${seatId}`),
 
   // Bookings
   listBookings: (_userId?: string, _showtimeId?: number, _status?: string, limit: number = 100, offset: number = 0) =>
