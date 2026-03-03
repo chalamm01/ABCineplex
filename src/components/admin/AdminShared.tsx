@@ -100,7 +100,7 @@ interface ModalProps {
 export function Modal({ title, onClose, children }: Readonly<ModalProps>) {
   return (
     <Dialog open onOpenChange={open => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
+      <DialogContent className="max-w-[95vh] max-h-[95vh] overflow-y-auto bg-white">
         <DialogHeader>
           <DialogTitle className="text-neutral-900">{title}</DialogTitle>
         </DialogHeader>

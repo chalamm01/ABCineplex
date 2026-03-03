@@ -61,10 +61,14 @@ export default function TheatresSection() {
   }
 
   function openEdit(t: Theatre) {
+    // Calculate rows and columns from total_seats
+    // Default to 15 columns, then calculate rows
+    const defaultColumns = 15;
+    const calculatedRows = Math.ceil(t.total_seats / defaultColumns);
     setForm({
       name: t.name,
-      columns: t.total_seats ? 15 : 15,
-      rows: t.total_seats ? (t.total_seats / 15) : 8,
+      columns: defaultColumns,
+      rows: calculatedRows,
     });
     setEditId(t.id);
     setModal('edit');
@@ -243,22 +247,48 @@ export default function TheatresSection() {
         onClose={() => setSeatMapOpen(false)}
         onSave={async (seatGrid: Map<string, boolean>) => {
           if (!selectedTheatreId) return;
-          for (const [key, isActive] of seatGrid.entries()) {
+
+          // Build map of original seat states for quick lookup
+          const originalSeats = new Map<string, Seat>();
+          seats.forEach(seat => {
+            const key = `${seat.row_label}-${seat.seat_number}`;
+            originalSeats.set(key, seat);
+          });
+
+          // Collect only changed seats
+          const updatePromises: Promise<void>[] = [];
+
+          for (const [key, newIsActive] of seatGrid.entries()) {
             const [row, colStr] = key.split('-');
             const col = parseInt(colStr, 10);
-            const seat = seats.find(s => s.row_label === row && s.seat_number === col);
+            const originalSeat = originalSeats.get(key);
+            const hasChanged = !originalSeat || originalSeat.is_active !== newIsActive;
 
-            if (seat) {
-              await adminApi.updateSeat(selectedTheatreId, seat.id, { is_active: isActive });
+            if (!hasChanged) continue; // Skip unchanged seats
+
+            if (originalSeat) {
+              // Only update if changed
+              updatePromises.push(
+                adminApi.updateSeat(selectedTheatreId, originalSeat.id, { is_active: newIsActive })
+              );
             } else {
-              await adminApi.createSeat(selectedTheatreId, {
-                theatre_id: selectedTheatreId,
-                row_label: row,
-                seat_number: col,
-                is_active: isActive,
-              });
+              // Create new seat
+              updatePromises.push(
+                adminApi.createSeat(selectedTheatreId, {
+                  theatre_id: selectedTheatreId,
+                  row_label: row,
+                  seat_number: col,
+                  is_active: newIsActive,
+                })
+              );
             }
           }
+
+          // Execute all requests in parallel
+          if (updatePromises.length > 0) {
+            await Promise.all(updatePromises);
+          }
+
           loadTheatres();
         }}
       />
