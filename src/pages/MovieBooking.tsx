@@ -110,7 +110,7 @@ export default function MovieBooking() {
           }));
           return { ...date, showtimes };
         });
-
+        console.log(grouped)
         setBookingDates(dates);
         setSummarizedShowtimes(grouped);
         setSelectedDate(0);
