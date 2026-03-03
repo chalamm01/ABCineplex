@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { publicApi } from '@/services/api';
+import { publicApi, adminApi } from '@/services/api';
 import type { PromoEvent } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -14,7 +14,7 @@ interface PromoForm {
   is_active: boolean;
 }
 
-const emptyPromo: PromoForm = { title: '', promo_type: '', image_url: '', is_active: true };
+const emptyPromo: PromoForm = { title: '', promo_type: 'promo', image_url: '', is_active: true };
 
 type ModalMode = 'add' | 'edit' | null;
 
@@ -51,10 +51,10 @@ export default function PromoEventsSection() {
     setError('');
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete(id: string) {
     if (!confirm('Delete this promo event?')) return;
     try {
-      await publicApi.deletePromoEvent(String(id));
+      await adminApi.deletePromotion(id);
       refresh();
     } catch (e: unknown) {
       alert(String(e));
@@ -65,9 +65,9 @@ export default function PromoEventsSection() {
     setError('');
     try {
       if (modal === 'edit' && editId != null) {
-        await publicApi.updatePromoEvent(editId, form);
+        await adminApi.updatePromotion(editId, form);
       } else {
-        await publicApi.createPromoEvent(form);
+        await adminApi.createPromotion(form);
       }
       setModal(null);
       refresh();
@@ -100,7 +100,7 @@ export default function PromoEventsSection() {
                 <td className="px-3 py-2.5">
                   <div className="flex gap-1">
                     <button className={btnEdit} onClick={() => openEdit(p)}>Edit</button>
-                    <button className={btnDanger} onClick={() => handleDelete(p.id)}>Delete</button>
+                    <button className={btnDanger} onClick={() => handleDelete(String(p.id))}>Delete</button>
                   </div>
                 </td>
               </tr>
@@ -117,7 +117,10 @@ export default function PromoEventsSection() {
               <input className={inputCls} value={form.title} onChange={e => f('title', e.target.value)} />
             </Field>
             <Field label="Promo Type">
-              <input className={inputCls} value={form.promo_type} placeholder="e.g. discount, loyalty, seasonal" onChange={e => f('promo_type', e.target.value)} />
+              <select className={inputCls} value={form.promo_type} onChange={e => f('promo_type', e.target.value)}>
+                <option value="promo">Promotion</option>
+                <option value="news">News</option>
+              </select>
             </Field>
             <div className="col-span-2">
               <Field label="Image URL">

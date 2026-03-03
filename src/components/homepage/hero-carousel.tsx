@@ -19,31 +19,58 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
     setCurrentIndex((prev) => (prev === movies.length - 1 ? 0 : prev + 1));
   };
 
+  const ACTIVE_PCT = 60;
+  const inactivePct = movies.length > 1 ? (100 - ACTIVE_PCT) / (movies.length - 1) : 100;
+
   return (
     <div className="relative h-100 overflow-hidden bg-neutral-900 group rounded-2xl">
-      <div className="flex h-full transition-transform duration-500 ease-out">
-        {movies.map((movie, index) => (
-          <div
-            key={movie.id}
-            className={`relative shrink-0 transition-all duration-500 ${
-              index === currentIndex ? "w-1/2 md:w-3/5" : "w-1/6 md:w-[15%]"
-            }`}
-          >
-            <img
-              src={movie.image}
-              alt={movie.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-            {index === currentIndex && (
-              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h2 className="text-3xl font-light tracking-wide">
-                  {movie.title}
-                </h2>
-              </div>
-            )}
-          </div>
-        ))}
+      <div className="flex h-full">
+        {movies.map((movie, index) => {
+          const isActive = index === currentIndex;
+          return (
+            <div
+              key={movie.id}
+              className="relative shrink-0 cursor-pointer transition-all duration-500 ease-in-out overflow-hidden"
+              style={{ width: isActive ? `${ACTIVE_PCT}%` : `${inactivePct}%` }}
+              onClick={() => setCurrentIndex(index)}
+            >
+              <img
+                src={movie.image_url}
+                alt={movie.title ?? ''}
+                className="w-full h-full object-cover"
+              />
+              <div className={`absolute inset-0 transition-colors duration-500 bg-gradient-to-t ${
+                isActive ? 'from-black/70 via-black/10 to-transparent' : 'from-black/60 via-black/30 to-black/20'
+              }`} />
+              {isActive && (
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h2 className="text-3xl font-light tracking-wide drop-shadow">
+                    {movie.title}
+                  </h2>
+                  {movie.description && (
+                    <p className="text-sm text-white/80 mt-1 line-clamp-2">{movie.description}</p>
+                  )}
+                  {movie.cta_text && movie.cta_link && (
+                    <a
+                      href={movie.cta_link}
+                      onClick={e => e.stopPropagation()}
+                      className="inline-block mt-3 px-4 py-1.5 bg-white text-neutral-900 text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
+                    >
+                      {movie.cta_text}
+                    </a>
+                  )}
+                </div>
+              )}
+              {!isActive && (
+                <div className="absolute inset-0 flex items-end justify-center pb-4 px-1">
+                  <p className="text-white/70 text-xs font-medium text-center leading-tight line-clamp-2 [writing-mode:vertical-lr] rotate-180">
+                    {movie.title}
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Navigation Buttons */}

@@ -32,11 +32,11 @@ export default function Home() {
         const limit = 10;
         const [heroData, nowScreeningRes, upcomingRes, promoData] = await Promise.all([
           publicApi.getHeroCarousel(),
+
           moviesApi.getMovies(page, limit, 'now_showing'),
           moviesApi.getMovies(page, limit, 'upcoming'),
           publicApi.getPromoEvents(),
         ]);
-
         const activeSlides = heroData
           .filter((item: HeroSlide) => item.is_active)
           .sort((a: HeroSlide, b: HeroSlide) => (a.display_order ?? 0) - (b.display_order ?? 0));

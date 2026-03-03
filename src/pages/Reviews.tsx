@@ -23,9 +23,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Heart, Star, Plus } from "lucide-react"
 import { useState, useEffect } from "react"
-import { useSearchParams } from "react-router-dom"
-import { reviewApi } from "@/services/api"
-import type { ReviewResponse } from "@/types/api"
+import { useSearchParams, Link } from "react-router-dom"
 
 function RatingStars({ rating }: { rating: number }) {
   return (
@@ -74,36 +72,44 @@ function StarSelector({
 export default function Reviews() {
   const [searchParams] = useSearchParams()
   const movieId = Number(searchParams.get("movie_id") ?? 0)
+  const isMyReviews = movieId === 0
 
   const isAuthenticated = !!localStorage.getItem('token')
   const currentUserId = localStorage.getItem('user_id')
 
-  const [reviews, setReviews] = useState<ReviewResponse[]>([])
+  const [reviews, setReviews] = useState<ReviewWithMovie[]>([])
   const [total, setTotal] = useState(0)
   const [loadError, setLoadError] = useState("")
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set())
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingReview, setEditingReview] = useState<ReviewResponse | null>(null)
+  const [editingReview, setEditingReview] = useState<ReviewWithMovie | null>(null)
   const [formRating, setFormRating] = useState(5)
   const [formText, setFormText] = useState("")
   const [formError, setFormError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
   // Delete state
-  const [deleteTarget, setDeleteTarget] = useState<ReviewResponse | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ReviewWithMovie | null>(null)
   const [deleting, setDeleting] = useState(false)
 
   const submitLabel = editingReview ? "Save Changes" : "Post Review"
 
   // Load reviews from API
   useEffect(() => {
-    if (!movieId) return
-    reviewApi.getMovieReviews(movieId).then(data => {
-      setReviews(data.items ?? [])
-      setTotal(data.total ?? 0)
-    }).catch(() => setLoadError("Failed to load reviews."))
+    if (isMyReviews) {
+      if (!isAuthenticated) return
+      reviewApi.getMyReviews().then(data => {
+        setReviews(data.items ?? [])
+        setTotal(data.total ?? 0)
+      }).catch(() => setLoadError("Failed to load your reviews."))
+    } else {
+      reviewApi.getMovieReviews(movieId).then(data => {
+        setReviews(data.items ?? [])
+        setTotal(data.total ?? 0)
+      }).catch(() => setLoadError("Failed to load reviews."))
+    }
   }, [movieId])
 
   function openCreateDialog() {
@@ -114,7 +120,7 @@ export default function Reviews() {
     setDialogOpen(true)
   }
 
-  function openEditDialog(review: ReviewResponse) {
+  function openEditDialog(review: ReviewWithMovie) {
     setEditingReview(review)
     setFormRating(review.rating)
     setFormText(review.review_text ?? "")
@@ -169,7 +175,7 @@ export default function Reviews() {
     }
   }
 
-  async function handleLike(review: ReviewResponse) {
+  async function handleLike(review: ReviewWithMovie) {
     if (!isAuthenticated) return
     const isLiked = likedIds.has(review.id)
     try {
@@ -193,12 +199,22 @@ export default function Reviews() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Reviews ({total})</h1>
-          {isAuthenticated && (
+          <div>
+            <h1 className="text-3xl font-bold">
+              {isMyReviews ? "My Reviews" : `Reviews (${total})`}
+            </h1>
+            {isMyReviews && <p className="text-sm text-muted-foreground">{total} review{total !== 1 ? 's' : ''}</p>}
+          </div>
+          {isAuthenticated && !isMyReviews && (
             <Button onClick={openCreateDialog}>
               <Plus className="w-4 h-4 mr-2" />
               Write a Review
             </Button>
+          )}
+          {isMyReviews && (
+            <Link to="/community">
+              <Button variant="outline">Browse Community</Button>
+            </Link>
           )}
         </div>
 
@@ -214,7 +230,11 @@ export default function Reviews() {
         {!loadError && reviews.length === 0 && (
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
-              No reviews yet. Be the first to write one!
+              {isMyReviews
+                ? isAuthenticated
+                  ? "You haven't written any reviews yet."
+                  : "Please log in to see your reviews."
+                : "No reviews yet. Be the first to write one!"}
             </CardContent>
           </Card>
         )}
@@ -233,6 +253,9 @@ export default function Reviews() {
                   </Avatar>
                   <div>
                     <p className="font-semibold">{displayName}</p>
+                    {isMyReviews && review.movie && (
+                      <p className="text-sm font-medium text-primary">{review.movie.title}</p>
+                    )}
                     <p className="text-sm text-muted-foreground">
                       {new Date(review.created_at).toLocaleDateString()}
                     </p>

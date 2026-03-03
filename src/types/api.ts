@@ -160,6 +160,7 @@ export interface Movie {
   audio_languages?: string[];
   subtitle_languages?: string[];
   tag_event?: string;
+  is_active?: boolean;
 }
 
 export interface MovieDetail extends Movie {
@@ -413,12 +414,28 @@ export interface ReviewResponse extends ReviewBase {
   user_id: string;
   movie_id: number;
   created_at: string;
-  points_awarded: boolean;
+  points_awarded?: boolean;
   // Fields returned by backend
   username?: string;
   like_count?: number;
   user_liked?: boolean;
   updated_at?: string;
+}
+
+export interface MovieSnippet {
+  id: number;
+  title: string;
+  poster_url?: string;
+  release_date?: string;
+}
+
+export interface ReviewWithMovie extends ReviewResponse {
+  movie?: MovieSnippet | null;
+}
+
+export interface ReviewWithMovieListResponse {
+  total: number;
+  items: ReviewWithMovie[];
 }
 
 // ============================================================================
@@ -428,7 +445,6 @@ export interface ReviewResponse extends ReviewBase {
 export interface HeroSlide {
   id: string;
   image_url: string;
-  image?: string; // Alias for image_url
   title?: string;
   description?: string;
   cta_link?: string;
@@ -537,6 +553,7 @@ export interface MovieCreate {
   tag_event?: string;
   release_status: string;
   genre?: string;
+  is_active?: boolean;
 }
 
 export interface MovieUpdate {
@@ -555,7 +572,9 @@ export interface MovieUpdate {
   subtitle_languages?: string[];
   tag_event?: string;
   status?: string;
+  release_status?: string;
   genre?: string;
+  is_active?: boolean;
 }
 
 export interface ShowtimeCreate {

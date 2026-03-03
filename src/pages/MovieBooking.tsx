@@ -5,12 +5,8 @@ import { DateTimeSelection } from '@/components/movies/date-time-selection';
 import { SeatMap } from '@/components/movies/seat-map';
 import { TicketSummary } from '@/components/movies/ticket-summary';
 import { moviesApi, showtimesApi, userApi } from '@/services/api';
-import type { MovieDetail, ShowtimeCard } from '@/types/api';
+import type { MovieDetail, ShowtimeCard, DateGroupShowtime as ApiDateGroupShowtime  } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
-
-// Use types from api.ts
-import type { SeatInMap, DateGroupShowtime as ApiDateGroupShowtime } from '@/types/api';
-import type { Seat as ApiSeat } from '@/types/api';
 import type { BookingDate } from '@/lib/constants/movies';
 
 type Seat = {

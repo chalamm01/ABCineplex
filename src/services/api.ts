@@ -34,6 +34,7 @@ import type {
   PaymentResponse,
   ReviewCreate,
   ReviewResponse,
+  ReviewWithMovieListResponse,
   HeroSlide,
   Promotion,
   MovieCreate,
@@ -413,11 +414,17 @@ export const reviewApi = {
   updateReview: (reviewId: number, review: Partial<ReviewCreate>): Promise<ReviewResponse> =>
     requestWithAuth<ReviewResponse>('PATCH', `/reviews/${reviewId}`, review),
 
-  getMovieReviews: (movieId: number): Promise<{ total: number; items: ReviewResponse[] }> =>
-    request<{ total: number; items: ReviewResponse[] }>('GET', `/reviews/movie/${movieId}`, undefined, false),
+  getMovieReviews: (movieId: number): Promise<ReviewWithMovieListResponse> =>
+    request<ReviewWithMovieListResponse>('GET', `/reviews/movie/${movieId}`, undefined, false),
 
   deleteReview: (reviewId: number): Promise<{ message: string }> =>
     requestWithAuth<{ message: string }>('DELETE', `/reviews/${reviewId}`),
+
+  getLatestReviews: (limit = 20): Promise<ReviewWithMovieListResponse> =>
+    request<ReviewWithMovieListResponse>('GET', `/reviews/latest?limit=${limit}`, undefined, false),
+
+  getMyReviews: (): Promise<ReviewWithMovieListResponse> =>
+    requestWithAuth<ReviewWithMovieListResponse>('GET', `/reviews/me`),
 
   likeReview: (reviewId: number): Promise<{ status: string }> =>
     requestWithAuth<{ status: string }>('POST', `/reviews/${reviewId}/likes`),
@@ -548,6 +555,12 @@ export const adminApi = {
 
   deleteMovie: (movieId: number): Promise<{ message: string }> =>
     requestWithAuth<{ message: string }>('DELETE', `/admin/movies/${movieId}`),
+
+  fetchFromTmdb: (tmdbId: number): Promise<Partial<MovieCreate> & { rating_count?: number }> =>
+    requestWithAuth<Partial<MovieCreate> & { rating_count?: number }>('GET', `/admin/movies/tmdb/${tmdbId}`),
+
+  toggleMovieActive: (movieId: number, isActive: boolean): Promise<Movie> =>
+    requestWithAuth<Movie>('PATCH', `/admin/movies/${movieId}`, { is_active: isActive }),
 
   // Showtimes
   createShowtime: (showtime: ShowtimeCreate): Promise<Showtime> =>
