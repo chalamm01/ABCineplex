@@ -1,4 +1,4 @@
-import { Play, Plus } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Movie } from '@/types/api';
 import { formatDuration, formatYear } from '@/types/api';
@@ -9,6 +9,8 @@ interface BookingMovieInfoProps {
 
 export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
   const firstGenre = movie.genre;
+  const isUpcoming = movie.release_status?.toLowerCase() === 'coming_soon' || movie.release_status?.toLowerCase() === 'upcoming';
+
   return (
     <div className="space-y-6">
       <div>
@@ -16,16 +18,20 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
           {movie.title} <span className='text-xl font-normal'>({formatYear(movie.release_date)})</span>
         </h1>
         <div className="flex items-center gap-2 flex-wrap">
+          {isUpcoming && (
+            <Badge className="bg-orange-600 text-white hover:bg-orange-700">
+              🎬 Coming Soon
+            </Badge>
+          )}
           {firstGenre && (
-            <Badge>
+            <Badge variant="default">
               {firstGenre}
             </Badge>
           )}
           {movie.imdb_score != null && movie.imdb_score > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 rounded-full border border-yellow-300">
-              <span className="text-xs font-bold text-yellow-700">IMDb</span>
-              <span className="text-black font-semibold text-sm">{movie.imdb_score}/10</span>
-            </div>
+            <Badge className="bg-yellow-600 text-yellow-50 hover:bg-yellow-700">
+              ⭐ {movie.imdb_score}/10
+            </Badge>
           )}
           {movie.audio_languages && movie.audio_languages.length > 0 && (
             <Badge variant="secondary">
@@ -77,19 +83,16 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
       )}
 
       <div className="flex gap-3 sm:gap-4 pt-4">
-        <Button className="flex-1 bg-black hover:bg-neutral-800 text-white font-semibold py-5 sm:py-6 rounded-lg sm:rounded-xl transition-all hover:scale-105">
-          <Play className="mr-2 h-5 w-5 fill-current" />
-          <span className="hidden sm:inline">WATCH TRAILER</span>
-          <span className="sm:hidden">TRAILER</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex-1 border-neutral-300 text-black hover:bg-neutral-100 py-5 sm:py-6 rounded-lg sm:rounded-xl transition-all hover:scale-105"
-        >
-          <Plus className="mr-2 h-5 w-5" />
-          <span className="hidden sm:inline">WATCHLIST</span>
-          <span className="sm:hidden">LIST</span>
-        </Button>
+        {movie.trailer_url && (
+          <Button
+            className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-5 sm:py-6 rounded-lg sm:rounded-xl transition-all hover:scale-105"
+            onClick={() => window.open(movie.trailer_url, '_blank')}
+          >
+            <Play className="mr-2 h-5 w-5 fill-current" />
+            <span className="hidden sm:inline">WATCH TRAILER</span>
+            <span className="sm:hidden">TRAILER</span>
+          </Button>
+        )}
       </div>
     </div>
   );

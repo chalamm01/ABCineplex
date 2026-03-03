@@ -4,6 +4,7 @@ import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, ActiveIcon,
   inputCls, btnEdit, btnDanger,
+  EditButton, DeleteButton,
 } from './AdminShared';
 
 const emptyCategory: CategoryCreate = { name: '', display_order: 0 };
@@ -160,8 +161,8 @@ export default function CategoriesSection() {
               <span className="text-neutral-900 font-medium text-sm">{c.name}</span>
               <span><ActiveIcon active={c.is_active} /></span>
               <div className="flex gap-1">
-                <button className={btnEdit} onClick={() => openEdit(c)}>Edit</button>
-                <button className={btnDanger} onClick={() => handleDelete(c.id)}>Delete</button>
+                <EditButton onClick={() => openEdit(c)} />
+                <DeleteButton onClick={() => handleDelete(c.id)} />
               </div>
             </div>
           ))}

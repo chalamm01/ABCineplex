@@ -17,7 +17,7 @@ function RatingStars({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`w-4 h-4 ${star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-600"}`}
+          className={`w-4 h-4 ${star <= rating ? "fill-yellow-600 text-yellow-600" : "text-neutral-300"}`}
         />
       ))}
     </div>
@@ -60,20 +60,20 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
-        className="relative bg-gray-950 text-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-white/10"
+        className="relative bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors text-neutral-900"
         >
           <X className="w-4 h-4" />
         </button>
@@ -83,7 +83,7 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
             <Spinner />
           </div>
         ) : error ? (
-          <div className="p-10 text-center text-red-400">{error}</div>
+          <div className="p-10 text-center text-red-600">{error}</div>
         ) : movie ? (
           <>
             {/* Banner */}
@@ -92,9 +92,8 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
                 <img
                   src={movie.banner_url}
                   alt=""
-                  className="w-full h-full object-cover opacity-50"
+                  className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-950" />
               </div>
             )}
 
@@ -103,15 +102,16 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
               <img
                 src={movie.poster_url || "/assets/images/placeholder.png"}
                 alt={movie.title}
-                className="w-28 h-40 object-cover rounded-xl shrink-0 shadow-xl border border-white/10"
+                className="w-28 h-40 object-cover rounded-xl shrink-0 shadow-lg border border-neutral-200"
               />
               <div className="flex-1 pt-2">
-                <h2 className="text-xl font-bold leading-tight">{movie.title}</h2>
-
-                <div className="flex flex-wrap items-center gap-2 mt-2 text-white/50 text-xs">
+                <h2 className="text-xl font-bold leading-tight text-white">{movie.title}
                   {movie.release_date && (
-                    <span>{new Date(movie.release_date).getFullYear()}</span>
+                    <span> ({new Date(movie.release_date).getFullYear()})</span>
                   )}
+                </h2>
+
+                <div className="flex flex-wrap items-center gap-2 mt-2 text-white text-xs">
                   {(movie.runtime_minutes ?? movie.duration_minutes) && (
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
@@ -126,7 +126,7 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
                     </span>
                   )}
                   {movie.content_rating && (
-                    <span className="border border-white/20 px-1.5 py-0.5 rounded text-[10px]">
+                    <span className="border border-neutral-300 px-1.5 py-0.5 rounded text-[10px] text-white">
                       {movie.content_rating}
                     </span>
                   )}
@@ -135,35 +135,35 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
                 <div className="flex items-center gap-4 mt-2">
                   {movie.rating_tmdb != null && (
                     <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-yellow-400 font-bold text-sm">{movie.rating_tmdb}</span>
-                      <span className="text-white/30 text-xs">/10 TMDB</span>
+                      <Star className="w-4 h-4 fill-yellow-600 text-yellow-600" />
+                      <span className="text-yellow-600 font-bold text-sm">{movie.rating_tmdb}</span>
+                      <span className="text-neutral-500 text-xs">/10 TMDB</span>
                     </div>
                   )}
                   {avgRating && (
                     <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
-                      <span className="text-orange-400 font-bold text-sm">{avgRating}</span>
-                      <span className="text-white/30 text-xs">community avg</span>
+                      <Star className="w-4 h-4 fill-orange-600 text-orange-600" />
+                      <span className="text-orange-600 font-bold text-sm">{avgRating}</span>
+                      <span className="text-neutral-500 text-xs">community avg</span>
                     </div>
                   )}
                 </div>
 
                 {movie.director && (
-                  <p className="mt-2 text-xs text-white/40">
-                    Dir. <span className="text-white/60">{movie.director}</span>
+                  <p className="mt-2 text-xs text-neutral-600">
+                    Dir. <span className="text-neutral-900 font-medium">{movie.director}</span>
                   </p>
                 )}
                 {(movie.starring?.length ?? 0) > 0 && (
-                  <p className="mt-0.5 text-xs text-white/40">
+                  <p className="mt-0.5 text-xs text-neutral-600">
                     Starring{" "}
-                    <span className="text-white/60">{movie.starring!.slice(0, 3).join(", ")}</span>
+                    <span className="text-neutral-900 font-medium">{movie.starring!.slice(0, 3).join(", ")}</span>
                   </p>
                 )}
 
                 <button
                   onClick={() => navigate(`/movie/${movieId}`)}
-                  className="mt-3 bg-white text-black font-semibold px-4 py-1.5 rounded-lg text-xs hover:bg-white/90 transition-colors"
+                  className="mt-3 bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg text-xs hover:bg-orange-700 transition-colors"
                 >
                   Book Tickets →
                 </button>
@@ -172,45 +172,45 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
 
             {/* Synopsis */}
             {movie.synopsis && (
-              <p className="px-6 mt-4 text-sm text-white/60 leading-relaxed">{movie.synopsis}</p>
+              <p className="px-6 mt-4 text-sm text-neutral-700 leading-relaxed">{movie.synopsis}</p>
             )}
 
             {/* Reviews section */}
             <div className="px-6 py-6">
               <div className="flex items-center gap-2 mb-4">
-                <h3 className="font-semibold text-white">Reviews</h3>
-                <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-white/60">
+                <h3 className="font-semibold text-neutral-900">Reviews</h3>
+                <span className="text-xs bg-neutral-100 px-2 py-0.5 rounded-full text-neutral-600">
                   {modalReviews.length}
                 </span>
               </div>
 
               {modalReviews.length === 0 ? (
-                <p className="text-white/30 text-sm py-4 text-center">No reviews yet. Be the first!</p>
+                <p className="text-neutral-500 text-sm py-4 text-center">No reviews yet. Be the first!</p>
               ) : (
                 <div className="space-y-3">
                   {modalReviews.map((r) => (
-                    <div key={r.id} className="bg-white/5 border border-white/5 rounded-xl p-4">
+                    <div key={r.id} className="bg-neutral-50 border border-neutral-200 rounded-xl p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-semibold">
+                          <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-xs font-semibold text-orange-700">
                             {(r.username ?? "A")[0].toUpperCase()}
                           </div>
-                          <span className="text-white/80 font-medium text-sm">
+                          <span className="text-neutral-900 font-medium text-sm">
                             {r.username ?? "Anonymous"}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <RatingStars rating={r.rating} />
-                          <span className="text-white/30 text-xs">
+                          <span className="text-neutral-500 text-xs">
                             {new Date(r.created_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                       {r.review_text && (
-                        <p className="text-white/55 text-sm leading-relaxed">{r.review_text}</p>
+                        <p className="text-neutral-700 text-sm leading-relaxed">{r.review_text}</p>
                       )}
                       {(r.like_count ?? 0) > 0 && (
-                        <div className="flex items-center gap-1 mt-2 text-white/30 text-xs">
+                        <div className="flex items-center gap-1 mt-2 text-neutral-500 text-xs">
                           <Heart className="w-3 h-3" />
                           {r.like_count}
                         </div>

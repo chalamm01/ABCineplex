@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { adminApi, type Theatre, type TheatreCreate, type TheatreUpdate, type Seat } from '@/services/api';
 import { Spinner } from '@/components/ui/spinner';
+import { SeatMapModal } from './SeatMapModal';
 import {
   Modal, Field, ModalActions, SectionHeader,
   inputCls, btnEdit, btnDanger, useSort, SortableTableHead,
+  EditButton, DeleteButton,
 } from './AdminShared';
 
 type ModalMode = 'add' | 'edit' | 'seats' | null;
@@ -24,7 +26,7 @@ export default function TheatresSection() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [selectedTheatreId, setSelectedTheatreId] = useState<number | null>(null);
-  const [seatGrid, setSeatGrid] = useState<Map<string, boolean>>(new Map());
+  const [seatMapOpen, setSeatMapOpen] = useState(false);
 
   useEffect(() => {
     loadTheatres();
@@ -46,32 +48,6 @@ export default function TheatresSection() {
     try {
       const data = await adminApi.listSeats(theatreId);
       setSeats(data);
-
-      // Build grid map for visual representation
-      // Default: all seats are ACTIVE (available/green)
-      const gridMap = new Map<string, boolean>();
-
-      // First, mark all seats as active by default
-      const theatreData = theatres.find(t => t.id === theatreId);
-      if (theatreData?.layout_json) {
-        const layout = theatreData.layout_json as any;
-        const rows = layout.rows || 8;
-        const cols = layout.columns || 15;
-        for (let r = 0; r < rows; r++) {
-          const rowLabel = String.fromCharCode(65 + r); // A, B, C, ...
-          for (let c = 1; c <= cols; c++) {
-            const key = `${rowLabel}-${c}`;
-            gridMap.set(key, true); // Default to active/available
-          }
-        }
-      }
-
-      // Then override with actual data (mark disabled ones from DB)
-      data.forEach(seat => {
-        const key = `${seat.row_label}-${seat.seat_number}`;
-        gridMap.set(key, seat.is_active);
-      });
-      setSeatGrid(gridMap);
     } catch (e) {
       console.error('Failed to load seats:', e);
     }
@@ -87,7 +63,7 @@ export default function TheatresSection() {
   function openEdit(t: Theatre) {
     setForm({
       name: t.name,
-      columns: t.total_seats ? 15 : 15, // Default, could parse from layout_json
+      columns: t.total_seats ? 15 : 15,
       rows: t.total_seats ? (t.total_seats / 15) : 8,
     });
     setEditId(t.id);
@@ -98,7 +74,7 @@ export default function TheatresSection() {
   function openSeatMap(t: Theatre) {
     setSelectedTheatreId(t.id);
     loadSeats(t.id);
-    setModal('seats');
+    setSeatMapOpen(true);
   }
 
   async function handleDelete(id: number) {
@@ -150,8 +126,6 @@ export default function TheatresSection() {
 
   const { sorted: sortedTheatres, sort, toggle } = useSort(filteredTheatres);
 
-  const rowLabels = Array.from({ length: form.rows }, (_, i) => String.fromCharCode(65 + i)); // A, B, C...
-
   return (
     <div>
       <SectionHeader title="Theatres" onAdd={openAdd} addLabel="+ Add Theatre" />
@@ -199,24 +173,14 @@ export default function TheatresSection() {
                   <td className="px-3 py-2.5 text-neutral-600">{t.total_seats}</td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
-                      <button
-                        className={btnEdit}
-                        onClick={() => openEdit(t)}
-                      >
-                        Edit
-                      </button>
+                      <EditButton onClick={() => openEdit(t)} />
                       <button
                         className={btnEdit}
                         onClick={() => openSeatMap(t)}
                       >
                         Seats
                       </button>
-                      <button
-                        className={btnDanger}
-                        onClick={() => handleDelete(t.id)}
-                      >
-                        Delete
-                      </button>
+                      <DeleteButton onClick={() => handleDelete(t.id)} />
                     </div>
                   </td>
                 </tr>
@@ -270,141 +234,34 @@ export default function TheatresSection() {
         </Modal>
       )}
 
-      {modal === 'seats' && selectedTheatreId && (
-        <Modal
-          title={`Edit Seat Map - ${theatres.find(t => t.id === selectedTheatreId)?.name}`}
-          onClose={() => setModal(null)}
-        >
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-            <strong>Instructions:</strong> All seats are available (green) by default. Click a seat to <strong>disable</strong> it (gray).
-            Click row/column headers to bulk disable/enable all seats in that row/column.
-          </div>
-          <div className="overflow-x-auto">
-            <div className="inline-block p-4 bg-neutral-50 rounded border border-neutral-200">
-              <div className="space-y-2">
-                {/* Column headers */}
-                <div className="flex gap-2 items-center">
-                  <span className="w-6"></span>
-                  <div className="flex gap-1">
-                    {Array.from({ length: form.columns }, (_, i) => i + 1).map(col => (
-                      <button
-                        key={`col-${col}`}
-                        onClick={() => {
-                          // Bulk enable/disable column
-                          const newGrid = new Map(seatGrid);
-                          const allRows = Array.from({ length: rowLabels.length }, (_, i) => String.fromCharCode(65 + i));
-                          const colActive = allRows.some(row => seatGrid.get(`${row}-${col}`));
-                          allRows.forEach(row => {
-                            newGrid.set(`${row}-${col}`, !colActive);
-                          });
-                          setSeatGrid(newGrid);
-                        }}
-                        className="w-8 h-8 border rounded text-xs font-semibold bg-neutral-300 hover:bg-neutral-400 text-neutral-700"
-                        title="Click to disable/enable entire column"
-                      >
-                        {col}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+      <SeatMapModal
+        isOpen={seatMapOpen}
+        title={`Edit Seat Map - ${theatres.find(t => t.id === selectedTheatreId)?.name}`}
+        theatreId={selectedTheatreId ?? 0}
+        rows={form.rows}
+        columns={form.columns}
+        onClose={() => setSeatMapOpen(false)}
+        onSave={async (seatGrid: Map<string, boolean>) => {
+          if (!selectedTheatreId) return;
+          for (const [key, isActive] of seatGrid.entries()) {
+            const [row, colStr] = key.split('-');
+            const col = parseInt(colStr, 10);
+            const seat = seats.find(s => s.row_label === row && s.seat_number === col);
 
-                {/* Row headers with seats */}
-                {rowLabels.map(row => (
-                  <div key={row} className="flex gap-2 items-center">
-                    <button
-                      onClick={() => {
-                        // Bulk enable/disable row
-                        const newGrid = new Map(seatGrid);
-                        const rowActive = Array.from({ length: form.columns }, (_, i) => i + 1)
-                          .some(col => seatGrid.get(`${row}-${col}`));
-                        Array.from({ length: form.columns }, (_, i) => i + 1).forEach(col => {
-                          newGrid.set(`${row}-${col}`, !rowActive);
-                        });
-                        setSeatGrid(newGrid);
-                      }}
-                      className="w-6 font-bold text-neutral-600 hover:bg-neutral-200 px-1 rounded"
-                      title="Click to disable/enable entire row"
-                    >
-                      {row}
-                    </button>
-                    <div className="flex gap-1">
-                      {Array.from({ length: form.columns }, (_, i) => i + 1).map(col => {
-                        const key = `${row}-${col}`;
-                        const isActive = seatGrid.get(key) ?? true; // Default to active
-                        return (
-                          <button
-                            key={key}
-                            onClick={() => {
-                              const newGrid = new Map(seatGrid);
-                              newGrid.set(key, !isActive);
-                              setSeatGrid(newGrid);
-                            }}
-                            className={`w-8 h-8 border rounded text-xs font-semibold transition-colors ${
-                              isActive
-                                ? 'bg-green-100 border-green-400 text-green-700 hover:bg-red-100 hover:border-red-400 hover:text-red-700'
-                                : 'bg-neutral-200 border-neutral-300 text-neutral-500 hover:bg-green-100 hover:border-green-400 hover:text-green-700'
-                            }`}
-                            title={isActive ? 'Click to disable' : 'Click to enable'}
-                          >
-                            {col}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 text-xs text-neutral-500 space-y-1">
-                <p>🟢 Green = Active seat (can be booked)</p>
-                <p>⚪ Gray = Disabled seat (cannot be booked)</p>
-                <p>Click any seat to toggle status. Click row/column headers for bulk changes.</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end gap-2">
-            <button
-              onClick={() => setModal(null)}
-              className="px-4 py-2 bg-neutral-200 text-neutral-900 rounded-lg hover:bg-neutral-300 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={async () => {
-                if (!selectedTheatreId) return;
-                try {
-                  // Save all seat changes to database
-                  for (const [key, isActive] of seatGrid.entries()) {
-                    const [row, colStr] = key.split('-');
-                    const col = parseInt(colStr, 10);
-                    const seat = seats.find(s => s.row_label === row && s.seat_number === col);
-
-                    if (seat) {
-                      // Update existing seat
-                      await adminApi.updateSeat(selectedTheatreId, seat.id, { is_active: isActive });
-                    } else {
-                      // Create new seat if it doesn't exist
-                      await adminApi.createSeat(selectedTheatreId, {
-                        theatre_id: selectedTheatreId,
-                        row_label: row,
-                        seat_number: col,
-                        is_active: isActive,
-                      });
-                    }
-                  }
-                  setModal(null);
-                  // Refresh theatres list
-                  loadTheatres();
-                } catch (e) {
-                  alert(`Failed to save seats: ${e}`);
-                }
-              }}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
-            >
-              Save Changes
-            </button>
-          </div>
-        </Modal>
-      )}
+            if (seat) {
+              await adminApi.updateSeat(selectedTheatreId, seat.id, { is_active: isActive });
+            } else {
+              await adminApi.createSeat(selectedTheatreId, {
+                theatre_id: selectedTheatreId,
+                row_label: row,
+                seat_number: col,
+                is_active: isActive,
+              });
+            }
+          }
+          loadTheatres();
+        }}
+      />
     </div>
   );
 }

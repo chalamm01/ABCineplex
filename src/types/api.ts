@@ -161,6 +161,8 @@ export interface Movie {
   subtitle_languages?: string[];
   tag_event?: string;
   is_active?: boolean;
+  allow_student_discount?: boolean;
+  allow_member_discount?: boolean;
 }
 
 export interface MovieDetail extends Movie {
@@ -186,13 +188,12 @@ export interface ShowtimeCard {
   theatre_name?: string;
   start_time?: string;
   end_time?: string;
-  format?: string;
   language?: string;
   available_seats?: number;
   total_seats?: number;
-  ticket_price_normal?: number;
-  ticket_price_student?: number;
-  ticket_price_member?: number;
+  base_price: number;
+  student_discount_baht?: number;
+  member_discount_baht?: number;
   total_time_commitment_minutes: number;
   risk_adjusted_quality_score: number;
 }
@@ -233,9 +234,8 @@ export interface Showtime {
   audio_language?: string;
   subtitle_language?: string;
   language?: string;
-  format?: string;
-  ticket_price_normal?: number;
-  ticket_price_student?: number;
+  student_discount_baht?: number;
+  member_discount_baht?: number;
   created_at?: string;
 }
 
@@ -246,15 +246,12 @@ export interface ShowtimeDetail {
   start_time?: string;
   end_time?: string;
   estimated_end_with_credits?: string;
-  format?: string;
   language?: string;
   available_seats?: number;
   total_seats?: number;
-  ticket_prices?: {
-    normal?: number;
-    student?: number;
-    member?: number;
-  };
+  base_price: number;
+  student_discount_baht?: number;
+  member_discount_baht?: number;
   total_time_commitment_minutes: number;
   risk_adjusted_quality_score: number;
 }
@@ -282,7 +279,6 @@ export interface SeatInMap {
   seat_id: number;
   row_label: string;
   seat_number: number;
-  seat_type: string;
   status: string; // available | held | booked | disabled
 }
 
@@ -603,6 +599,8 @@ export interface MovieCreate {
   release_status: string;
   genre?: string;
   is_active?: boolean;
+  allow_student_discount?: boolean;
+  allow_member_discount?: boolean;
 }
 
 export interface MovieUpdate {
@@ -635,10 +633,8 @@ export interface ShowtimeCreate {
   audio_language?: string;
   subtitle_language?: string;
   language?: string;
-  format?: string;
-  ticket_price_normal?: number;
-  ticket_price_student?: number;
-  ticket_price_member?: number;
+  student_discount_baht?: number;
+  member_discount_baht?: number;
 }
 
 export interface ShowtimeUpdate {
@@ -650,10 +646,8 @@ export interface ShowtimeUpdate {
   audio_language?: string;
   subtitle_language?: string;
   language?: string;
-  format?: string;
-  ticket_price_normal?: number;
-  ticket_price_student?: number;
-  ticket_price_member?: number;
+  student_discount_baht?: number;
+  member_discount_baht?: number;
 }
 
 export interface AdminUserUpdate {

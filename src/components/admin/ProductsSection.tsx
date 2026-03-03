@@ -4,6 +4,7 @@ import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
   inputCls, btnEdit, btnDanger,
+  EditButton, DeleteButton,
 } from './AdminShared';
 
 const emptyProduct: ProductCreate = {

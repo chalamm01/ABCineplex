@@ -234,10 +234,12 @@ export const movieApi = {
     movieId: number,
     dateFrom?: string,
     days: number = 7,
+    active?: boolean,
   ): Promise<MovieShowtimesResponse> => {
     const params = new URLSearchParams();
     if (dateFrom) params.append('date_from', dateFrom);
     params.append('days', days.toString());
+    if (active !== undefined) params.append('active', active.toString());
     return request<MovieShowtimesResponse>(
       'GET',
       `/movies/${movieId}/showtimes?${params.toString()}`,
@@ -249,8 +251,8 @@ export const movieApi = {
   getQualityScore: (movieId: number): Promise<QualityScoreResponse> =>
     request<QualityScoreResponse>('GET', `/movies/${movieId}/quality-score`, undefined, false),
 
-  getShowtimesByMovie: (movieId: number): Promise<MovieShowtimesResponse> =>
-    movieApi.getMovieShowtimes(movieId),
+  getShowtimesByMovie: (movieId: number, active?: boolean): Promise<MovieShowtimesResponse> =>
+    movieApi.getMovieShowtimes(movieId, undefined, 7, active),
 
   createMovie: (movie: MovieCreate): Promise<Movie> =>
     requestWithAuth<Movie>('POST', '/admin/movies', movie),
@@ -578,6 +580,16 @@ export const adminApi = {
   deleteShowtime: (showtimeId: number): Promise<{ message: string }> =>
     requestWithAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
 
+  listAllShowtimes: (active?: boolean): Promise<Showtime[]> => {
+    const params = new URLSearchParams();
+    if (active !== undefined) params.append('active', active.toString());
+    return requestWithAuth<{ showtimes: Showtime[] }>(
+      'GET',
+      `/movies/bulk/all-active-showtimes?${params.toString()}`,
+      undefined,
+    ).then(res => res.showtimes || []);
+  },
+
   // Theatres
   listTheatres: (): Promise<Theatre[]> =>
     requestWithAuth<Theatre[]>('GET', '/admin/theatres'),
@@ -606,6 +618,16 @@ export const adminApi = {
 
   deleteSeat: (theatreId: number, seatId: number): Promise<{ message: string }> =>
     requestWithAuth<{ message: string }>('DELETE', `/admin/theatres/${theatreId}/seats/${seatId}`),
+
+  // Showtime Seats (Showtime-specific seat configurations)
+  listShowtimeSeats: (showtimeId: number): Promise<any[]> =>
+    requestWithAuth<any[]>('GET', `/admin/showtimes/${showtimeId}/seats`),
+
+  updateShowtimeSeats: (showtimeId: number, seatConfigs: Record<number, boolean>): Promise<any[]> =>
+    requestWithAuth<any[]>('PATCH', `/admin/showtimes/${showtimeId}/seats/batch`, seatConfigs),
+
+  updateSingleShowtimeSeat: (showtimeSeatId: number, isAvailable: boolean): Promise<any> =>
+    requestWithAuth<any>('PATCH', `/admin/showtime-seats/${showtimeSeatId}`, { is_available: isAvailable }),
 
   // Bookings
   listBookings: (_userId?: string, _showtimeId?: number, _status?: string, limit: number = 100, offset: number = 0) =>

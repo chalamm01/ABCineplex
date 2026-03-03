@@ -5,6 +5,7 @@ import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
   inputCls, btnEdit, btnDanger,
+  EditButton, DeleteButton,
 } from './AdminShared';
 
 interface PromoForm {
@@ -99,8 +100,8 @@ export default function PromoEventsSection() {
                 <td className="px-3 py-2.5"><ActiveIcon active={p.is_active} /></td>
                 <td className="px-3 py-2.5">
                   <div className="flex gap-1">
-                    <button className={btnEdit} onClick={() => openEdit(p)}>Edit</button>
-                    <button className={btnDanger} onClick={() => handleDelete(String(p.id))}>Delete</button>
+                    <EditButton onClick={() => openEdit(p)} />
+                    <DeleteButton onClick={() => handleDelete(String(p.id))} />
                   </div>
                 </td>
               </tr>

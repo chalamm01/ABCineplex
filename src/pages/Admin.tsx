@@ -73,7 +73,7 @@ export default function Admin() {
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen bg-white/70 backdrop-blur-md px-4 py-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto">
           <h1 className="text-3xl font-bold text-neutral-900 mb-1">Admin Panel</h1>
           <p className="text-neutral-500 text-sm mb-6">Logged in as {user.email}</p>
 

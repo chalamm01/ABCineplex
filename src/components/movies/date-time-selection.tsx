@@ -57,62 +57,74 @@ export function DateTimeSelection({
     }),
   }));
 
+  const selectedDateGroup = groupedShowtimes[selectedDate];
+  const selectedShowtime = selectedDateGroup?.showtimes.find((s) => s.time === selectedTime);
+
   return (
-    <div className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 mb-8">
-      {/* <h3 className="text-black font-bold text-2xl sm:text-3xl uppercase tracking-wider mb-8">
-        SELECT DATE & TIME
-      </h3> */}
-
-      {/* Vertical Chronological Layout */}
-      <div className="space-y-8">
-        {groupedShowtimes.map((dateGroup, dateIndex) => (
-          <div key={dateIndex}>
-            {/* Date Header */}
-            <div
+    <div className="bg-white rounded-lg p-4 border border-neutral-200 mb-6">
+      {/* Compact Horizontal Date Selector */}
+      <div className="mb-4">
+        <h4 className="text-xs font-bold text-neutral-600 uppercase tracking-wide mb-2">Select Date</h4>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {groupedShowtimes.map((dateGroup, dateIndex) => (
+            <button
+              key={dateIndex}
               onClick={() => onDateChange(dateIndex)}
-              className="cursor-pointer mb-4 transition-all hover:opacity-80"
+              className={`px-3 py-1.5 rounded-md font-semibold text-xs whitespace-nowrap transition-all shrink-0 ${
+                selectedDate === dateIndex
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
+              }`}
             >
-              <h4 className="text-black font-bold text-lg sm:text-xl uppercase tracking-wider">
-                {dateGroup.dayName} {dateGroup.day} {dateGroup.month}
-              </h4>
-            </div>
-
-            {/* Time Slots */}
-            <div className="flex flex-wrap gap-3">
-              {dateGroup.showtimes.map((showtime) => (
-                <button
-                  key={`${dateIndex}-${showtime.time}`}
-                  onClick={() => {
-                    onDateChange(dateIndex);
-                    onTimeChange(showtime.time);
-                  }}
-                  disabled={showtime.status === 'sold_out' || showtime.status === 'past'}
-                  className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full font-semibold text-sm sm:text-base uppercase tracking-wide transition-all ${
-                    showtime.status === 'selected'
-                      ? 'bg-black text-white border-2 border-black'
-                      : showtime.status === 'available'
-                        ? 'bg-white text-black border-2 border-neutral-300 hover:border-black'
-                        : 'bg-neutral-200 text-neutral-500 border-2 border-neutral-300 cursor-not-allowed opacity-50'
-                  }`}
-                >
-                  <span className="block">{showtime.time}</span>
-                  {showtime.raqs != null && (
-                    <span className="block text-[10px] mt-0.5 opacity-75">⭐ {showtime.raqs.toFixed(1)}</span>
-                  )}
-                  {showtime.ttc != null && (
-                    <span className="block text-[10px] mt-0.5 opacity-60">⏱ {Math.floor(showtime.ttc / 60)}h {showtime.ttc % 60}m</span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Divider between date groups */}
-            {dateIndex < groupedShowtimes.length - 1 && (
-              <div className="mt-8 border-t border-neutral-200" />
-            )}
-          </div>
-        ))}
+              {dateGroup.dayName} {dateGroup.day} {dateGroup.month}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Compact Time Slots for Selected Date */}
+      {selectedDateGroup && (
+        <div>
+          <h4 className="text-xs font-bold text-neutral-600 uppercase tracking-wide mb-2">Select Time</h4>
+          <div className="flex flex-wrap gap-2">
+            {selectedDateGroup.showtimes.map((showtime) => (
+              <button
+                key={`${selectedDate}-${showtime.time}`}
+                onClick={() => onTimeChange(showtime.time)}
+                disabled={showtime.status === 'sold_out' || showtime.status === 'past'}
+                className={`px-3 py-1 rounded-md font-semibold text-xs transition-all ${
+                  showtime.status === 'selected'
+                    ? 'bg-orange-600 text-white'
+                    : showtime.status === 'available'
+                      ? 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
+                      : 'bg-neutral-100 text-neutral-400 cursor-not-allowed opacity-50'
+                }`}
+              >
+                {showtime.time}
+              </button>
+            ))}
+          </div>
+
+          {/* Compact Info Display */}
+          {selectedShowtime && (selectedShowtime.raqs != null || selectedShowtime.ttc != null) && (
+            <div className="mt-3 pt-3 border-t border-neutral-200">
+              <h4 className="text-xs font-bold text-neutral-600 uppercase tracking-wide mb-2">Showtime Info</h4>
+              <div className="flex gap-4 text-xs">
+                {selectedShowtime.raqs != null && (
+                  <div className="flex items-center gap-1">
+                    <span>⭐ {selectedShowtime.raqs.toFixed(1)}</span>
+                  </div>
+                )}
+                {selectedShowtime.ttc != null && (
+                  <div className="flex items-center gap-1">
+                    <span>⏱ {Math.floor(selectedShowtime.ttc / 60)}h {selectedShowtime.ttc % 60}m</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

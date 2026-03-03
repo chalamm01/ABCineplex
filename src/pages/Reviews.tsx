@@ -1,8 +1,5 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
@@ -217,26 +214,27 @@ export default function Reviews() {
   }
 
   return (
-    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen p-6 flex justify-center bg-white/70 backdrop-blur-md">
-        <div className="w-full max-w-3xl space-y-6">
+    <div className="min-h-screen bg-[url('/assets/background/bg.png')] bg-cover bg-center ">
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 flex justify-center bg-white/70 backdrop-blur-md">
+        <div className="w-full max-w-2xl space-y-6">
 
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">
-                {isMyReviews ? "My Reviews" : `Reviews (${total})`}
+              <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900">
+                {isMyReviews ? "My Reviews" : `Movie Reviews`}
               </h1>
-              {isMyReviews && (
-                <p className="text-sm text-muted-foreground">
-                  {total} review{total !== 1 ? "s" : ""}
-                </p>
-              )}
+              <p className="text-sm text-neutral-600 mt-1">
+                {isMyReviews ? `${total} review${total !== 1 ? "s" : ""}` : `${total} review${total !== 1 ? "s" : ""}`}
+              </p>
             </div>
             {isAuthenticated && !isMyReviews && (
-              <Button onClick={openCreateDialog}>
+              <Button
+                onClick={openCreateDialog}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
                 <Plus className="w-4 h-4 mr-2" />
-                Write a Review
+                Write Review
               </Button>
             )}
             {isMyReviews && (
@@ -246,25 +244,23 @@ export default function Reviews() {
             )}
           </div>
 
-          <Separator />
-
           {loadError && (
-            <Card>
-              <CardContent className="p-6 text-center text-red-500">{loadError}</CardContent>
-            </Card>
+            <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+              {loadError}
+            </div>
           )}
 
           {/* Empty state */}
           {!loadError && reviews.length === 0 && (
-            <Card>
-              <CardContent className="p-6 text-center text-muted-foreground">
+            <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center">
+              <p className="text-neutral-600">
                 {isMyReviews
                   ? isAuthenticated
                     ? "You haven't written any reviews yet."
                     : "Please log in to see your reviews."
                   : "No reviews yet. Be the first to write one!"}
-              </CardContent>
-            </Card>
+              </p>
+            </div>
           )}
 
           {/* Review list */}
@@ -273,62 +269,75 @@ export default function Reviews() {
             const isOwner = !!currentUserId && review.user_id === currentUserId
             const isLiked = likedIds.has(review.id)
             return (
-              <Card key={review.id} className="hover:shadow-md transition">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <div className="flex items-center gap-4">
-                    <Avatar>
-                      <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{displayName}</p>
-
-                      {/* Clickable movie — opens Letterboxd-style modal */}
-                      {isMyReviews && review.movie && (
-                        <button
-                          className="flex items-center gap-2 mt-1 group text-left"
-                          onClick={() => setSelectedMovieId(review.movie!.id)}
-                        >
-                          {review.movie.poster_url && (
-                            <img
-                              src={review.movie.poster_url}
-                              alt={review.movie.title}
-                              className="w-8 h-11 object-cover rounded shadow group-hover:ring-2 group-hover:ring-primary transition"
-                            />
-                          )}
-                          <span className="text-sm font-medium text-primary group-hover:underline">
-                            {review.movie.title}
-                          </span>
-                        </button>
-                      )}
-
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(review.created_at).toLocaleDateString()}
-                      </p>
+              <div key={review.id} className="rounded-lg border border-neutral-200 bg-white overflow-hidden hover:shadow-md transition-shadow">
+                <div className="p-5 sm:p-6">
+                  {/* Header with user info and rating */}
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-orange-100 text-orange-700 font-semibold">
+                          {displayName[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-semibold text-neutral-900">{displayName}</p>
+                        <p className="text-xs text-neutral-500">
+                          {new Date(review.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 px-3 py-2 bg-yellow-50 rounded-full">
+                      <RatingStars rating={review.rating} />
+                      <span className="text-xs font-semibold text-yellow-700 ml-1">{review.rating}</span>
                     </div>
                   </div>
-                  <Badge variant="secondary">
-                    <RatingStars rating={review.rating} />
-                  </Badge>
-                </CardHeader>
 
-                <CardContent className="space-y-4">
-                  <p className="text-sm">{review.review_text}</p>
-                  <div className="flex justify-between items-center">
+                  {/* Movie link for My Reviews */}
+                  {isMyReviews && review.movie && (
+                    <button
+                      className="flex items-center gap-2 mb-3 group"
+                      onClick={() => setSelectedMovieId(review.movie!.id)}
+                    >
+                      {review.movie.poster_url && (
+                        <img
+                          src={review.movie.poster_url}
+                          alt={review.movie.title}
+                          className="w-7 h-10 object-cover rounded shadow-sm group-hover:ring-1 group-hover:ring-orange-400 transition"
+                        />
+                      )}
+                      <span className="text-sm font-medium text-orange-600 group-hover:underline">
+                        {review.movie.title}
+                      </span>
+                    </button>
+                  )}
+
+                  {/* Review text */}
+                  <p className="text-neutral-700 text-sm leading-relaxed mb-4">
+                    {review.review_text}
+                  </p>
+
+                  {/* Footer with actions */}
+                  <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={`gap-2 ${isLiked ? "text-red-500" : ""}`}
+                      className={`gap-2 text-neutral-600 hover:text-neutral-900 ${isLiked ? "text-red-500" : ""}`}
                       onClick={() => handleLike(review)}
                       disabled={!isAuthenticated}
                     >
                       <Heart className={`w-4 h-4 ${isLiked ? "fill-red-500" : ""}`} />
-                      {review.like_count ?? 0}
+                      <span className="text-xs">{review.like_count ?? 0}</span>
                     </Button>
                     {isOwner && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="text-xs hover:bg-neutral-100"
                           onClick={() => openEditDialog(review)}
                         >
                           Edit
@@ -336,7 +345,7 @@ export default function Reviews() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-destructive"
+                          className="text-xs text-red-600 hover:bg-red-50"
                           onClick={() => setDeleteTarget(review)}
                         >
                           Delete
@@ -344,43 +353,52 @@ export default function Reviews() {
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )
           })}
         </div>
 
         {/* Create / Edit dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>
-                {editingReview ? "Edit Review" : "Write a Review"}
+              <DialogTitle className="text-2xl">
+                {editingReview ? "Edit Your Review" : "Write a Review"}
               </DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-4">
+            <div className="space-y-5 py-4">
               <div>
-                <p className="text-sm font-medium mb-2">Rating</p>
+                <label className="text-sm font-medium text-neutral-900 block mb-3">
+                  Rating
+                </label>
                 <StarSelector value={formRating} onChange={setFormRating} />
               </div>
               <div>
-                <p className="text-sm font-medium mb-2">Your Review</p>
+                <label className="text-sm font-medium text-neutral-900 block mb-2">
+                  Your Review
+                </label>
                 <Textarea
                   placeholder="Share your thoughts about this movie..."
                   value={formText}
                   onChange={(e) => setFormText(e.target.value)}
                   rows={5}
+                  className="resize-none"
                 />
               </div>
-              {formError && <p className="text-sm text-destructive">{formError}</p>}
+              {formError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{formError}</p>}
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-2">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSubmit} disabled={submitting}>
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
                 {submitting ? "Saving..." : submitLabel}
               </Button>
             </DialogFooter>
@@ -404,7 +422,7 @@ export default function Reviews() {
               <AlertDialogAction
                 onClick={handleDelete}
                 disabled={deleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="bg-red-600 hover:bg-red-700 text-white"
               >
                 {deleting ? "Deleting..." : "Delete"}
               </AlertDialogAction>

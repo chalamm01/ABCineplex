@@ -26,7 +26,9 @@ function StarSelector({ value, onChange }: { value: number; onChange: (v: number
         <Star
           key={star}
           className={`w-7 h-7 cursor-pointer transition-colors ${
-            star <= (hovered || value) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+            star <= (hovered || value)
+              ? "fill-yellow-600 text-yellow-600"
+              : "text-neutral-300"
           }`}
           onMouseEnter={() => setHovered(star)}
           onMouseLeave={() => setHovered(0)}
@@ -128,29 +130,45 @@ export default function CommunityPage() {
   }
 
   return (
-    <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen p-6 bg-white/70 backdrop-blur-sm py-12">
+    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 py-12">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-semibold uppercase">Popular Reviews</h1>
+        <div className="max-w-6xl mx-auto mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900">
+              Popular Reviews
+            </h1>
+            <p className="text-neutral-600 text-sm mt-1">
+              Discover what people are watching and their thoughts
+            </p>
+          </div>
           {isAuthenticated && (
-            <Button onClick={openWriteDialog} className="gap-2">
+            <Button
+              onClick={openWriteDialog}
+              className="bg-orange-600 hover:bg-orange-700 text-white gap-2"
+            >
               <Plus className="w-4 h-4" />
-              Write a Review
+              Write Review
             </Button>
           )}
         </div>
 
         {/* Main layout */}
-        <div className="flex gap-10">
+        <div className="max-w-6xl mx-auto flex gap-6 lg:gap-10">
           {/* Left: Review Feed */}
-          <div className="flex-1 flex flex-col gap-0 divide-y divide-gray-200">
+          <div className="flex-1 space-y-4">
             {feedLoading ? (
-              <div className="flex justify-center py-12"><Spinner /></div>
+              <div className="flex justify-center py-16"><Spinner /></div>
             ) : feedError ? (
-              <p className="text-sm text-red-500 py-6">{feedError}</p>
+              <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+                {feedError}
+              </div>
             ) : reviews.length === 0 ? (
-              <p className="text-sm text-gray-400 py-6">No reviews yet. Be the first!</p>
+              <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center">
+                <p className="text-neutral-600">
+                  No reviews yet. Be the first to share your thoughts!
+                </p>
+              </div>
             ) : (
               reviews.map((review) => (
                 <ReviewCard
@@ -166,11 +184,11 @@ export default function CommunityPage() {
           </div>
 
           {/* Right: Sidebar */}
-          <aside className="w-72 shrink-0 flex flex-col gap-10">
+          <aside className="w-64 lg:w-72 shrink-0">
             {moviesLoading ? (
-              <Spinner />
+              <div className="flex justify-center py-8"><Spinner className="w-5 h-5" /></div>
             ) : (
-              <NowShowingMovies movies={nowShowing} />
+              <NowShowingMovies movies={nowShowing} onMovieClick={(id) => setModalMovieId(id)} />
             )}
           </aside>
         </div>
@@ -178,41 +196,63 @@ export default function CommunityPage() {
 
       {/* Write Review Dialog */}
       <Dialog open={writeOpen} onOpenChange={setWriteOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Write a Review</DialogTitle>
+            <DialogTitle className="text-2xl">Write a Review</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-5 py-4">
             <div>
-              <p className="text-sm font-medium mb-2">Movie</p>
+              <label className="text-sm font-medium text-neutral-900 block mb-2">
+                Movie
+              </label>
               <select
                 value={selectedMovieId}
                 onChange={(e) => setSelectedMovieId(Number(e.target.value))}
-                className="w-full border rounded-md px-3 py-2 text-sm bg-background"
+                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
+                <option value="">Select a movie...</option>
                 {nowShowing.map((m) => (
                   <option key={m.id} value={m.id}>{m.title}</option>
                 ))}
               </select>
             </div>
             <div>
-              <p className="text-sm font-medium mb-2">Rating</p>
+              <label className="text-sm font-medium text-neutral-900 block mb-3">
+                Rating
+              </label>
               <StarSelector value={formRating} onChange={setFormRating} />
             </div>
             <div>
-              <p className="text-sm font-medium mb-2">Your Review</p>
+              <label className="text-sm font-medium text-neutral-900 block mb-2">
+                Your Review
+              </label>
               <Textarea
-                placeholder="Share your thoughts..."
+                placeholder="Share your thoughts about this movie..."
                 value={formText}
                 onChange={(e) => setFormText(e.target.value)}
                 rows={4}
+                className="resize-none"
               />
             </div>
-            {formError && <p className="text-sm text-red-500">{formError}</p>}
+            {formError && (
+              <p className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                {formError}
+              </p>
+            )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setWriteOpen(false)}>Cancel</Button>
-            <Button onClick={handleSubmitReview} disabled={submitting}>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setWriteOpen(false)}
+              className="text-neutral-900"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={submitting}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
               {submitting ? "Posting..." : "Post Review"}
             </Button>
           </DialogFooter>

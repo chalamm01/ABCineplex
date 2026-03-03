@@ -171,7 +171,7 @@ export default function BookingHistoryPage() {
                 {availableShowtimes.map(s => (
                   <option key={s.showtime_id} value={s.showtime_id}>
                     {s.start_time ?? `Showtime #${s.showtime_id}`}
-                    {s.ticket_price_normal ? ` · ฿${s.ticket_price_normal}` : ''}
+                    {s.base_price ? ` · ฿${s.base_price}` : ''}
                   </option>
                 ))}
               </select>

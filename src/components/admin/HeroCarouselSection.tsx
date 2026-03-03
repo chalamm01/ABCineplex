@@ -5,6 +5,7 @@ import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, ActiveIcon,
   inputCls, btnEdit, btnDanger,
+  EditButton, DeleteButton,
 } from './AdminShared';
 
 type ContentType = 'movie' | 'promo';
@@ -207,8 +208,8 @@ export default function HeroCarouselSection() {
               <span className="text-neutral-600 text-xs">{s.cta_text || <span className="text-neutral-400 italic">—</span>}</span>
               <span><ActiveIcon active={s.is_active} /></span>
               <div className="flex gap-1">
-                <button className={btnEdit} onClick={() => openEdit(s)}>Edit</button>
-                <button className={btnDanger} onClick={() => handleDelete(s.id)}>Delete</button>
+                <EditButton onClick={() => openEdit(s)} />
+                <DeleteButton onClick={() => handleDelete(s.id)} />
               </div>
             </div>
           ))}

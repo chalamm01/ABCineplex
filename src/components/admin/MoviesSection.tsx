@@ -5,6 +5,7 @@ import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, StatusBadge,
   inputCls, btnEdit, btnDanger, joinLines, splitLines, useSort, SortableTableHead,
+  EditButton, DeleteButton,
 } from './AdminShared';
 
 // Aligned with the provided schema keys
@@ -28,6 +29,8 @@ const emptyMovie: MovieCreate = {
   trailer_url: '',
   tag_event: '',
   is_active: true,
+  allow_student_discount: true,
+  allow_member_discount: true,
 };
 
 type ModalMode = 'add' | 'edit' | null;
@@ -88,6 +91,8 @@ export default function MoviesSection() {
       trailer_url: m.trailer_url || '',
       tag_event: m.tag_event || '',
       is_active: m.is_active ?? true,
+      allow_student_discount: m.allow_student_discount ?? true,
+      allow_member_discount: m.allow_member_discount ?? true,
     });
     setEditId(m.id);
     setModal('edit');
@@ -232,14 +237,14 @@ export default function MoviesSection() {
                   <td className="px-3 py-2.5 text-neutral-600">{m.release_date}</td>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">
-                      <button className={btnEdit} onClick={() => openEdit(m)}>Edit</button>
+                      <EditButton onClick={() => openEdit(m)} />
                       <button
                         className="rounded px-2 py-1 text-xs font-medium border transition-colors border-neutral-300 text-neutral-700 hover:bg-neutral-100"
                         onClick={() => handleToggleActive(m)}
                       >
                         {(m.is_active ?? true) ? 'Hide' : 'Show'}
                       </button>
-                      <button className={btnDanger} onClick={() => handleDelete(m.id)}>Delete</button>
+                      <DeleteButton onClick={() => handleDelete(m.id)} />
                     </div>
                   </td>
                 </tr>
@@ -341,6 +346,28 @@ export default function MoviesSection() {
             <Field label="Trailer URL">
               <input className={inputCls} value={form.trailer_url ?? ''} onChange={e => f('trailer_url', e.target.value)} />
             </Field>
+            <div className="col-span-2 border-t pt-4 mt-2">
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.allow_student_discount ?? true}
+                    onChange={e => f('allow_student_discount', e.target.checked)}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="text-sm font-medium text-neutral-700">Allow Student Discount</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.allow_member_discount ?? true}
+                    onChange={e => f('allow_member_discount', e.target.checked)}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="text-sm font-medium text-neutral-700">Allow Member Discount</span>
+                </label>
+              </div>
+            </div>
           </div>
           <ModalActions
             onCancel={() => setModal(null)}

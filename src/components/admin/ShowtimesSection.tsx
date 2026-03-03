@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { adminApi, showtimesApi, type ShowtimeCreate, type Showtime, type Theatre } from '@/services/api';
+import { adminApi, showtimesApi, type ShowtimeCreate, type Showtime, type Theatre, type Seat } from '@/services/api';
 import type { Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
+import { SeatMapModal } from './SeatMapModal';
 import {
   Modal, Field, ModalActions, SectionHeader,
   inputCls, btnEdit, btnDanger, fmtDT, useSort, SortableTableHead,
+  EditButton, DeleteButton,
 } from './AdminShared';
 
 const emptyShowtime: ShowtimeCreate = {
   movie_id: 0, theatre_id: 0, start_time: '', end_time: undefined, base_price: 0,
-  audio_language: '', subtitle_language: '', format: '',
-  ticket_price_normal: undefined, ticket_price_student: undefined,
+  audio_language: '', subtitle_language: '',
+  student_discount_baht: 20, member_discount_baht: 30,
 };
 
 type ModalMode = 'add' | 'edit' | null;
@@ -36,6 +38,9 @@ export default function ShowtimesSection() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [seatMapOpen, setSeatMapOpen] = useState(false);
+  const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(null);
+  const [seats, setSeats] = useState<Seat[]>([]);
 
   useEffect(() => {
     adminApi.listMovies().then(setMovies).catch(() => {});
@@ -46,18 +51,11 @@ export default function ShowtimesSection() {
   async function loadAllShowtimes() {
     setLoading(true);
     try {
-      let allShowtimesData: Showtime[] = [];
-      const movieList = await adminApi.listMovies();
-      for (const movie of movieList) {
-        try {
-          const timings = await showtimesApi.getShowtimesByMovie(movie.id);
-          allShowtimesData = [...allShowtimesData, ...timings];
-        } catch {
-          // Skip if no showtimes for this movie
-        }
-      }
+      // Fetch all showtimes directly from DB (includes active + inactive)
+      const allShowtimesData = await adminApi.listAllShowtimes();
       setAllShowtimes(allShowtimesData);
-    } catch {
+    } catch (error) {
+      console.error('Failed to load showtimes:', error);
       setAllShowtimes([]);
     } finally {
       setLoading(false);
@@ -93,9 +91,8 @@ export default function ShowtimesSection() {
       base_price: s.base_price,
       audio_language: s.audio_language ?? '',
       subtitle_language: s.subtitle_language ?? '',
-      format: s.format ?? '',
-      ticket_price_normal: s.ticket_price_normal ?? undefined,
-      ticket_price_student: s.ticket_price_student ?? undefined,
+      student_discount_baht: s.student_discount_baht ?? 20,
+      member_discount_baht: s.member_discount_baht ?? 30,
     });
     setEditId(s.id);
     setModal('edit');
@@ -112,17 +109,31 @@ export default function ShowtimesSection() {
     }
   }
 
+  async function openSeatMap(showtime: Showtime) {
+    setSelectedShowtime(showtime);
+    try {
+      // Load showtime-specific seat configurations
+      const showtimeSeats = await adminApi.listShowtimeSeats(showtime.id);
+      // Convert to Seat format for display
+      const theatreSeats = await adminApi.listSeats(showtime.theatre_id);
+      setSeats(theatreSeats);
+      // Store showtime seats for reference during save
+      (showtime as any)._showtimeSeats = showtimeSeats;
+    } catch (e) {
+      console.error('Failed to load seats:', e);
+    }
+    setSeatMapOpen(true);
+  }
+
   async function handleSubmit() {
     setError('');
 
     // Validate that start_time is not in the past
-    if (form.start_time) {
-      const startDateTime = new Date(form.start_time);
-      const now = new Date();
-      if (startDateTime < now) {
-        setError('Showtime cannot be in the past. Please select a future date and time.');
-        return;
-      }
+    const startDateTime = new Date(form.start_time);
+    const now = new Date();
+    if (startDateTime < now) {
+      setError('Showtime cannot be in the past. Please select a future date and time.');
+      return;
     }
 
     const payload = {
@@ -130,7 +141,7 @@ export default function ShowtimesSection() {
       start_time: form.start_time ? `${form.start_time}:00` : form.start_time,
       audio_language: form.audio_language || undefined,
       subtitle_language: form.subtitle_language || undefined,
-      format: form.format || undefined,
+
     };
     try {
       if (modal === 'edit' && editId != null) {
@@ -223,15 +234,15 @@ export default function ShowtimesSection() {
                   { label: 'Audio',       key: 'audio_language' },
                   { label: 'Subtitles',   key: 'subtitle_language' },
                   { label: 'Base (฿)',    key: 'base_price' },
-                  { label: 'Normal (฿)', key: 'ticket_price_normal' },
-                  { label: 'Student (฿)',key: 'ticket_price_student' },
+                  { label: 'Student -฿', key: 'student_discount_baht' },
+                  { label: 'Member -฿',  key: 'member_discount_baht' },
                   { label: 'Actions',    key: '' },
                 ]}
               />
               <tbody>
                 {sortedShowtimes.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="px-3 py-6 text-neutral-400 text-center">
+                    <td colSpan={12} className="px-3 py-6 text-neutral-400 text-center">
                       No showtimes found.
                     </td>
                   </tr>
@@ -245,13 +256,14 @@ export default function ShowtimesSection() {
                     <td className="px-3 py-2.5 text-neutral-600">{fmtTime(s.end_time)}</td>
                     <td className="px-3 py-2.5 text-neutral-600">{s.audio_language ?? '—'}</td>
                     <td className="px-3 py-2.5 text-neutral-600">{s.subtitle_language ?? '—'}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">฿{s.base_price}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{s.ticket_price_normal == null ? '—' : `฿${s.ticket_price_normal}`}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{s.ticket_price_student == null ? '—' : `฿${s.ticket_price_student}`}</td>
+                    <td className="px-3 py-2.5 text-neutral-600">{s.base_price}</td>
+                    <td className="px-3 py-2.5 text-neutral-600">{s.student_discount_baht == null ? '—' : `-฿${s.student_discount_baht}`}</td>
+                    <td className="px-3 py-2.5 text-neutral-600">{s.member_discount_baht == null ? '—' : `-฿${s.member_discount_baht}`}</td>
                     <td className="px-3 py-2">
                       <div className="flex gap-1">
-                        <button className={btnEdit} onClick={() => openEdit(s)}>Edit</button>
-                        <button className={btnDanger} onClick={() => handleDelete(s.id)}>Delete</button>
+                        <EditButton onClick={() => openEdit(s)} />
+                        <button type="button" className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition-colors" onClick={() => openSeatMap(s)}>Seats</button>
+                        <DeleteButton onClick={() => handleDelete(s.id)} />
                       </div>
                     </td>
                   </tr>
@@ -289,9 +301,6 @@ export default function ShowtimesSection() {
             </Field>
             <Field label="End Time (Optional)">
               <input className={inputCls} type="datetime-local" value={form.end_time ?? ''} onChange={e => f('end_time', e.target.value || undefined)} />
-            </Field>
-            <Field label="Format">
-              <input className={inputCls} placeholder="2D / 3D / IMAX…" value={form.format ?? ''} onChange={e => f('format', e.target.value)} />
             </Field>
 
             {/* Audio Language */}
@@ -343,17 +352,15 @@ export default function ShowtimesSection() {
             <Field label="Base Price (฿)">
               <input className={inputCls} type="number" step="0.01" min="0" value={form.base_price} onChange={e => f('base_price', +e.target.value)} />
             </Field>
-            <Field label="Normal Ticket (฿)">
+            <Field label="Student Discount (฿)">
               <input className={inputCls} type="number" step="0.01" min="0"
-                value={form.ticket_price_normal ?? ''}
-                placeholder="Leave blank to use base price"
-                onChange={e => f('ticket_price_normal', e.target.value ? +e.target.value : undefined)} />
+                value={form.student_discount_baht ?? 20}
+                onChange={e => f('student_discount_baht', +e.target.value)} />
             </Field>
-            <Field label="Student Ticket (฿)">
+            <Field label="Member Discount (฿)">
               <input className={inputCls} type="number" step="0.01" min="0"
-                value={form.ticket_price_student ?? ''}
-                placeholder="Leave blank to use base price"
-                onChange={e => f('ticket_price_student', e.target.value ? +e.target.value : undefined)} />
+                value={form.member_discount_baht ?? 30}
+                onChange={e => f('member_discount_baht', +e.target.value)} />
             </Field>
           </div>
           {form.movie_id > 0 && (
@@ -369,6 +376,42 @@ export default function ShowtimesSection() {
             error={error}
           />
         </Modal>
+      )}
+
+      {seatMapOpen && (
+        <SeatMapModal
+          isOpen={seatMapOpen}
+          title={selectedShowtime ? `Manage Seats - ${selectedShowtime.id} (${theatres.find(t => t.id === selectedShowtime.theatre_id)?.name})` : 'Manage Seats'}
+          theatreId={selectedShowtime?.theatre_id ?? 0}
+          showtimeId={selectedShowtime?.id}
+          rows={selectedShowtime ? (theatres.find(t => t.id === selectedShowtime.theatre_id)?.total_seats ?? 120) / 15 : 8}
+          columns={15}
+          onClose={() => {
+            setSeatMapOpen(false);
+            setSelectedShowtime(null);
+          }}
+          onSave={async (seatGrid: Map<string, boolean>) => {
+            if (!selectedShowtime) return;
+
+            // Build seat configs for this specific showtime
+            const seatConfigs: Record<number, boolean> = {};
+
+            for (const [key, isActive] of seatGrid.entries()) {
+              const [row, colStr] = key.split('-');
+              const col = parseInt(colStr, 10);
+              const seat = seats.find(s => s.row_label === row && s.seat_number === col);
+              if (seat) {
+                seatConfigs[seat.id] = isActive;
+              }
+            }
+
+            // Update showtime-specific seat configurations (not theatre seats)
+            await adminApi.updateShowtimeSeats(selectedShowtime.id, seatConfigs);
+            setRefreshKey(k => k + 1);
+            setSeatMapOpen(false);
+            setSelectedShowtime(null);
+          }}
+        />
       )}
     </div>
   );

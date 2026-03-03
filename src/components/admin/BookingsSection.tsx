@@ -18,10 +18,13 @@ const formatSeats = (seats?: Array<{ seat_id?: number; row_label?: string; seat_
     .join(', ');
 };
 
-// Matches the booking_details view + payments merge returned by the backend
+// Matches the booking_details view returned by the backend
 interface AdminBookingRow {
   booking_id: string;
   user_id: string;
+  full_name?: string;
+  email?: string;
+  phone?: string;
   showtime_id: number;
   booking_status: string;
   total_amount?: number;
@@ -30,7 +33,10 @@ interface AdminBookingRow {
   movie_title?: string;
   movie_id?: number;
   showtime_start?: string;
+  showtime_end?: string;
   seats?: Array<{ seat_id?: number; row_label?: string; seat_number?: number } | string>;
+  screen_name?: string;
+  theatre_id?: number;
   created_at?: string;
   updated_at?: string;
   paid_at?: string;
@@ -88,7 +94,7 @@ export default function BookingsSection() {
       (b.user_id ?? '').toLowerCase().includes(q)
     );
   });
-
+  console.log(filtered)
   const { sorted, sort, toggle } = useSort(filtered);
 
   return (
@@ -141,9 +147,13 @@ export default function BookingsSection() {
             <SortableTableHead
               sort={sort} onSort={toggle}
               cols={[
-                { label: 'Booking ID', key: '' },
+                { label: 'Booking ID', key: 'booking_id' },
+                { label: 'Full Name',  key: 'full_name' },
+                { label: 'Email',      key: 'email' },
+                { label: 'Phone',      key: 'phone' },
                 { label: 'Movie',      key: 'movie_title' },
                 { label: 'Showtime',   key: 'showtime_start' },
+                { label: 'Theatre',    key: 'screen_name' },
                 { label: 'Seats',      key: '' },
                 { label: 'Amount',     key: 'total_amount' },
                 { label: 'Status',     key: 'booking_status' },
@@ -153,18 +163,30 @@ export default function BookingsSection() {
             />
             <tbody>
               {sorted.length === 0 && (
-                <tr key="empty"><td colSpan={8} className="px-3 py-6 text-neutral-400 text-center">No bookings found.</td></tr>
+                <tr key="empty"><td colSpan={12} className="px-3 py-6 text-neutral-400 text-center">No bookings found.</td></tr>
               )}
               {sorted.map(b => (
-                <tr key={b.booking_id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
-                  <td className="px-3 py-2.5 text-neutral-400 font-mono text-xs max-w-35 truncate" title={b.booking_id}>
-                    {(b.booking_id ?? '').slice(0, 8)}…
+                <tr key={b.id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
+                  <td className="px-3 py-2.5 text-neutral-400 font-mono text-xs" title={b.booking_id}>
+                    {b.booking_id ?? '—'}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-900 font-medium">
+                    {b.full_name ?? <span className="text-neutral-400">—</span>}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-600 text-xs">
+                    {b.email ?? <span className="text-neutral-400">—</span>}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-600 text-xs">
+                    {b.phone ?? <span className="text-neutral-400">—</span>}
                   </td>
                   <td className="px-3 py-2.5 text-neutral-900 font-medium">
                     {b.movie_title ?? <span className="text-neutral-400">—</span>}
                   </td>
-                  <td className="px-3 py-2.5 text-neutral-600 whitespace-nowrap">
-                    {fmtDT(b.showtime_start)}
+                  <td className="px-3 py-2.5 text-neutral-600 whitespace-nowrap text-xs">
+                    {b.showtime_start && b.showtime_end ? `${fmtDT(b.showtime_start)} - ${fmtDT(b.showtime_end)}` : '—'}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-600 text-xs">
+                    {b.screen_name ?? <span className="text-neutral-400">—</span>}
                   </td>
                   <td className="px-3 py-2.5 text-neutral-600">
                     {formatSeats(b.seats)}
@@ -174,7 +196,7 @@ export default function BookingsSection() {
                   <td className="px-3 py-2.5 text-neutral-500 text-xs capitalize">
                     {b.payment_method?.replace('mock_', '') ?? '—'}
                   </td>
-                  <td className="px-3 py-2.5 text-neutral-500 whitespace-nowrap">
+                  <td className="px-3 py-2.5 text-neutral-500 whitespace-nowrap text-xs">
                     {fmtDT(b.paid_at)}
                   </td>
                 </tr>

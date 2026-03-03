@@ -180,7 +180,7 @@ export default function MovieBooking() {
             row: s.row_label,
             col: s.seat_number,
             status: s.status?.toLowerCase() === 'available' ? 'available' : 'reserved',
-            price: card.ticket_price_normal ?? undefined,
+            price: card.base_price ?? undefined,
           }));
           setSeats(mapped);
         } else {
@@ -257,8 +257,8 @@ export default function MovieBooking() {
   const currentCardEndTime = currentCard ? extractTime(currentCard.end_time) : undefined;
 
   const pricePerSeat = ticketType === 'student'
-    ? (currentCard?.ticket_price_student ?? currentCard?.ticket_price_normal ?? 0)
-    : (currentCard?.ticket_price_normal ?? 0);
+    ? ((currentCard?.base_price ?? 0) - (currentCard?.student_discount_baht ?? 0))
+    : (currentCard?.base_price ?? 0);
 
   const seatsTotalPrice = seats.filter(s => s.status === 'selected').length * pricePerSeat;
 
@@ -340,7 +340,11 @@ export default function MovieBooking() {
               </div>
             ) : (
               <>
-                <DateTimeSelection
+
+
+                <div className="flex justify-between gap-8">
+                  <div className="w-full">
+                                 <DateTimeSelection
                   dates={bookingDates}
                   times={bookingTimes}
                   selectedDate={selectedDate}
@@ -349,8 +353,6 @@ export default function MovieBooking() {
                   onTimeChange={setSelectedTime}
                   summarizedShowtimes={summarizedShowtimes}
                 />
-
-                <div className="flex justify-between gap-8">
                   <TicketSummary
                     selectedSeats={selectedSeats}
                     selectedDate={bookingDates[selectedDate]}
@@ -363,7 +365,7 @@ export default function MovieBooking() {
                     onTicketTypeChange={setTicketType}
                     endTime={currentCardEndTime}
                   />
-
+</div>
                   {seats.length > 0 ? (
                     <SeatMap seats={seats} onSeatToggle={toggleSeat} />
                   ) : (

@@ -59,6 +59,36 @@ export const btnPrimary =
 export const btnSecondary =
   'text-xs px-2 py-1 rounded font-medium transition-colors border bg-white text-neutral-700 hover:bg-neutral-50 border-neutral-200';
 
+// ─── Button Components ───────────────────────────────────────────────────────
+
+export function EditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className="h-6 px-2 text-xs"
+      onClick={onClick}
+    >
+      Edit
+    </Button>
+  );
+}
+
+export function DeleteButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="destructive"
+      className="h-6 px-2 text-xs"
+      onClick={onClick}
+    >
+      Delete
+    </Button>
+  );
+}
+
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 interface ModalProps {
