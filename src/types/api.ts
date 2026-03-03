@@ -92,6 +92,7 @@ export interface BookingSummary {
   booking_status?: string;
   total_amount?: number;
   created_at?: string;
+  change_count?: number;
   movie_title?: string;
   poster_url?: string;
   screen_name?: string;
@@ -334,11 +335,14 @@ export interface BookingDetail {
   user_id: string;
   booking_status: string;
   total_amount: number;
-  payment_deadline: string;
-  created_at: string;
+  ticket_type?: string;
+  num_tickets?: number;
+  payment_deadline?: string;
+  created_at?: string;
+  updated_at?: string;
   showtime_id: number;
-  screen_name: string;
-  seats: string[];
+  screen_name?: string;
+  seats?: string[];
   movie_title?: string;
   poster_url?: string;
   showtime_start?: string;
@@ -521,6 +525,7 @@ export interface MovieCreate {
   runtime_minutes: number;
   duration_minutes: number;
   content_rating?: string;
+  credits_duration_minutes?: number;
   director?: string;
   starring?: string[];
   synopsis?: string;

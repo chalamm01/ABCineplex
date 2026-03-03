@@ -73,20 +73,21 @@ export default function CategoriesSection() {
       <SectionHeader title="Categories" count={categories.length} onAdd={openAdd} addLabel="+ Add Category" />
 
       {loading ? (
-        <div className="flex justify-center py-8"><Spinner className="text-zinc-400 w-6 h-6" /></div>
+        <div className="flex justify-center py-8"><Spinner className="text-neutral-400 w-6 h-6" /></div>
       ) : (
+        <div className="overflow-x-auto rounded-lg border border-neutral-200">
         <table className="w-full text-sm text-left">
           <TableHead cols={['Name', 'Display Order', 'Active', 'Actions']} />
           <tbody>
             {categories.length === 0 && (
-              <tr><td colSpan={4} className="px-3 py-6 text-zinc-500 text-center">No categories found.</td></tr>
+              <tr><td colSpan={4} className="px-3 py-6 text-neutral-400 text-center">No categories found.</td></tr>
             )}
             {categories.map(c => (
-              <tr key={c.id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
-                <td className="px-3 py-2 text-white font-medium">{c.name}</td>
-                <td className="px-3 py-2 text-zinc-300">{c.display_order}</td>
-                <td className="px-3 py-2"><ActiveIcon active={c.is_active} /></td>
-                <td className="px-3 py-2">
+              <tr key={c.id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
+                <td className="px-3 py-2.5 text-neutral-900 font-medium">{c.name}</td>
+                <td className="px-3 py-2.5 text-neutral-600">{c.display_order}</td>
+                <td className="px-3 py-2.5"><ActiveIcon active={c.is_active} /></td>
+                <td className="px-3 py-2.5">
                   <div className="flex gap-1">
                     <button className={btnEdit} onClick={() => openEdit(c)}>Edit</button>
                     <button className={btnDanger} onClick={() => handleDelete(c.id)}>Delete</button>
@@ -96,6 +97,7 @@ export default function CategoriesSection() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {(modal === 'add' || modal === 'edit') && (

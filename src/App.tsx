@@ -9,6 +9,7 @@ import Cart from "./pages/Cart.tsx";
 import Movies from "./pages/Movies.tsx";
 import MovieBooking from "./pages/MovieBooking.tsx";
 import Payment from "./pages/Payment.tsx";
+import SnackPayment from "./pages/SnackPayment.tsx";
 import Home from "./pages/Home.tsx";
 import Admin from "./pages/Admin.tsx";
 import Profile from "./pages/Profile.tsx";
@@ -34,6 +35,7 @@ function App() {
           <Route path="/movies" element={<Movies />} />
           <Route path="/movie/:id" element={<MovieBooking />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/snack-payment" element={<SnackPayment />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/reviews" element={<Reviews />} />

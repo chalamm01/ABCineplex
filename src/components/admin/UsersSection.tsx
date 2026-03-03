@@ -4,7 +4,7 @@ import type { AdminUserResponse } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
-  inputCls, btnEdit,
+  inputCls, btnEdit, useSort, SortableTableHead,
 } from './AdminShared';
 
 interface UserEditForm {
@@ -17,14 +17,14 @@ interface UserEditForm {
 }
 
 const TIER_BADGE: Record<string, string> = {
-  none: 'bg-zinc-700 text-zinc-300',
-  free: 'bg-blue-900 text-blue-300',
-  paid: 'bg-yellow-900 text-yellow-300',
+  none: 'bg-neutral-100 text-neutral-500',
+  free: 'bg-blue-100 text-blue-700',
+  paid: 'bg-amber-100 text-amber-700',
 };
 
 function TierBadge({ tier }: Readonly<{ tier: string }>) {
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full ${TIER_BADGE[tier] ?? 'bg-zinc-700 text-zinc-300'}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TIER_BADGE[tier] ?? 'bg-neutral-100 text-neutral-600'}`}>
       {tier}
     </span>
   );
@@ -106,6 +106,8 @@ export default function UsersSection() {
     );
   });
 
+  const { sorted, sort, toggle } = useSort(filtered);
+
   return (
     <div>
       <SectionHeader title="Users" count={users.length} onAdd={() => {}} addLabel="" />
@@ -122,36 +124,49 @@ export default function UsersSection() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-8"><Spinner className="text-zinc-400 w-6 h-6" /></div>
+        <div className="flex justify-center py-8"><Spinner className="text-neutral-400 w-6 h-6" /></div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg border border-neutral-200">
           <table className="w-full text-sm text-left">
-            <TableHead cols={['Name', 'Email', 'Membership', 'Student', 'Verified', 'Points', 'Admin', 'Active', 'Actions']} />
+            <SortableTableHead
+              sort={sort} onSort={toggle}
+              cols={[
+                { label: 'Name',       key: 'full_name' },
+                { label: 'Email',      key: 'email' },
+                { label: 'Membership', key: 'membership_tier' },
+                { label: 'Student',    key: 'is_student' },
+                { label: 'Verified',   key: 'student_id_verified' },
+                { label: 'Points',     key: 'loyalty_points' },
+                { label: 'Admin',      key: 'is_admin' },
+                { label: 'Active',     key: 'is_active' },
+                { label: 'Actions',    key: '' },
+              ]}
+            />
             <tbody>
-              {filtered.length === 0 && (
-                <tr><td colSpan={9} className="px-3 py-6 text-zinc-500 text-center">No users found.</td></tr>
+              {sorted.length === 0 && (
+                <tr key="empty"><td colSpan={9} className="px-3 py-6 text-neutral-400 text-center">No users found.</td></tr>
               )}
-              {filtered.map(u => (
-                <tr key={u.user_id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
-                  <td className="px-3 py-2 text-white font-medium whitespace-nowrap">
-                    {u.full_name || <span className="text-zinc-500 italic">—</span>}
+              {sorted.map(u => (
+                <tr key={u.user_id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
+                  <td className="px-3 py-2.5 text-neutral-900 font-medium whitespace-nowrap">
+                    {u.full_name || <span className="text-neutral-400 italic">—</span>}
                   </td>
-                  <td className="px-3 py-2 text-zinc-300 max-w-[180px] truncate">{u.email}</td>
-                  <td className="px-3 py-2"><TierBadge tier={u.membership_tier} /></td>
-                  <td className="px-3 py-2"><ActiveIcon active={u.is_student} /></td>
-                  <td className="px-3 py-2"><ActiveIcon active={u.student_id_verified} /></td>
-                  <td className="px-3 py-2 text-zinc-300">{u.loyalty_points}</td>
-                  <td className="px-3 py-2">
-                    {u.is_admin && <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full">admin</span>}
+                  <td className="px-3 py-2.5 text-neutral-600 max-w-45 truncate">{u.email}</td>
+                  <td className="px-3 py-2.5"><TierBadge tier={u.membership_tier} /></td>
+                  <td className="px-3 py-2.5"><ActiveIcon active={u.is_student} /></td>
+                  <td className="px-3 py-2.5"><ActiveIcon active={u.student_id_verified} /></td>
+                  <td className="px-3 py-2.5 text-neutral-600">{u.loyalty_points}</td>
+                  <td className="px-3 py-2.5">
+                    {u.is_admin && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">admin</span>}
                   </td>
-                  <td className="px-3 py-2"><ActiveIcon active={u.is_active} /></td>
-                  <td className="px-3 py-2 flex gap-1">
+                  <td className="px-3 py-2.5"><ActiveIcon active={u.is_active} /></td>
+                  <td className="px-3 py-2.5 flex gap-1">
                     <button className={btnEdit} onClick={() => openEdit(u)}>Edit</button>
                     <button
-                      className={`text-xs px-2 py-1 rounded font-medium transition-colors ${
+                      className={`text-xs px-2 py-1 rounded font-medium transition-colors border ${
                         u.is_active
-                          ? 'bg-red-900/60 text-red-300 hover:bg-red-800'
-                          : 'bg-green-900/60 text-green-300 hover:bg-green-800'
+                          ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200'
+                          : 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'
                       }`}
                       onClick={() => handleDeactivate(u)}
                     >
@@ -203,7 +218,7 @@ export default function UsersSection() {
                 </select>
               </Field>
               {form.is_admin && !editUser.is_admin && (
-                <p className="text-yellow-400 text-xs mt-1">
+                <p className="text-amber-600 text-xs mt-1">
                   ⚠ This will grant full admin access to this user.
                 </p>
               )}

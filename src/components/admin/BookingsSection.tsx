@@ -1,31 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '@/services/api';
 import { Spinner } from '@/components/ui/spinner';
-import { SectionHeader, TableHead, inputCls } from './AdminShared';
+import { SectionHeader, TableHead, inputCls, fmtDT, useSort, SortableTableHead } from './AdminShared';
 
-// Raw DB shape returned by GET /admin/bookings (select("*"))
+// Matches the booking_details view + payments merge returned by the backend
 interface AdminBookingRow {
-  id: string;
+  booking_id: string;
   user_id: string;
   showtime_id: number;
   booking_status: string;
-  total_price?: number;
+  total_amount?: number;
   ticket_type?: string;
   num_tickets?: number;
+  movie_title?: string;
+  showtime_start?: string;
+  seats?: string[];
   created_at?: string;
   updated_at?: string;
+  // from payments table (merged by backend)
+  paid_at?: string;
+  payment_method?: string;
+  payment_status?: string;
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  confirmed: 'bg-green-900 text-green-300',
-  pending: 'bg-yellow-900 text-yellow-300',
-  cancelled: 'bg-red-900 text-red-300',
-  changed: 'bg-blue-900 text-blue-300',
+  confirmed: 'bg-green-100 text-green-700',
+  pending: 'bg-amber-100 text-amber-700',
+  cancelled: 'bg-red-100 text-red-600',
+  changed: 'bg-blue-100 text-blue-700',
 };
 
 function StatusBadge({ status }: Readonly<{ status: string }>) {
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${STATUS_BADGE[status] ?? 'bg-zinc-700 text-zinc-300'}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full capitalize font-medium ${STATUS_BADGE[status] ?? 'bg-neutral-100 text-neutral-600'}`}>
       {status}
     </span>
   );
@@ -54,19 +61,13 @@ export default function BookingsSection() {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      b.id.toLowerCase().includes(q) ||
-      b.user_id.toLowerCase().includes(q) ||
-      String(b.showtime_id).includes(q)
+      (b.booking_id ?? '').toLowerCase().includes(q) ||
+      (b.movie_title ?? '').toLowerCase().includes(q) ||
+      (b.user_id ?? '').toLowerCase().includes(q)
     );
   });
 
-  const formatDateTime = (iso?: string) => {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleString('en-GB', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-  };
+  const { sorted, sort, toggle } = useSort(filtered);
 
   return (
     <div>
@@ -92,7 +93,7 @@ export default function BookingsSection() {
           ))}
         </select>
         <button
-          className="text-xs px-3 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded-lg transition-colors"
+          className="text-xs px-3 py-2 bg-white hover:bg-neutral-50 text-neutral-700 rounded-lg transition-colors border border-neutral-200"
           onClick={refresh}
         >
           Refresh
@@ -100,29 +101,49 @@ export default function BookingsSection() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-8"><Spinner className="text-zinc-400 w-6 h-6" /></div>
+        <div className="flex justify-center py-8"><Spinner className="text-neutral-400 w-6 h-6" /></div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg border border-neutral-200">
           <table className="w-full text-sm text-left">
-            <TableHead cols={['Booking ID', 'User ID', 'Showtime ID', 'Type', 'Tickets', 'Amount', 'Status', 'Created']} />
+            <SortableTableHead
+              sort={sort} onSort={toggle}
+              cols={[
+                { label: 'Booking ID', key: '' },
+                { label: 'Movie',      key: 'movie_title' },
+                { label: 'Showtime',   key: 'showtime_start' },
+                { label: 'Seats',      key: '' },
+                { label: 'Amount',     key: 'total_amount' },
+                { label: 'Status',     key: 'booking_status' },
+                { label: 'Method',     key: 'payment_method' },
+                { label: 'Paid At',    key: 'paid_at' },
+              ]}
+            />
             <tbody>
-              {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-3 py-6 text-zinc-500 text-center">No bookings found.</td></tr>
+              {sorted.length === 0 && (
+                <tr key="empty"><td colSpan={8} className="px-3 py-6 text-neutral-400 text-center">No bookings found.</td></tr>
               )}
-              {filtered.map(b => (
-                <tr key={b.id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
-                  <td className="px-3 py-2 text-zinc-400 font-mono text-xs max-w-[140px] truncate" title={b.id}>
-                    {b.id.slice(0, 8)}…
+              {sorted.map(b => (
+                <tr key={b.booking_id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
+                  <td className="px-3 py-2.5 text-neutral-400 font-mono text-xs max-w-35 truncate" title={b.booking_id}>
+                    {(b.booking_id ?? '').slice(0, 8)}…
                   </td>
-                  <td className="px-3 py-2 text-zinc-400 font-mono text-xs max-w-[160px] truncate" title={b.user_id}>
-                    {b.user_id.slice(0, 8)}…
+                  <td className="px-3 py-2.5 text-neutral-900 font-medium">
+                    {b.movie_title ?? <span className="text-neutral-400">—</span>}
                   </td>
-                  <td className="px-3 py-2 text-zinc-300">{b.showtime_id}</td>
-                  <td className="px-3 py-2 text-zinc-300">{b.ticket_type ?? '—'}</td>
-                  <td className="px-3 py-2 text-zinc-300">{b.num_tickets ?? '—'}</td>
-                  <td className="px-3 py-2 text-zinc-300">฿{b.total_price?.toLocaleString() ?? '—'}</td>
-                  <td className="px-3 py-2"><StatusBadge status={b.booking_status} /></td>
-                  <td className="px-3 py-2 text-zinc-400 whitespace-nowrap">{formatDateTime(b.created_at)}</td>
+                  <td className="px-3 py-2.5 text-neutral-600 whitespace-nowrap">
+                    {fmtDT(b.showtime_start)}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-600">
+                    {b.seats && b.seats.length > 0 ? b.seats.join(', ') : '—'}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-900 font-medium">฿{b.total_amount?.toLocaleString() ?? '—'}</td>
+                  <td className="px-3 py-2.5"><StatusBadge status={b.booking_status} /></td>
+                  <td className="px-3 py-2.5 text-neutral-500 text-xs capitalize">
+                    {b.payment_method?.replace('mock_', '') ?? '—'}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-500 whitespace-nowrap">
+                    {fmtDT(b.paid_at)}
+                  </td>
                 </tr>
               ))}
             </tbody>

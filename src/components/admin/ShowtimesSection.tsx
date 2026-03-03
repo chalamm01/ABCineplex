@@ -4,7 +4,7 @@ import type { Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead,
-  inputCls, btnEdit, btnDanger,
+  inputCls, btnEdit, btnDanger, fmtDT, useSort, SortableTableHead,
 } from './AdminShared';
 
 const emptyShowtime: ShowtimeCreate = { movie_id: 0, theatre_id: 0, start_time: '', base_price: 0 };
@@ -20,6 +20,7 @@ export default function ShowtimesSection() {
   const [form, setForm] = useState<ShowtimeCreate>(emptyShowtime);
   const [editId, setEditId] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     adminApi.listMovies().then(setMovies).catch(() => {});
@@ -38,6 +39,7 @@ export default function ShowtimesSection() {
 
   function onMovieChange(id: number) {
     setSelectedMovieId(id);
+    setSearch('');
     loadShowtimes(id);
   }
 
@@ -49,10 +51,8 @@ export default function ShowtimesSection() {
   }
 
   function openEdit(s: Showtime) {
-    const dt = new Date(s.start_time ?? '');
-    const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16);
+    // DB column is plain TIMESTAMP (no tz) — slice directly to get "YYYY-MM-DDTHH:mm"
+    const local = (s.start_time ?? '').replace(' ', 'T').slice(0, 16);
     setForm({ movie_id: s.movie_id, theatre_id: s.theatre_id, start_time: local, base_price: s.base_price });
     setEditId(s.id);
     setModal('edit');
@@ -71,7 +71,8 @@ export default function ShowtimesSection() {
 
   async function handleSubmit() {
     setError('');
-    const payload = { ...form, start_time: new Date(form.start_time).toISOString() };
+    // Send as local cinema time — DB column is plain TIMESTAMP (no tz conversion needed)
+    const payload = { ...form, start_time: form.start_time ? `${form.start_time}:00` : form.start_time };
     try {
       if (modal === 'edit' && editId != null) {
         await showtimesApi.updateShowtime(editId, payload);
@@ -88,12 +89,24 @@ export default function ShowtimesSection() {
   const f = (field: keyof ShowtimeCreate, value: unknown) =>
     setForm(prev => ({ ...prev, [field]: value }));
 
+  const filteredShowtimes = showtimes.filter(s => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      String(s.theatre_id).includes(q) ||
+      (s.start_time ?? '').includes(q) ||
+      String(s.base_price).includes(q)
+    );
+  });
+
+  const { sorted: sortedShowtimes, sort, toggle } = useSort(filteredShowtimes);
+
   return (
     <div>
       <SectionHeader title="Showtimes" onAdd={openAdd} addLabel="+ Add Showtime" />
 
       <div className="flex items-center gap-3 mb-4">
-        <label className="text-xs font-medium text-zinc-400 uppercase tracking-wide whitespace-nowrap">
+        <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide whitespace-nowrap">
           Filter by Movie
         </label>
         <select
@@ -106,33 +119,50 @@ export default function ShowtimesSection() {
             <option key={m.id} value={m.id}>{m.title}</option>
           ))}
         </select>
+        {selectedMovieId && (
+          <input
+            className={`${inputCls} max-w-xs`}
+            placeholder="Search theatre, time, price…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        )}
       </div>
 
       {!selectedMovieId && (
-        <p className="text-zinc-500 text-sm py-4">Select a movie above to view and manage its showtimes.</p>
+        <p className="text-neutral-400 text-sm py-4">Select a movie above to view and manage its showtimes.</p>
       )}
 
       {selectedMovieId && (
         loading ? (
-          <div className="flex justify-center py-8"><Spinner className="text-zinc-400 w-6 h-6" /></div>
+          <div className="flex justify-center py-8"><Spinner className="text-neutral-400 w-6 h-6" /></div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg border border-neutral-200">
             <table className="w-full text-sm text-left">
-              <TableHead cols={['ID', 'Theatre', 'Start Time', 'Base Price (฿)', 'Actions']} />
+              <SortableTableHead
+                sort={sort} onSort={toggle}
+                cols={[
+                  { label: 'ID',            key: 'id' },
+                  { label: 'Theatre',       key: 'theatre_id' },
+                  { label: 'Start Time',    key: 'start_time' },
+                  { label: 'Base Price (฿)', key: 'base_price' },
+                  { label: 'Actions',       key: '' },
+                ]}
+              />
               <tbody>
-                {showtimes.length === 0 && (
+                {sortedShowtimes.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-zinc-500 text-center">
+                    <td colSpan={5} className="px-3 py-6 text-neutral-400 text-center">
                       No showtimes for this movie.
                     </td>
                   </tr>
                 )}
-                {showtimes.map(s => (
-                  <tr key={s.id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
-                    <td className="px-3 py-2 text-zinc-400">{s.id}</td>
-                    <td className="px-3 py-2 text-zinc-300">Theatre {s.theatre_id}</td>
-                    <td className="px-3 py-2 text-white">{s.start_time ? new Date(s.start_time).toLocaleString() : '—'}</td>
-                    <td className="px-3 py-2 text-zinc-300">฿{s.base_price}</td>
+                {sortedShowtimes.map(s => (
+                  <tr key={s.id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
+                    <td className="px-3 py-2.5 text-neutral-400">{s.id}</td>
+                    <td className="px-3 py-2.5 text-neutral-600">Theatre {s.theatre_id}</td>
+                    <td className="px-3 py-2.5 text-neutral-900 font-medium">{fmtDT(s.start_time)}</td>
+                    <td className="px-3 py-2.5 text-neutral-600">฿{s.base_price}</td>
                     <td className="px-3 py-2">
                       <div className="flex gap-1">
                         <button className={btnEdit} onClick={() => openEdit(s)}>Edit</button>

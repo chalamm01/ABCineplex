@@ -89,22 +89,22 @@ export default function ProductsSection() {
       <SectionHeader title="Products" count={products.length} onAdd={openAdd} addLabel="+ Add Product" />
 
       {loading ? (
-        <div className="flex justify-center py-8"><Spinner className="text-zinc-400 w-6 h-6" /></div>
+        <div className="flex justify-center py-8"><Spinner className="text-neutral-400 w-6 h-6" /></div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg border border-neutral-200">
           <table className="w-full text-sm text-left">
             <TableHead cols={['Name', 'Category', 'Price (฿)', 'In Stock', 'Actions']} />
             <tbody>
               {products.length === 0 && (
-                <tr><td colSpan={5} className="px-3 py-6 text-zinc-500 text-center">No products found.</td></tr>
+                <tr><td colSpan={5} className="px-3 py-6 text-neutral-400 text-center">No products found.</td></tr>
               )}
               {products.map(p => (
-                <tr key={p.id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
-                  <td className="px-3 py-2 text-white font-medium">{p.name}</td>
-                  <td className="px-3 py-2 text-zinc-300">{catName(p.category_id)}</td>
-                  <td className="px-3 py-2 text-zinc-300">฿{p.price}</td>
-                  <td className="px-3 py-2"><ActiveIcon active={p.is_active} /></td>
-                  <td className="px-3 py-2">
+                <tr key={p.id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
+                  <td className="px-3 py-2.5 text-neutral-900 font-medium">{p.name}</td>
+                  <td className="px-3 py-2.5 text-neutral-600">{catName(p.category_id)}</td>
+                  <td className="px-3 py-2.5 text-neutral-600">฿{p.price}</td>
+                  <td className="px-3 py-2.5"><ActiveIcon active={p.is_active} /></td>
+                  <td className="px-3 py-2.5">
                     <div className="flex gap-1">
                       <button className={btnEdit} onClick={() => openEdit(p)}>Edit</button>
                       <button className={btnDanger} onClick={() => handleDelete(p.id)}>Delete</button>

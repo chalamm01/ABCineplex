@@ -94,23 +94,24 @@ export default function HeroCarouselSection() {
       <SectionHeader title="Hero Carousel" count={slides.length} onAdd={openAdd} addLabel="+ Add Slide" />
 
       {loading ? (
-        <div className="flex justify-center py-8"><Spinner className="text-zinc-400 w-6 h-6" /></div>
+        <div className="flex justify-center py-8"><Spinner className="text-neutral-400 w-6 h-6" /></div>
       ) : (
+        <div className="overflow-x-auto rounded-lg border border-neutral-200">
         <table className="w-full text-sm text-left">
           <TableHead cols={['Order', 'Title', 'Type', 'Active', 'Actions']} />
           <tbody>
             {slides.length === 0 && (
-              <tr><td colSpan={5} className="px-3 py-6 text-zinc-500 text-center">No slides found.</td></tr>
+              <tr><td colSpan={5} className="px-3 py-6 text-neutral-400 text-center">No slides found.</td></tr>
             )}
             {slides.map(s => (
-              <tr key={s.id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
-                <td className="px-3 py-2 text-zinc-300">{s.display_order}</td>
-                <td className="px-3 py-2 text-white">
-                  {s.title || <span className="text-zinc-500 italic">—</span>}
+              <tr key={s.id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
+                <td className="px-3 py-2.5 text-neutral-600">{s.display_order}</td>
+                <td className="px-3 py-2.5 text-neutral-900 font-medium">
+                  {s.title || <span className="text-neutral-400 italic">—</span>}
                 </td>
-                <td className="px-3 py-2 text-zinc-300">{s.content_type}</td>
-                <td className="px-3 py-2"><ActiveIcon active={s.is_active} /></td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2.5 text-neutral-600">{s.content_type}</td>
+                <td className="px-3 py-2.5"><ActiveIcon active={s.is_active} /></td>
+                <td className="px-3 py-2.5">
                   <div className="flex gap-1">
                     <button className={btnEdit} onClick={() => openEdit(s)}>Edit</button>
                     <button className={btnDanger} onClick={() => handleDelete(s.id)}>Delete</button>
@@ -120,6 +121,7 @@ export default function HeroCarouselSection() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {(modal === 'add' || modal === 'edit') && (

@@ -83,6 +83,22 @@ export default function BookingHistoryPage() {
     return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   };
 
+  /** True if the booking was created within the last 30 minutes. */
+  const isWithin30Min = (b: BookingSummary) => {
+    if (!b.created_at) return true; // unknown — allow and let backend enforce
+    return Date.now() - new Date(b.created_at).getTime() < 30 * 60 * 1000;
+  };
+
+  /** Booking can be cancelled only if confirmed and still within the 30-min window. */
+  const canCancel = (b: BookingSummary) =>
+    b.booking_status === "confirmed" && isWithin30Min(b);
+
+  /** Booking can have its showtime changed only once, and within the 30-min window. */
+  const canChange = (b: BookingSummary) =>
+    b.booking_status === "confirmed" &&
+    isWithin30Min(b) &&
+    (b.change_count ?? 0) < 1;
+
   return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <main className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
@@ -110,8 +126,8 @@ export default function BookingHistoryPage() {
                   posterUrl={b.poster_url || ""}
                   seats={b.seats?.join(", ") || "N/A"}
                   status={b.booking_status}
-                  onCancel={b.booking_status === "confirmed" ? () => handleCancel(b.booking_id.toString()) : undefined}
-                  onChangeShowtime={b.booking_status === "confirmed" ? () => openChangeShowtime(b) : undefined}
+                  onCancel={canCancel(b) ? () => handleCancel(b.booking_id.toString()) : undefined}
+                  onChangeShowtime={canChange(b) ? () => openChangeShowtime(b) : undefined}
                 />
               ))
             )}

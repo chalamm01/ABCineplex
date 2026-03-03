@@ -3,8 +3,8 @@ import { moviesApi, type MovieCreate } from '@/services/api';
 import type { Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
-  Modal, Field, ModalActions, SectionHeader, StatusBadge, TableHead,
-  inputCls, btnEdit, btnDanger, joinLines, splitLines,
+  Modal, Field, ModalActions, SectionHeader, StatusBadge,
+  inputCls, btnEdit, btnDanger, joinLines, splitLines, useSort, SortableTableHead,
 } from './AdminShared';
 
 // Aligned with the provided schema keys
@@ -39,12 +39,13 @@ export default function MoviesSection() {
   const [editId, setEditId] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [search, setSearch] = useState('');
 
   const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
 
   useEffect(() => {
     setLoading(true);
-    moviesApi.getMovies(1, 100, 'all')
+    moviesApi.getMovies(1, 100, '')
       .then((response: any) => {
         if (response && Array.isArray(response.movies)) {
           setMovies(response.movies);
@@ -119,29 +120,62 @@ export default function MoviesSection() {
 
   const f = (field: keyof MovieCreate, value: unknown) => setForm(prev => ({ ...prev, [field]: value }));
 
+  const filteredMovies = movies.filter(m => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      m.title.toLowerCase().includes(q) ||
+      (m.director ?? '').toLowerCase().includes(q) ||
+      (m.genre ?? '').toLowerCase().includes(q)
+    );
+  });
+
+  const { sorted, sort, toggle } = useSort(filteredMovies);
+
   return (
     <div>
       <SectionHeader title="Movies" count={movies.length} onAdd={openAdd} addLabel="+ Add Movie" />
 
+      <div className="mb-4">
+        <input
+          className={inputCls}
+          style={{ maxWidth: '320px' }}
+          placeholder="Search by title, director, genre…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
       {loading ? (
-        <div className="flex justify-center py-8"><Spinner className="text-zinc-400 w-6 h-6" /></div>
+        <div className="flex justify-center py-8"><Spinner className="text-neutral-400 w-6 h-6" /></div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg border border-neutral-200">
           <table className="w-full text-sm text-left">
-            <TableHead cols={['ID', 'Title', 'Status', 'Runtime', 'Rating', 'Release Date', 'Actions']} />
+            <SortableTableHead
+              sort={sort} onSort={toggle}
+              cols={[
+                { label: 'ID',           key: 'id' },
+                { label: 'Title',        key: 'title' },
+                { label: 'Status',       key: 'release_status' },
+                { label: 'Runtime',      key: 'runtime_minutes' },
+                { label: 'Rating',       key: 'imdb_score' },
+                { label: 'Release Date', key: 'release_date' },
+                { label: 'Actions',      key: '' },
+              ]}
+            />
             <tbody>
-              {movies.length === 0 && (
-                <tr><td colSpan={7} className="px-3 py-6 text-zinc-500 text-center">No movies found.</td></tr>
+              {sorted.length === 0 && (
+                <tr><td colSpan={7} className="px-3 py-6 text-neutral-400 text-center">No movies found.</td></tr>
               )}
-              {movies.map(m => (
-                <tr key={m.id} className="border-t border-zinc-800 hover:bg-zinc-800/40">
-                  <td className="px-3 py-2 text-zinc-400">{m.id}</td>
-                  <td className="px-3 py-2 text-white font-medium">{m.title}</td>
-                  <td className="px-3 py-2"><StatusBadge value={m.release_status} /></td>
-                  <td className="px-3 py-2 text-zinc-300">{m.runtime_minutes}m</td>
-                  <td className="px-3 py-2 text-zinc-300">{m.content_rating}</td>
-                  <td className="px-3 py-2 text-zinc-300">{m.release_date}</td>
-                  <td className="px-3 py-2">
+              {sorted.map(m => (
+                <tr key={m.id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
+                  <td className="px-3 py-2.5 text-neutral-400">{m.id}</td>
+                  <td className="px-3 py-2.5 text-neutral-900 font-medium">{m.title}</td>
+                  <td className="px-3 py-2.5"><StatusBadge value={m.release_status ?? ''} /></td>
+                  <td className="px-3 py-2.5 text-neutral-600">{m.runtime_minutes}m</td>
+                  <td className="px-3 py-2.5 text-neutral-600">{m.content_rating}</td>
+                  <td className="px-3 py-2.5 text-neutral-600">{m.release_date}</td>
+                  <td className="px-3 py-2.5">
                     <div className="flex gap-1">
                       <button className={btnEdit} onClick={() => openEdit(m)}>Edit</button>
                       <button className={btnDanger} onClick={() => handleDelete(m.id)}>Delete</button>
@@ -173,7 +207,7 @@ export default function MoviesSection() {
               <input className={inputCls} value={form.content_rating} placeholder="e.g. PG-13" onChange={e => f('content_rating', e.target.value)} />
             </Field>
             <Field label="Status">
-              <select className={inputCls} value={form.status} onChange={e => f('status', e.target.value)}>
+              <select className={inputCls} value={form.release_status} onChange={e => f('release_status', e.target.value)}>
                 <option value="upcoming">Coming Soon</option>
                 <option value="now_showing">Now Showing</option>
                 <option value="ended">Ended</option>
@@ -187,7 +221,7 @@ export default function MoviesSection() {
               />
             </Field>
             <Field label="Credits Duration (mins)">
-              <input className={inputCls} type="number" min="0" value={form.credits_duration_minutes} onChange={e => f('credits_duration_minutes', +e.target.value)} />
+              <input className={inputCls} type="number" min="0" value={form.credits_duration_minutes ?? 0} onChange={e => f('credits_duration_minutes', +e.target.value)} />
             </Field>
             <div className="col-span-2">
               <Field label="Poster URL">

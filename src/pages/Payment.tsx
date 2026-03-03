@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,19 +11,33 @@ import {
   type BookingDetails,
 } from '@/components/payment';
 import { useCountdown } from '@/hooks/useCountdown';
-import { bookingsApi, paymentsApi, showtimesApi, userApi } from '@/services/api';
+import { bookingsApi, paymentsApi, showtimesApi, userApi, ordersApi } from '@/services/api';
+import type { CartItem } from '@/providers/CartContext';
 import { Zap, CheckCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner'
+
+interface SnackPaymentState {
+  cart: CartItem[];
+  total: number;
+}
 
 
 export default function Payment() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Snack-order mode: cart passed via router state
+  const snackState = location.state as SnackPaymentState | null;
+  const isSnackMode = !!(snackState?.cart?.length);
 
   const bookingId = searchParams.get('booking_id');
   const seatsParam = searchParams.get('seats');
   const totalParam = searchParams.get('total');
   const deadlineParam = searchParams.get('deadline');
+
+  // Snack order result id
+  const [snackOrderId, setSnackOrderId] = useState<string | null>(null);
 
   // Payment state
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
@@ -60,6 +74,28 @@ export default function Payment() {
 
   // Fetch booking details — all data comes from the booking endpoint
   useEffect(() => {
+    // Snack mode: populate details directly from cart state
+    if (isSnackMode) {
+      const { cart, total } = snackState as SnackPaymentState;
+      setBookingDetails({
+        movieTitle: 'Snack Order',
+        posterUrl: '',
+        cinemaName: 'Counter Pickup',
+        showTime: 'Pick up before show',
+        endTime: 'N/A',
+        seats: cart.map((i) => `${i.name} ×${i.quantity || 1}`),
+        subtotal: total,
+        discount: 0,
+        discountLabel: undefined,
+        total,
+      });
+      try {
+        userApi.getProfile().then((p) => setUserPoints(p.reward_points ?? 0)).catch(() => {});
+      } catch { /* best-effort */ }
+      setLoading(false);
+      return;
+    }
+
     if (!bookingId) {
       setError('No booking ID provided');
       setLoading(false);
@@ -122,6 +158,25 @@ export default function Payment() {
   }, [bookingId, seatsParam, totalParam]);
 
   const handlePayment = async () => {
+    // ── Snack mode ─────────────────────────────────────────────────────────
+    if (isSnackMode) {
+      try {
+        setIsProcessing(true);
+        const items = (snackState as SnackPaymentState).cart
+          .filter((i) => i.id)
+          .map((i) => ({ product_id: i.id as string, quantity: i.quantity || 1 }));
+        const result = await ordersApi.createOrder(items);
+        setSnackOrderId((result as unknown as { id: string }).id);
+        setPaymentSuccess(true);
+      } catch {
+        alert('Order failed. Please try again.');
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // ── Booking mode ───────────────────────────────────────────────────────
     if (!bookingId) {
       alert('No booking ID provided');
       return;
@@ -211,6 +266,35 @@ export default function Payment() {
 
   // Payment success screen
   if (paymentSuccess) {
+    // Snack success screen
+    if (isSnackMode) {
+      const pointsEarned = Math.max(1, Math.floor((snackState?.total ?? 0) / 10));
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+          <Card className="border-none shadow-2xl bg-white max-w-md w-full">
+            <CardContent className="p-10 text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-12 h-12 text-green-600" />
+              </div>
+              <h2 className="text-3xl font-bold mb-2">Order Confirmed!</h2>
+              {snackOrderId && <p className="text-slate-500 mb-2 font-mono text-xs">Order #{snackOrderId}</p>}
+              <p className="text-slate-600 mb-4">Your snacks are being prepared. Pick them up at the counter before the show.</p>
+              <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6 text-sm text-green-700 font-medium">
+                🎉 +{pointsEarned} loyalty points earned!
+              </div>
+              <Button
+                onClick={() => navigate('/movies')}
+                className="w-full h-12 bg-black text-white hover:bg-slate-800 font-bold rounded-lg"
+              >
+                Back to Movies
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Booking success screen
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <Card className="border-none shadow-2xl bg-white max-w-md w-full">

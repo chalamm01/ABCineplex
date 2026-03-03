@@ -1,24 +1,18 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { CartContext } from "@/providers/CartContextDef";
-import { ordersApi } from "@/services/api";
-import type { OrderResponse } from "@/types/api";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Spinner } from "@/components/ui/spinner";
 
 function Cart() {
   const context = useContext(CartContext);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [ordering, setOrdering] = useState(false);
-  const [orderResult, setOrderResult] = useState<OrderResponse | null>(null);
-  const [orderError, setOrderError] = useState('');
 
   if (!context) {
     throw new Error("CartContext must be used inside CartProvider");
   }
 
-  const { cart, increaseQuantity, decreaseQuantity, removeFromCart, clearCart } = context;
+  const { cart, increaseQuantity, decreaseQuantity, removeFromCart } = context;
 
   const total = cart.reduce(
     (sum, item) => sum + item.price * (item.quantity || 1),
@@ -27,79 +21,14 @@ function Cart() {
 
   const pointsToEarn = Math.max(1, Math.floor(total / 10));
 
-  const handlePlaceOrder = async () => {
+  const handleProceedToPayment = () => {
     if (!user) {
       navigate('/login');
       return;
     }
     if (cart.length === 0) return;
-
-    const items = cart
-      .filter((item) => item.id)
-      .map((item) => ({ product_id: item.id as string, quantity: item.quantity || 1 }));
-
-    if (items.length === 0) {
-      setOrderError('Some items are missing product IDs. Please re-add them.');
-      return;
-    }
-
-    setOrdering(true);
-    setOrderError('');
-    try {
-      const result = await ordersApi.createOrder(items);
-      setOrderResult(result);
-      clearCart();
-    } catch {
-      setOrderError('Failed to place order. Please try again.');
-    } finally {
-      setOrdering(false);
-    }
+    navigate('/payment', { state: { cart, total } });
   };
-
-  // ── Success state ──────────────────────────────────────────────────────────
-  if (orderResult) {
-    return (
-      <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-        <div className="min-h-screen flex items-center justify-center px-6 py-12 bg-white/70 backdrop-blur-md">
-          <div className="bg-white rounded-2xl shadow-xl p-10 max-w-md w-full text-center">
-            <div className="text-6xl mb-4">🍿</div>
-            <h1 className="text-2xl font-bold text-violet-900 mb-2">Order Placed!</h1>
-            <p className="text-gray-500 mb-4">
-              Your snacks are being prepared. Pick them up at the counter before the show.
-            </p>
-
-            <div className="bg-violet-50 rounded-xl p-4 mb-6 text-left">
-              <p className="text-sm text-gray-500 mb-1">Order ID</p>
-              <p className="font-mono text-xs text-gray-700 truncate">{orderResult.id}</p>
-              <hr className="my-3" />
-              {orderResult.items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-700">×{item.quantity}</span>
-                  <span className="font-medium text-violet-900">{Number(item.subtotal)} THB</span>
-                </div>
-              ))}
-              <hr className="my-3" />
-              <div className="flex justify-between font-bold">
-                <span>Total</span>
-                <span className="text-violet-900">{Number(orderResult.total_amount)} THB</span>
-              </div>
-            </div>
-
-            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6 text-sm text-green-700 font-medium">
-              🎉 +{pointsToEarn} loyalty points earned from this order!
-            </div>
-
-            <button
-              onClick={() => navigate('/movies')}
-              className="w-full bg-violet-900 hover:bg-violet-800 text-white font-semibold py-3 rounded-xl"
-            >
-              Back to Movies
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ── Main cart ──────────────────────────────────────────────────────────────
   return (
@@ -195,10 +124,6 @@ function Cart() {
                 🎉 Earn ~{pointsToEarn} loyalty points
               </p>
 
-              {orderError && (
-                <p className="text-sm text-red-500 mb-3">{orderError}</p>
-              )}
-
               {!user && (
                 <p className="text-sm text-amber-600 mb-3">
                   Please <button onClick={() => navigate('/login')} className="underline font-medium">log in</button> to place an order.
@@ -206,11 +131,11 @@ function Cart() {
               )}
 
               <button
-                onClick={handlePlaceOrder}
-                disabled={ordering || cart.length === 0}
-                className="w-full bg-violet-900 hover:bg-violet-800 disabled:opacity-50 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2"
+                onClick={handleProceedToPayment}
+                disabled={cart.length === 0}
+                className="w-full bg-violet-900 hover:bg-violet-800 disabled:opacity-50 text-white font-semibold py-3 rounded-xl"
               >
-                {ordering ? <><Spinner /><span>Placing Order…</span></> : 'Place Order'}
+                Proceed to Payment
               </button>
             </div>
           )}
