@@ -57,7 +57,11 @@ function Cart() {
                 className="flex items-center justify-between bg-white rounded-xl shadow-md p-6 mb-6"
               >
                 <div className="flex items-center gap-6 size-20">
-                  <img src={item.image} alt={item.name} className="w-20" />
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-20 object-cover"
+                  />
                   <div>
                     <h3 className="font-semibold">{item.name}</h3>
                   </div>

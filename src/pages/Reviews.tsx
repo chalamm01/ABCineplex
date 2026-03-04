@@ -306,7 +306,7 @@ export default function Reviews() {
                         <img
                           src={review.movie.poster_url}
                           alt={review.movie.title}
-                          className="w-7 h-10 object-cover rounded shadow-sm group-hover:ring-1 group-hover:ring-orange-400 transition"
+                          className="w-7 h-10 rounded shadow-sm group-hover:ring-1 group-hover:ring-orange-400 transition object-cover"
                         />
                       )}
                       <span className="text-sm font-medium text-orange-600 group-hover:underline">

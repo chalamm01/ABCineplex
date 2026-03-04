@@ -130,8 +130,8 @@ export default function CommunityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="min-h-screen p-4 sm:p-6 lg:p-8 py-12">
+    <div className="min-h-screen bg-[url('/assets/background/bg.png')] bg-cover bg-center ">
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 py-12 bg-white/70 backdrop-blur-md">
         {/* Header */}
         <div className="max-w-6xl mx-auto mb-8 flex items-center justify-between">
           <div>

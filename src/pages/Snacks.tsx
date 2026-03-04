@@ -31,7 +31,7 @@ function ItemModal({
           <img
             src={item.image_url ?? '/assets/images/placeholder.png'}
             alt={item.name}
-            className="h-40 object-contain"
+            className="h-40 w-40 object-contain"
           />
         </div>
 
@@ -164,7 +164,7 @@ function Snacks() {
                     <img
                       src={item.image_url ?? '/assets/images/placeholder.png'}
                       alt={item.name}
-                      className="w-full h-40 object-contain mb-4 rounded"
+                      className="w-full h-40 mb-4 rounded object-contain"
                     />
                     <p className="text-sm font-semibold text-gray-800 line-clamp-2">{item.name}</p>
                     {item.description && (

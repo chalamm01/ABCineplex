@@ -48,7 +48,7 @@ export function BookingSummary({ booking, countdown }: BookingSummaryProps) {
             <img
               src={booking.posterUrl}
               alt={booking.movieTitle}
-              className="w-full h-full object-cover opacity-90"
+              className="w-full h-full opacity-90 object-cover"
             />
           ) : (
             <div className="w-full h-full bg-slate-700 flex items-center justify-center">

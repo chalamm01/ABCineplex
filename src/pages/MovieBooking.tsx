@@ -6,10 +6,9 @@ import { SeatMap } from '@/components/movies/seat-map';
 import { TicketSummary } from '@/components/movies/ticket-summary';
 import { moviesApi, showtimesApi, userApi } from '@/services/api';
 import type { MovieDetail, ShowtimeCard, DateGroupShowtime as ApiDateGroupShowtime  } from '@/types/api';
-import { Spinner } from '@/components/ui/spinner';
 import { CalendarX } from 'lucide-react';
 import type { BookingDate } from '@/lib/constants/movies';
-
+import { Spinner } from '@/components/ui/spinner';
 type Seat = {
   id: number;
   row: string;
@@ -172,8 +171,11 @@ export default function MovieBooking() {
 
       setCurrentShowtimeId(card.showtime_id);
       try {
+        console.log('Fetching seats for showtime:', card.showtime_id);
         const response = await showtimesApi.getSeats(card.showtime_id);
+        console.log('Seats response:', response);
         const seatsData = response.seats ?? [];
+        console.log('Extracted seats data:', seatsData);
         if (seatsData.length > 0) {
           const mapped: Seat[] = seatsData.map((s) => ({
             id: s.seat_id,
@@ -182,12 +184,14 @@ export default function MovieBooking() {
             status: s.status?.toLowerCase() === 'available' ? 'available' : 'reserved',
             price: card.base_price ?? undefined,
           }));
+          console.log('Mapped seats:', mapped);
           setSeats(mapped);
         } else {
+          console.warn('No seats returned from API');
           setSeats([]);
         }
       } catch (error) {
-        console.error('Failed to fetch seats', error);
+        console.error('Failed to fetch seats:', error);
         setSeats([]);
       }
     };
@@ -297,9 +301,9 @@ export default function MovieBooking() {
               <div className="relative group hidden lg:block">
                 <div className="relative aspect-2/3 w-full h-full bg-neutral-900 rounded-lg overflow-hidden shadow-lg">
                   <img
-                    src={movie.poster_url ?? ''}
+                    src={movie.poster_url ?? '/assets/images/placeholder.png'}
                     alt={movie.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full"
                   />
                 </div>
               </div>

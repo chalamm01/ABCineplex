@@ -5,7 +5,6 @@ import { X, Star, Clock, Film, Heart } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { movieApi, reviewApi } from "@/services/api"
 import type { MovieDetail, ReviewWithMovie } from "@/types/api"
-
 interface MovieModalProps {
   movieId: number
   onClose: () => void
@@ -92,7 +91,7 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
                 <img
                   src={movie.banner_url}
                   alt=""
-                  className="w-full h-full object-cover"
+                  className="w-full h-40 object-cover"
                 />
               </div>
             )}
@@ -102,7 +101,7 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
               <img
                 src={movie.poster_url || "/assets/images/placeholder.png"}
                 alt={movie.title}
-                className="w-28 h-40 object-cover rounded-xl shrink-0 shadow-lg border border-neutral-200"
+                className="rounded-xl shrink-0 shadow-lg border border-neutral-200 w-28 h-40 object-cover"
               />
               <div className="flex-1 pt-2">
                 <h2 className="text-xl font-bold leading-tight text-white">{movie.title}

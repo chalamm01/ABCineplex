@@ -23,11 +23,11 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
         }}
       >
         {/* Movie Poster */}
-        <div className="relative overflow-hidden rounded-lg mb-2 sm:mb-4 aspect-2/3 bg-neutral-900">
+        <div className="relative overflow-hidden rounded-lg mb-2 sm:mb-4 aspect-2/3 bg-neutral-900 group">
           <img
-            src={movie.poster_url}
+            src={movie.poster_url || '/assets/images/placeholder.png'}
             alt={movie.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="w-full h-full transition-transform duration-700 group-hover:scale-110 object-cover"
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

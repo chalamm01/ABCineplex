@@ -84,7 +84,7 @@ export function ReviewModal({ review, onClose }: ReviewModalProps) {
             <img
               src={review.movie.poster}
               alt={review.movie.title}
-              className="w-36 h-52 object-cover rounded-lg shadow-md"
+              className="w-36 h-52 rounded-lg shadow-md object-cover"
             />
           </div>
 

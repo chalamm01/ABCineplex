@@ -1,6 +1,7 @@
 // src/components/community/ReviewCard.tsx
 import { Heart } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ImageWithLoader } from '@/components/ui/image-with-loader'
 import type { ReviewWithMovie } from "@/types/api"
 
 interface ReviewCardProps {
@@ -31,7 +32,6 @@ const POSTER_PLACEHOLDER = "https://placehold.co/80x110/1a1a2e/white?text=?"
 export function ReviewCard({ review, isLiked, isAuthenticated, onLike, onMovieClick }: Readonly<ReviewCardProps>) {
   const posterUrl = review.movie?.poster_url || POSTER_PLACEHOLDER
   const movieTitle = review.movie?.title ?? "Unknown Movie"
-  const releaseYear = review.movie?.release_date?.slice(0, 4) ?? ""
   const displayName = review.username ?? "Anonymous"
   const likeCount = review.like_count ?? 0
   const canClickMovie = !!onMovieClick && !!review.movie?.id
@@ -41,12 +41,12 @@ export function ReviewCard({ review, isLiked, isAuthenticated, onLike, onMovieCl
       <div className="flex gap-5 p-5 sm:p-6">
         {/* Movie poster */}
         <div className="shrink-0">
-          <img
+          <ImageWithLoader
             src={posterUrl}
             alt={movieTitle}
-            onClick={() => canClickMovie && onMovieClick!(review.movie!.id)}
-            className={`w-20 h-28 object-cover rounded shadow-sm ${canClickMovie ? "cursor-pointer hover:ring-2 hover:ring-orange-400 transition-all hover:shadow-md" : ""}`}
-            onError={(e) => { (e.target as HTMLImageElement).src = POSTER_PLACEHOLDER }}
+            className={`w-20 h-28 rounded shadow-sm ${canClickMovie ? "cursor-pointer hover:ring-2 hover:ring-orange-400 transition-all hover:shadow-md" : ""}`}
+            objectFit="cover"
+            containerClassName=''
           />
         </div>
 

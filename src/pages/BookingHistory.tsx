@@ -120,7 +120,7 @@ export default function BookingHistoryPage() {
           Booking History
         </h1>
         {loading ? (
-          <div className="text-center text-gray-500"><Spinner /></div>
+          <div className="flex items-center justify-center min-h-[60vh] text-gray-500"><Spinner /></div>
         ) : error ? (
           <div className="text-center text-red-500">{error}</div>
         ) : (
@@ -140,7 +140,7 @@ export default function BookingHistoryPage() {
                   posterUrl={b.poster_url || ""}
                   seats={formatSeats(b.seats)}
                   status={b.booking_status}
-                  onCancel={canCancel(b) ? () => handleCancel(b.booking_id.toString()) : undefined}
+                  // onCancel={canCancel(b) ? () => handleCancel(b.booking_id.toString()) : undefined}
                   onChangeShowtime={canChange(b) ? () => openChangeShowtime(b) : undefined}
                 />
               ))

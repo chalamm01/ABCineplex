@@ -18,7 +18,7 @@ export function HomepageMovieCard({ movie }: HomepageMovieCardProps) {
           <img
             src={imageSrc}
             alt={movie.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            className="w-full h-full transition-transform duration-300 hover:scale-105 object-cover"
           />
           <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-300" />
         </div>

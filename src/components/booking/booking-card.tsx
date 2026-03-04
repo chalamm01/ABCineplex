@@ -2,6 +2,7 @@ import { Ticket } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { QRCodeSVG } from 'qrcode.react';
 
 interface BookingCardProps {
   id: string;
@@ -18,6 +19,7 @@ interface BookingCardProps {
 }
 
 export function BookingCard({
+  id,
   title,
   cinema,
   date,
@@ -35,12 +37,9 @@ export function BookingCard({
         {/* Poster */}
         <div className="relative aspect-2/3 max-h-75 max-w-50 shrink-0 overflow-hidden rounded-xl">
           <img
-            src={posterUrl}
+            src={posterUrl || '/assets/images/placeholder.png'}
             alt={title}
             className="h-full w-full object-cover"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
           />
         </div>
 
@@ -65,46 +64,46 @@ export function BookingCard({
 
           <Separator className="my-3" />
           <div className="flex justify-between">
-          <div className="content-between">
-            <div>
+          <div className="flex-col content-between">
+            <div className="mb-4">
               <p className="text-lg font-medium uppercase text-gray-400">Seat</p>
               <p className="text-xl font-bold text-gray-900">{seats}</p>
             </div>
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-gray-400">
+          {/* <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-gray-400">
             Transaction No: {transactionNo}
-          </p>
-
-          <Button
+          </p> */}
+        <div className="flex w-full justify-start gap-2">
+          {/* <Button
             className="rounded-2xl bg-gray-900 text-white hover:bg-gray-700"
             size="sm"
           >
             <Ticket className="mr-2 h-4 w-4" />
             View Ticket
-          </Button>
-          {onCancel && status === 'confirmed' && (
+          </Button> */}
+          {/* {onCancel && status === 'confirmed' && (
             <Button
               variant="outline"
-              className="rounded-2xl border-red-300 text-red-600 hover:bg-red-50 mt-2"
+              className="rounded-2xl border-red-300 text-red-600 hover:bg-red-50"
               size="sm"
               onClick={onCancel}
             >
               Cancel Booking
             </Button>
-          )}
+          )} */}
           {onChangeShowtime && status === 'confirmed' && (
             <Button
               variant="outline"
-              className="rounded-2xl border-blue-300 text-blue-600 hover:bg-blue-50 mt-2"
+              className="rounded-2xl border-blue-300 text-blue-600 hover:bg-blue-50"
               size="sm"
               onClick={onChangeShowtime}
             >
               Change Showtime
             </Button>
           )}
+          </div>
         </div>
         <div className="w-32 h-32">
-        <img src="qr.jpg"
-        />
+          <QRCodeSVG value={id} size={128} level="H" includeMargin={true} />
         </div>
         </div>
         </div>

@@ -28,6 +28,8 @@ interface AdminBookingRow {
   showtime_id: number;
   booking_status: string;
   total_amount?: number;
+  final_amount_paid?: number;
+  points_redeemed?: number;
   ticket_type?: string;
   num_tickets?: number;
   movie_title?: string;
@@ -155,7 +157,8 @@ export default function BookingsSection() {
                 { label: 'Showtime',   key: 'showtime_start' },
                 { label: 'Theatre',    key: 'screen_name' },
                 { label: 'Seats',      key: '' },
-                { label: 'Amount',     key: 'total_amount' },
+                { label: 'Points Used',  key: 'points_redeemed' },
+                { label: 'Final Amount', key: 'final_amount_paid' },
                 { label: 'Status',     key: 'booking_status' },
                 { label: 'Method',     key: 'payment_method' },
                 { label: 'Paid At',    key: 'paid_at' },
@@ -191,7 +194,12 @@ export default function BookingsSection() {
                   <td className="px-3 py-2.5 text-neutral-600">
                     {formatSeats(b.seats)}
                   </td>
-                  <td className="px-3 py-2.5 text-neutral-900 font-medium">฿{b.total_amount?.toLocaleString() ?? '—'}</td>
+                  <td className="px-3 py-2.5 text-neutral-600">
+                    {b.points_redeemed ? `${b.points_redeemed} pts` : '—'}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-900 font-medium">
+                    ฿{(b.final_amount_paid ?? b.total_amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
                   <td className="px-3 py-2.5"><StatusBadge status={b.booking_status} /></td>
                   <td className="px-3 py-2.5 text-neutral-500 text-xs capitalize">
                     {b.payment_method?.replace('mock_', '') ?? '—'}
