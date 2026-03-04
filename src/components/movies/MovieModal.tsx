@@ -29,6 +29,7 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
   const [modalReviews, setModalReviews] = useState<ReviewWithMovie[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [isAnimating, setIsAnimating] = useState(true)
 
   useEffect(() => {
     setLoading(true)
@@ -47,7 +48,12 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
 
   // Close on Escape key
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsAnimating(false)
+        setTimeout(onClose, 150)
+      }
+    }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
   }, [onClose])
@@ -57,20 +63,32 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
       ? (modalReviews.reduce((s, r) => s + r.rating, 0) / modalReviews.length).toFixed(1)
       : null
 
+  const handleBackdropClick = () => {
+    setIsAnimating(false)
+    setTimeout(onClose, 150)
+  }
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${
+        isAnimating ? "animate-in fade-in-0" : "animate-out fade-out-0"
+      } bg-black/40 backdrop-blur-sm`}
       role="dialog"
       aria-modal="true"
-      onClick={onClose}
+      onClick={handleBackdropClick}
     >
       <div
-        className="relative bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+        className={`relative bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl transition-all duration-200 ${
+          isAnimating ? "animate-in zoom-in-95 fade-in-0" : "animate-out zoom-out-95 fade-out-0"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            setIsAnimating(false)
+            setTimeout(onClose, 150)
+          }}
           aria-label="Close modal"
           className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors text-neutral-900"
         >

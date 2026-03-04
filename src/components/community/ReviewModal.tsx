@@ -4,6 +4,7 @@ import { X, Heart, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
+import { useEffect } from "react"
 
 interface Review {
   id: string
@@ -54,30 +55,56 @@ export function ReviewModal({ review, onClose }: ReviewModalProps) {
   const [liked, setLiked] = useState(false)
   const [watchedBefore, setWatchedBefore] = useState(true)
   const [watchedDate] = useState("25 Jan 2026")
+  const [isAnimating, setIsAnimating] = useState(true)
+
+  // Close on Escape key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsAnimating(false)
+        setTimeout(onClose, 150)
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [onClose])
 
   const handleSave = () => {
     // TODO: call your API here
     console.log({ reviewText, tags, rating, liked, watchedBefore })
-    onClose()
+    setIsAnimating(false)
+    setTimeout(onClose, 150)
+  }
+
+  const handleBackdropClick = () => {
+    setIsAnimating(false)
+    setTimeout(onClose, 150)
   }
 
   return (
     /* Backdrop */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-200 ${
+        isAnimating ? "animate-in fade-in-0" : "animate-out fade-out-0"
+      }`}
+      style={{ backgroundColor: isAnimating ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.55)" }}
+      onClick={handleBackdropClick}
     >
       {/* Close button outside modal */}
       <button
-        onClick={onClose}
+        onClick={() => {
+          setIsAnimating(false)
+          setTimeout(onClose, 150)
+        }}
         className="absolute top-6 right-8 text-white hover:text-gray-300 transition-colors z-10"
       >
         <X className="w-8 h-8" strokeWidth={2.5} />
       </button>
 
       {/* Modal card */}
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-8 relative">
+      <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-8 relative transition-all duration-200 ${
+        isAnimating ? "animate-in zoom-in-95 fade-in-0" : "animate-out zoom-out-95 fade-out-0"
+      }`}>
         <div className="flex gap-6">
           {/* Poster */}
           <div className="flex-shrink-0">

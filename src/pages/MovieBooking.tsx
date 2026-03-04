@@ -352,7 +352,7 @@ export default function MovieBooking() {
 
                 <div className="flex justify-between gap-8">
                   <div className="w-full">
-                                 <DateTimeSelection
+                <DateTimeSelection
                   dates={bookingDates}
                   times={bookingTimes}
                   selectedDate={selectedDate}

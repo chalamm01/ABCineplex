@@ -41,6 +41,11 @@ export function DateTimeSelection({
     })),
   }));
 
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short'
+});
   // Always derive selected state from props so clicking registers visually
   const groupedShowtimes = rawGroups.map((dateGroup, dateIndex) => ({
     ...dateGroup,
@@ -60,7 +65,7 @@ export function DateTimeSelection({
 
   const selectedDateGroup = groupedShowtimes[selectedDate];
   const selectedShowtime = selectedDateGroup?.showtimes.find((s) => s.time === selectedTime);
-
+  console.log(groupedShowtimes)
   return (
     <div className="bg-white rounded-lg p-4 border border-neutral-200 mb-6">
       {/* Compact Horizontal Date Selector */}
@@ -77,7 +82,7 @@ export function DateTimeSelection({
                   : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
               }`}
             >
-              {dateGroup.dayName} {dateGroup.day} {dateGroup.month}
+              {formatter.format(new Date(dateGroup.date))}
             </button>
           ))}
         </div>

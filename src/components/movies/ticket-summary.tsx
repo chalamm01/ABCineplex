@@ -26,8 +26,12 @@ export function TicketSummary({
   onTicketTypeChange,
   endTime,
 }: TicketSummaryProps) {
-
-  console.log(endTime)
+const formatter = new Intl.DateTimeFormat('en-GB', {
+  weekday: 'short',
+  day: '2-digit',
+  month: 'short'
+});
+  console.log("Selected Date", selectedDate)
   return (
     <div className="w-full space-y-4 sm:space-y-6 ">
       <div className="bg-white rounded-xl p-4 sm:p-6 border border-neutral-300">
@@ -36,13 +40,13 @@ export function TicketSummary({
         </h3>
 
         {/* Ticket Type Selector */}
-        {isStudentEligible && onTicketTypeChange && (
+        {/* {isStudentEligible && onTicketTypeChange && (
           <div className="mb-4">
             <p className="text-xs text-neutral-500 uppercase tracking-wider mb-2">Ticket Type</p>
             <div className="flex gap-2">
               <button
                 onClick={() => onTicketTypeChange('normal')}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${ticketType === 'normal' ? 'bg-black text-white border-black' : 'bg-white text-black border-neutral-300 hover:border-black'}`}
+               className={`px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${ticketType === 'normal' ? 'bg-black text-white border-black' : 'bg-white text-black border-neutral-300 hover:border-black'}`}
               >
                 Normal
               </button>
@@ -54,7 +58,7 @@ export function TicketSummary({
               </button>
             </div>
           </div>
-        )}
+        )} */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {selectedSeats.map((seat) => (
             <button key={seat} className="px-3 sm:px-4 py-2 bg-black text-white font-semibold rounded-lg text-xs sm:text-sm">
@@ -67,17 +71,21 @@ export function TicketSummary({
           <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">DATE & TIME</span>
             <span className="text-black font-medium">
-              {selectedDate ? `${selectedDate.day} ${selectedDate.month} ${selectedDate.date?.slice(0, 4) ?? ''} ${selectedTime}` : 'Select date & time'}
+              {formatter.format(new Date(selectedDate.date))}
             </span>
+          </div>
+          <div className="flex justify-between text-xs sm:text-sm">
+            <span className="text-neutral-600">START TIME</span>
+            <span className="text-black font-medium">{selectedTime}</span>
           </div>
           <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">END TIME</span>
             <span className="text-black font-medium">{endTime}</span>
           </div>
-          <div className="flex justify-between text-xs sm:text-sm">
+          {/* <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">TICKETS</span>
             <span className="text-black font-medium capitalize">{ticketType}</span>
-          </div>
+          </div> */}
           <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-neutral-600">TOTAL</span>
             <span className="text-black font-medium">{totalPrice.toLocaleString()} THB</span>
