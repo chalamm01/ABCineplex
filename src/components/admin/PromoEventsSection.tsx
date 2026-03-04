@@ -4,7 +4,7 @@ import type { PromoEvent } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
-  inputCls, btnEdit, btnDanger,
+  inputCls,
   EditButton, DeleteButton,
 } from './AdminShared';
 
@@ -46,7 +46,7 @@ export default function PromoEventsSection() {
   }
 
   function openEdit(p: PromoEvent) {
-    setForm({ title: p.title, promo_type: p.promo_type, image_url: p.image_url, is_active: p.is_active });
+    setForm({ title: p.title, promo_type: p.promo_type || 'promo', image_url: p.image_url || '', is_active: p.is_active });
     setEditId(String(p.id));
     setModal('edit');
     setError('');
@@ -65,10 +65,16 @@ export default function PromoEventsSection() {
   async function handleSubmit() {
     setError('');
     try {
+      const payload = {
+        title: form.title,
+        promo_type: form.promo_type as 'news' | 'promo',
+        image_url: form.image_url,
+        is_active: form.is_active,
+      };
       if (modal === 'edit' && editId != null) {
-        await adminApi.updatePromotion(editId, form);
+        await adminApi.updatePromotion(editId, payload);
       } else {
-        await adminApi.createPromotion(form);
+        await adminApi.createPromotion(payload);
       }
       setModal(null);
       refresh();

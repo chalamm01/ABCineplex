@@ -706,4 +706,8 @@ export type {
   PromoEvent,
   HeroCarouselItem,
   DateGroupShowtime,
+  Theatre,
+  TheatreCreate,
+  TheatreUpdate,
+  Seat,
 } from '@/types/api';

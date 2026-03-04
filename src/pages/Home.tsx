@@ -48,10 +48,10 @@ export default function Home() {
 
         const activePromotions = promoData
           .filter((item: any) => item.is_active)
-          .map((item: any) => ({
+          .map((item: any): PromotionalEvent => ({
             id: item.id,
+            title: item.title,
             image: item.image_url ?? '',
-            title: item.title ?? '',
             category: item.promo_type === 'news' ? 'news' : 'promo',
           }));
         setPromotions(activePromotions);

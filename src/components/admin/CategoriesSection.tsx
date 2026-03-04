@@ -3,11 +3,11 @@ import { productsApi, type CategoryCreate, type Category } from '@/services/api'
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, ActiveIcon,
-  inputCls, btnEdit, btnDanger,
+  inputCls,
   EditButton, DeleteButton,
 } from './AdminShared';
 
-const emptyCategory: CategoryCreate = { name: '', display_order: 0 };
+const emptyCategory: CategoryCreate = { name: '', display_order: 0, is_active: true };
 
 type ModalMode = 'add' | 'edit' | null;
 
@@ -36,14 +36,14 @@ export default function CategoriesSection() {
   }, [refreshKey]);
 
   function openAdd() {
-    setForm({ name: '', display_order: categories.length });
+    setForm({ name: '', display_order: categories.length, is_active: true });
     setEditId(null);
     setModal('add');
     setError('');
   }
 
   function openEdit(c: Category) {
-    setForm({ name: c.name, display_order: c.display_order });
+    setForm({ name: c.name, display_order: c.display_order, is_active: c.is_active });
     setEditId(c.id);
     setModal('edit');
     setError('');

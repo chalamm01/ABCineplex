@@ -4,7 +4,7 @@ import type { Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, StatusBadge,
-  inputCls, btnEdit, btnDanger, joinLines, splitLines, useSort, SortableTableHead,
+  inputCls, joinLines, splitLines, useSort, SortableTableHead,
   EditButton, DeleteButton,
 } from './AdminShared';
 

@@ -14,18 +14,6 @@ interface TicketSummaryProps {
   readonly endTime?: string;
 }
 
-function formatEndTime(endTime?: string): string {
-  if (!endTime) return '—';
-  try {
-    const d = new Date(endTime);
-    const h = d.getHours().toString().padStart(2, '0');
-    const m = d.getMinutes().toString().padStart(2, '0');
-    return `${h}:${m}`;
-  } catch {
-    return endTime;
-  }
-}
-
 export function TicketSummary({
   selectedSeats,
   selectedDate,

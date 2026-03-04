@@ -23,7 +23,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams, Link } from "react-router-dom"
 import { reviewApi } from "@/services/api"
 import type { ReviewWithMovie } from "@/types/api"
-import { Spinner } from "@/components/ui/spinner"
+
 import { MovieModal } from "@/components/movies/MovieModal"
 
 function RatingStars({ rating }: { rating: number }) {
@@ -100,9 +100,9 @@ export default function Reviews() {
   const submitLabel = editingReview ? "Save Changes" : "Post Review"
 
   // In movie-specific mode, find if the current user already has a review
-  const userExistingReview = !isMyReviews && currentUserId
-    ? reviews.find((r) => r.user_id === currentUserId) ?? null
-    : null
+  // const userExistingReview = !isMyReviews && currentUserId
+  //   ? reviews.find((r) => r.user_id === currentUserId) ?? null
+  //   : null
 
   // Load reviews
   useEffect(() => {

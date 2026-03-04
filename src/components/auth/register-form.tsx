@@ -45,8 +45,7 @@ export function RegisterForm() {
       const response = await authApi.register({
         email: formData.email,
         password: formData.password,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
+        full_name: `${formData.first_name || ''} ${formData.last_name || ''}`.trim(),
         phone: formData.phone,
         date_of_birth: formData.date_of_birth,
       });

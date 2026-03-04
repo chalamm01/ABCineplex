@@ -43,15 +43,16 @@ export default function BookingHistoryPage() {
       .finally(() => setLoading(false));
   }, [refreshKey]);
 
-  const handleCancel = async (bookingId: string) => {
-    if (!confirm("Cancel this booking? No refund will be issued per theatre policy.")) return;
-    try {
-      await bookingsApi.cancelBooking(bookingId);
-      setRefreshKey(k => k + 1);
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to cancel booking.");
-    }
-  };
+  // Unused function - kept for reference
+  // const handleCancel = async (bookingId: string) => {
+  //   if (!confirm("Cancel this booking? No refund will be issued per theatre policy.")) return;
+  //   try {
+  //     await bookingsApi.cancelBooking(bookingId);
+  //     setRefreshKey(k => k + 1);
+  //   } catch (err: unknown) {
+  //     alert(err instanceof Error ? err.message : "Failed to cancel booking.");
+  //   }
+  // };
 
   const openChangeShowtime = async (b: BookingSummary) => {
     setChangingBooking(b);
@@ -104,8 +105,8 @@ export default function BookingHistoryPage() {
   };
 
   /** Booking can be cancelled only if confirmed and still within the 30-min window. */
-  const canCancel = (b: BookingSummary) =>
-    b.booking_status === "confirmed" && isWithin30Min(b);
+  // const canCancel = (b: BookingSummary) =>
+  //   b.booking_status === "confirmed" && isWithin30Min(b);
 
   /** Booking can have its showtime changed only once, and within the 30-min window. */
   const canChange = (b: BookingSummary) =>

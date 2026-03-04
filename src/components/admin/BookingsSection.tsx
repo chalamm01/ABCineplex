@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '@/services/api';
 import type { Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
-import { SectionHeader, TableHead, inputCls, fmtDT, useSort, SortableTableHead } from './AdminShared';
+import { SectionHeader, inputCls, fmtDT, useSort, SortableTableHead } from './AdminShared';
 
 // Format seats for display - handles both string and object formats
 const formatSeats = (seats?: Array<{ seat_id?: number; row_label?: string; seat_number?: number } | string>) => {
@@ -20,6 +20,7 @@ const formatSeats = (seats?: Array<{ seat_id?: number; row_label?: string; seat_
 
 // Matches the booking_details view returned by the backend
 interface AdminBookingRow {
+  id?: string;
   booking_id: string;
   user_id: string;
   full_name?: string;

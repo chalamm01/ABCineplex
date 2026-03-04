@@ -3,7 +3,7 @@ import { productsApi, type ProductCreate, type Product, type Category } from '@/
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
-  inputCls, btnEdit, btnDanger,
+  inputCls,
   EditButton, DeleteButton,
 } from './AdminShared';
 
@@ -45,7 +45,7 @@ export default function ProductsSection() {
     setForm({
       name: p.name,
       category_id: p.category_id,
-      price: Number.parseFloat(p.price),
+      price: typeof p.price === 'string' ? Number.parseFloat(p.price) : p.price,
       description: p.description ?? '',
       image_url: p.image_url ?? '',
       is_active: p.is_active,

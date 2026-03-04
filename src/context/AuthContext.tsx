@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import { authApi, userApi } from '@/services/api';
 
 const AuthContext = createContext<any>(null);
@@ -30,8 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const login = (userData: any, token: string, refreshToken?: string) => {
     localStorage.setItem('token', token);

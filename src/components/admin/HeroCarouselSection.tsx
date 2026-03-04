@@ -4,7 +4,7 @@ import type { HeroCarouselItem, Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, ActiveIcon,
-  inputCls, btnEdit, btnDanger,
+  inputCls,
   EditButton, DeleteButton,
 } from './AdminShared';
 

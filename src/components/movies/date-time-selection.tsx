@@ -8,7 +8,8 @@ interface ShowtimeInfo {
   ttc?: number;
 }
 
-interface DateGroupShowtime extends BookingDate {
+// This type extends BookingDate with additional showtime detail - used for rendering
+interface DateGroupShowtime extends Omit<BookingDate, 'showtimes'> {
   showtimes: ShowtimeInfo[];
 }
 

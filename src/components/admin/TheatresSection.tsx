@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { adminApi, type Theatre, type TheatreCreate, type TheatreUpdate, type Seat } from '@/services/api';
+import { adminApi, type Theatre, type TheatreCreate, type Seat } from '@/services/api';
 import { Spinner } from '@/components/ui/spinner';
 import { SeatMapModal } from './SeatMapModal';
 import {
   Modal, Field, ModalActions, SectionHeader,
-  inputCls, btnEdit, btnDanger, useSort, SortableTableHead,
+  inputCls, useSort, SortableTableHead,
   EditButton, DeleteButton,
 } from './AdminShared';
 
@@ -116,7 +116,7 @@ export default function TheatresSection() {
   }
 
   const f = (field: keyof TheatreCreate, value: unknown) =>
-    setForm(prev => ({ ...prev, [field]: value }));
+    setForm((prev: any) => ({ ...prev, [field]: value }));
 
   const filteredTheatres = theatres.filter(t => {
     if (!search) return true;
@@ -179,7 +179,7 @@ export default function TheatresSection() {
                     <div className="flex gap-1">
                       <EditButton onClick={() => openEdit(t)} />
                       <button
-                        className={btnEdit}
+                        className="text-xs px-2 py-1 rounded font-medium transition-colors border bg-neutral-50 text-neutral-700 hover:bg-neutral-100 border-neutral-200"
                         onClick={() => openSeatMap(t)}
                       >
                         Seats
@@ -256,7 +256,7 @@ export default function TheatresSection() {
           });
 
           // Collect only changed seats
-          const updatePromises: Promise<void>[] = [];
+          const updatePromises: Promise<any>[] = [];
 
           for (const [key, newIsActive] of seatGrid.entries()) {
             const [row, colStr] = key.split('-');

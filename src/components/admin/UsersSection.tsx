@@ -3,7 +3,7 @@ import { adminApi } from '@/services/api';
 import type { AdminUserResponse } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
-  Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
+  Modal, Field, ModalActions, SectionHeader, ActiveIcon,
   inputCls, btnEdit, useSort, SortableTableHead,
 } from './AdminShared';
 

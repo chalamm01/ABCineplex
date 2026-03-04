@@ -3,7 +3,7 @@ import { Separator } from '@/components/ui/separator';
 import { Link } from 'react-router-dom';
 
 interface PromotionalEvent {
-  readonly id: number;
+  readonly id: string | number;
   readonly image: string;
   readonly title: string;
   readonly category?: 'news' | 'promo';

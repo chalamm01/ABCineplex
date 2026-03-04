@@ -5,7 +5,7 @@ import { DateTimeSelection } from '@/components/movies/date-time-selection';
 import { SeatMap } from '@/components/movies/seat-map';
 import { TicketSummary } from '@/components/movies/ticket-summary';
 import { moviesApi, showtimesApi, userApi } from '@/services/api';
-import type { MovieDetail, ShowtimeCard, DateGroupShowtime as ApiDateGroupShowtime  } from '@/types/api';
+import type { MovieDetail, ShowtimeCard } from '@/types/api';
 import { CalendarX } from 'lucide-react';
 import type { BookingDate } from '@/lib/constants/movies';
 import { Spinner } from '@/components/ui/spinner';
@@ -17,7 +17,14 @@ type Seat = {
   price?: number;
 };
 
-type DateGroupShowtime = ApiDateGroupShowtime & { showtimes: { time: string; endTime: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past'; raqs?: number; ttc?: number }[] };
+type DateGroupShowtime = {
+  date: string;
+  fullDate: string;
+  dayName: string;
+  day: number;
+  month: number;
+  showtimes: { time: string; endTime: string; showtimeId: number; status: 'available' | 'selected' | 'sold_out' | 'past'; raqs?: number; ttc?: number }[]
+};
 
 const extractTime = (datetime?: string): string => {
   if (!datetime) return 'N/A';
@@ -96,38 +103,35 @@ export default function MovieBooking() {
         setShowtimesByDate(byDate);
 
         const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-        const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-        const dates: BookingDate[] = Object.keys(byDate)
+        const dates: any[] = Object.keys(byDate)
           .sort((a, b) => a.localeCompare(b))
           .map((dateStr) => {
             const d = new Date(dateStr);
+            const cards: ShowtimeCard[] = byDate[dateStr] ?? [];
+            const showtimes = cards.map((card: ShowtimeCard) => {
+              const startTime = extractTime(card.start_time);
+              const endTime = extractTime(card.end_time);
+              return {
+                time: startTime,
+                endTime: endTime,
+                showtimeId: card.showtime_id,
+                status: 'available' as const,
+                raqs: card.risk_adjusted_quality_score,
+                ttc: card.total_time_commitment_minutes,
+              };
+            });
             return {
-              day: d.getUTCDate(),
-              month: monthNames[d.getUTCMonth()],
-              dayName: dayNames[d.getUTCDay()],
+              date: dateStr,
               fullDate: dateStr,
+              day: d.getUTCDate(),
+              month: d.getUTCMonth(),
+              dayName: dayNames[d.getUTCDay()],
+              showtimes,
             };
           });
 
-        // Build summarized showtimes with date-specific time slots
-        const grouped: DateGroupShowtime[] = dates.map((date) => {
-          const cards: ShowtimeCard[] = byDate[date.fullDate || ''] ?? [];
-          console.log(cards);
-          const showtimes = cards.map((card: ShowtimeCard) => {
-            const startTime = extractTime(card.start_time);
-            const endTime = extractTime(card.end_time);
-            return {
-              time: startTime,
-              endTime: endTime,
-              showtimeId: card.showtime_id,
-              status: 'available' as const,
-              raqs: card.risk_adjusted_quality_score,
-              ttc: card.total_time_commitment_minutes,
-            };
-          });
-          return { ...date, showtimes };
-        });
+        const grouped: DateGroupShowtime[] = dates;
         setBookingDates(dates);
         setSummarizedShowtimes(grouped);
         setSelectedDate(0);
@@ -147,7 +151,7 @@ export default function MovieBooking() {
   useEffect(() => {
     if (bookingDates.length === 0) return;
 
-    const dateKey = bookingDates[selectedDate]?.fullDate;
+    const dateKey = bookingDates[selectedDate]?.date;
     if (!dateKey) return;
 
     const cards = showtimesByDate[dateKey] ?? [];
@@ -161,7 +165,7 @@ export default function MovieBooking() {
     const fetchSeats = async () => {
       if (!selectedTime || bookingDates.length === 0) return;
 
-      const dateKey = bookingDates[selectedDate]?.fullDate;
+      const dateKey = bookingDates[selectedDate]?.date;
       if (!dateKey) return;
 
       const card = (showtimesByDate[dateKey] ?? []).find(
@@ -253,7 +257,7 @@ export default function MovieBooking() {
     .map((s) => `${s.row}${s.col}`);
 
   const currentCard = (() => {
-    const dateKey = bookingDates[selectedDate]?.fullDate;
+    const dateKey = bookingDates[selectedDate]?.date;
     if (!dateKey) return null;
     return (showtimesByDate[dateKey] ?? []).find(c => extractTime(c.start_time) === selectedTime) ?? null;
   })();

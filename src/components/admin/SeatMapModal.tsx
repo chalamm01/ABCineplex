@@ -285,7 +285,6 @@ export function SeatMapModal({
         onSubmit={handleSave}
         submitLabel={saving ? 'Saving...' : 'Save Changes'}
         error={error}
-        disabled={loading || saving}
       />
     </Modal>
   );

@@ -1,4 +1,4 @@
-import { Ticket } from "lucide-react";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -24,11 +24,11 @@ export function BookingCard({
   cinema,
   date,
   showTime,
-  transactionNo,
+
   posterUrl,
   seats,
   status,
-  onCancel,
+
   onChangeShowtime,
 }: BookingCardProps) {
   return (
