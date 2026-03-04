@@ -132,16 +132,19 @@ export default function BookingHistoryPage() {
               bookings.map((b) => (
                 <BookingCard
                   key={b.booking_id.toString()}
-                  id={b.booking_id.toString()}
-                  title={b.movie_title || "Unknown Movie"}
-                  cinema={b.screen_name || "Unknown Hall"}
-                  date={formatDate(b.showtime_start)}
-                  showTime={formatTime(b.showtime_start)}
-                  transactionNo={b.booking_id.toString()}
-                  posterUrl={b.poster_url || ""}
-                  seats={formatSeats(b.seats)}
-                  status={b.booking_status}
-                  // onCancel={canCancel(b) ? () => handleCancel(b.booking_id.toString()) : undefined}
+                  booking={{
+                    id: b.booking_id.toString(),
+                    title: b.movie_title || "Unknown Movie",
+                    cinema: b.screen_name || "Unknown Hall",
+                    date: formatDate(b.showtime_start),
+                    showTime: formatTime(b.showtime_start),
+                    transactionNo: b.booking_id.toString(),
+                    posterUrl: b.poster_url || "",
+                    seats: formatSeats(b.seats),
+                    status: b.booking_status,
+                    audio: "English",
+                    subtitle: "Thai",
+                  } as any}
                   onChangeShowtime={canChange(b) ? () => openChangeShowtime(b) : undefined}
                 />
               ))
