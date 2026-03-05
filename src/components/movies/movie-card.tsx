@@ -53,10 +53,24 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Duration</p>
               <p className="font-medium text-neutral-900">{formatDuration(movie.runtime_minutes)}</p>
             </div>
-            <div>
-              <p className="text-neutral-500 uppercase font-semibold mb-0.5">Genre</p>
-              <p className="font-medium text-neutral-900">{movie.genre || 'N/A'}</p>
-            </div>
+<div>
+  <p className="text-neutral-500 uppercase font-semibold mb-0.5">Genre</p>
+  <p className="font-medium text-neutral-900">
+    {(() => {
+      const genreData = movie.genre;
+      if (!genreData) return 'N/A';
+
+      // Ensure we have an array regardless of input type
+      const genreList: string[] = Array.isArray(genreData)
+        ? genreData
+        : String(genreData).split(',').map((g: string) => g.trim());
+
+      const displayed = genreList.slice(0, 3).join(', ');
+
+      return genreList.length > 3 ? `${displayed}...` : displayed;
+    })()}
+  </p>
+</div>
             <div>
               <p className="text-neutral-500 uppercase font-semibold mb-0.5">Rating</p>
               <p className="font-medium text-neutral-900">{movie.content_rating || 'N/A'}</p>
