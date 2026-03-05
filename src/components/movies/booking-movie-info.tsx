@@ -8,9 +8,12 @@ interface BookingMovieInfoProps {
 }
 
 export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
-  const firstGenre = movie.genre;
   const isUpcoming = movie.release_status?.toLowerCase() === 'coming_soon' || movie.release_status?.toLowerCase() === 'upcoming';
-
+  const genreList: string[] = movie.genre
+    ? (Array.isArray(movie.genre)
+        ? movie.genre
+        : String(movie.genre).split(',').map((g: string) => g.trim()))
+    : [];
   return (
     <div className="space-y-6">
       <div>
@@ -23,11 +26,11 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
               🎬 Coming Soon
             </Badge>
           )}
-          {firstGenre && (
-            <Badge variant="default">
-              {firstGenre}
+{genreList.map((genre) => (
+            <Badge key={genre} variant="default">
+              {genre}
             </Badge>
-          )}
+          ))}
           {movie.imdb_score != null && movie.imdb_score > 0 && (
             <Badge className="bg-yellow-600 text-yellow-50 hover:bg-yellow-700">
               ⭐ {movie.imdb_score}/10
