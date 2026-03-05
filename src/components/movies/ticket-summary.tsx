@@ -8,10 +8,11 @@ interface TicketSummaryProps {
   readonly totalPrice: number;
   readonly onBook: () => void;
   readonly isBooking?: boolean;
-  readonly ticketType?: 'normal' | 'student';
-  readonly isStudentEligible?: boolean;
-  readonly onTicketTypeChange?: (type: 'normal' | 'student') => void;
   readonly endTime?: string;
+  // Added these missing props
+  readonly isStudentEligible: boolean;
+  readonly ticketType: 'normal' | 'student';
+  readonly onTicketTypeChange: (type: 'normal' | 'student') => void;
 }
 
 export function TicketSummary({
@@ -21,32 +22,32 @@ export function TicketSummary({
   totalPrice,
   onBook,
   isBooking = false,
-  ticketType = 'normal',
-  isStudentEligible = false,
-  onTicketTypeChange,
   endTime,
+  isStudentEligible,
+  ticketType,
+  onTicketTypeChange,
 }: TicketSummaryProps) {
-const formatter = new Intl.DateTimeFormat('en-GB', {
-  weekday: 'short',
-  day: '2-digit',
-  month: 'short'
-});
-  console.log("Selected Date", selectedDate)
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short'
+  });
+
   return (
-    <div className="w-full space-y-4 sm:space-y-6 ">
+    <div className="w-full space-y-4 sm:space-y-6">
       <div className="bg-white rounded-xl p-4 sm:p-6 border border-neutral-300">
         <h3 className="text-black font-semibold text-base sm:text-lg mb-4 uppercase tracking-wider">
           Select Your Seats
         </h3>
 
-        {/* Ticket Type Selector */}
-        {/* {isStudentEligible && onTicketTypeChange && (
+        {/* Ticket Type Selector - Now active */}
+        {isStudentEligible && (
           <div className="mb-4">
             <p className="text-xs text-neutral-500 uppercase tracking-wider mb-2">Ticket Type</p>
             <div className="flex gap-2">
               <button
                 onClick={() => onTicketTypeChange('normal')}
-               className={`px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${ticketType === 'normal' ? 'bg-black text-white border-black' : 'bg-white text-black border-neutral-300 hover:border-black'}`}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${ticketType === 'normal' ? 'bg-black text-white border-black' : 'bg-white text-black border-neutral-300 hover:border-black'}`}
               >
                 Normal
               </button>
@@ -58,7 +59,7 @@ const formatter = new Intl.DateTimeFormat('en-GB', {
               </button>
             </div>
           </div>
-        )} */}
+        )}
         <div className="flex gap-2 mb-6 flex-wrap">
           {selectedSeats.map((seat) => (
             <button key={seat} className="px-3 sm:px-4 py-2 bg-black text-white font-semibold rounded-lg text-xs sm:text-sm">

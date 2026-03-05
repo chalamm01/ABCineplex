@@ -66,8 +66,7 @@ export interface UserProfile {
   id: string;
   email: string;
   user_name: string;
-  first_name: string;
-  last_name: string;
+  full_name: string;        // backend users.full_name (was first_name + last_name)
   is_admin: boolean;
   phone?: string;
   date_of_birth?: string;
@@ -80,8 +79,7 @@ export interface UserProfile {
 }
 
 export interface UserUpdate {
-  first_name?: string;
-  last_name?: string;
+  full_name?: string;       // backend UserUpdate only accepts full_name
   phone?: string;
   date_of_birth?: string;
 }
@@ -143,7 +141,7 @@ export interface Movie {
   id: number;
   title: string;
   synopsis?: string;
-  genre?: string;
+  genre?: string[];           // from movie_genres join table
   runtime_minutes?: number;
   duration_minutes?: number;
   rating_tmdb?: number;
@@ -172,7 +170,7 @@ export interface MovieDetail extends Movie {
   audio_languages?: string[];
   subtitle_languages?: string[];
   tag_event?: string;
-  genre?: string;
+  // genre inherited from Movie as string[] — no override needed
   rating_count?: number;
   duration_minutes?: number;
 }
@@ -346,6 +344,7 @@ export interface ReserveSeatRequest {
   showtime_id: number;
   seat_ids: number[];
   price_per_seat: number;
+  ticket_type?: string;     // "normal" | "student" — written to each tickets row
 }
 
 export interface ReserveSeatResponse {
@@ -372,7 +371,9 @@ export interface ConfirmPaymentResponse {
     seat_id: number;
     row_label: string;
     seat_number: number;
-    qr_code?: string;
+    ticket_type: string;      // "normal" | "student"
+    price_paid?: number;
+    qr_code_slug?: string;
   }>;
 }
 
@@ -381,7 +382,7 @@ export interface BookingDetail {
   user_id: string;
   booking_status: string;
   total_amount: number;
-  ticket_type?: string;
+  // ticket_type removed from booking level — use tickets[n].ticket_type instead
   num_tickets?: number;
   payment_deadline?: string;
   created_at?: string;
@@ -399,6 +400,9 @@ export interface BookingDetail {
     seat_id: number;
     row_label: string;
     seat_number: number;
+    ticket_type: string;      // "normal" | "student" — migrated from bookings table
+    price_paid?: number;
+    qr_code_slug?: string;
   }>;
 }
 
@@ -597,7 +601,7 @@ export interface MovieCreate {
   subtitle_languages?: string[];
   tag_event?: string;
   release_status: string;
-  genre?: string;
+  genre?: string[];           // from movie_genres join table
   is_active?: boolean;
   allow_student_discount?: boolean;
   allow_member_discount?: boolean;
@@ -620,7 +624,7 @@ export interface MovieUpdate {
   tag_event?: string;
   status?: string;
   release_status?: string;
-  genre?: string;
+  genre?: string[];           // from movie_genres join table
   is_active?: boolean;
 }
 

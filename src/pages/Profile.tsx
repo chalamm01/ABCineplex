@@ -15,8 +15,7 @@ export default function ProfilePage() {
   const { mutate: updateProfile, loading: saving, error: saveError } = useApiMutation<UserProfile, UserUpdate>();
 
   const [formData, setFormData] = useState<UserUpdate>({
-    first_name: "",
-    last_name: "",
+    full_name: "",
     phone: "",
     date_of_birth: "",
   });
@@ -26,8 +25,7 @@ export default function ProfilePage() {
     fetchProfile(() => userApi.getProfile()).then((loadedProfile) => {
       if (loadedProfile) {
         setFormData({
-          first_name: loadedProfile.first_name || "",
-          last_name: loadedProfile.last_name || "",
+          full_name: loadedProfile.full_name || "",
           phone: loadedProfile.phone || "",
           date_of_birth: loadedProfile.date_of_birth || "",
         });
@@ -35,6 +33,23 @@ export default function ProfilePage() {
     });
   }, [fetchProfile]);
 
+  // Split full_name for display
+  const nameParts = (formData.full_name || "").split(" ");
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ");
+
+  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      full_name: e.target.value + (lastName ? " " + lastName : "")
+    }));
+  };
+  const handleLastNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      full_name: firstName + (e.target.value ? " " + e.target.value : "")
+    }));
+  };
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -59,8 +74,7 @@ export default function ProfilePage() {
   const handleCancel = () => {
     if (profile) {
       setFormData({
-        first_name: profile.first_name || "",
-        last_name: profile.last_name || "",
+        full_name: profile.full_name || "",
         phone: profile.phone || "",
         date_of_birth: profile.date_of_birth || "",
       });
@@ -90,7 +104,10 @@ export default function ProfilePage() {
     );
   }
 
-  const initials = `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""}`.toUpperCase() || "U";
+  const profileNameParts = (profile.full_name || "").split(" ");
+  const initials = (
+    (profileNameParts[0]?.[0] || "") + (profileNameParts[1]?.[0] || "")
+  ).toUpperCase() || "U";
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
@@ -105,7 +122,7 @@ export default function ProfilePage() {
 
           <div className="flex-1">
             <CardTitle className="text-2xl">
-              {profile.first_name} {profile.last_name}
+              {profile.full_name}
             </CardTitle>
             <p className="text-muted-foreground">{profile.email}</p>
             <div className="flex gap-2 mt-2">
@@ -132,8 +149,8 @@ export default function ProfilePage() {
               <label className="text-sm font-medium">First Name</label>
               <Input
                 name="first_name"
-                value={formData.first_name}
-                onChange={handleInputChange}
+                value={firstName}
+                onChange={handleFirstNameChange}
                 disabled={saving}
               />
             </div>
@@ -141,8 +158,8 @@ export default function ProfilePage() {
               <label className="text-sm font-medium">Last Name</label>
               <Input
                 name="last_name"
-                value={formData.last_name}
-                onChange={handleInputChange}
+                value={lastName}
+                onChange={handleLastNameChange}
                 disabled={saving}
               />
             </div>

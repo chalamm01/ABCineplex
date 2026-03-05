@@ -1,3 +1,12 @@
+// Helper functions for date/time formatting
+function formatDate(iso?: string) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+}
+function formatTime(iso?: string) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,8 +34,8 @@ export function BookingCard({
           {/* Poster */}
           <div className="relative aspect-2/3 max-h-75 max-w-50 shrink-0 overflow-hidden rounded-xl">
             <img
-              src={booking.posterUrl || '/assets/images/placeholder.png'}
-              alt={booking.title}
+              src={booking.poster_url || '/assets/images/placeholder.png'}
+              alt={booking.movie_title}
               className="h-full w-full object-cover"
             />
           </div>
@@ -34,19 +43,19 @@ export function BookingCard({
           <div className="flex flex-col content-between w-full">
             <div>
               <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-gray-900 truncate">
-                {booking.title}
+                {booking.movie_title}
               </h1>
-              <p className="mt-0.5 text-lg font-medium text-gray-400">{booking.cinema}</p>
+              <p className="mt-0.5 text-lg font-medium text-gray-400">{booking.screen_name}</p>
             </div>
 
             <div className="mt-4 flex justify-between">
               <div>
                 <p className="text-lg font-medium uppercase text-gray-400">Date</p>
-                <p className="text-xl font-bold text-gray-900">{booking.date}</p>
+                <p className="text-xl font-bold text-gray-900">{formatDate(booking.showtime_start)}</p>
               </div>
               <div>
                 <p className="text-lg font-medium uppercase text-gray-400">Show Time</p>
-                <p className="text-xl font-bold text-gray-900">{booking.showTime}</p>
+                <p className="text-xl font-bold text-gray-900">{formatTime(booking.showtime_start)}</p>
               </div>
             </div>
 
@@ -56,7 +65,7 @@ export function BookingCard({
               <div className="flex-col content-between">
                 <div className="mb-4">
                   <p className="text-lg font-medium uppercase text-gray-400">Seat</p>
-                  <p className="text-xl font-bold text-gray-900">{booking.seats}</p>
+                  <p className="text-xl font-bold text-gray-900">{Array.isArray(booking.seats) ? booking.seats.join(', ') : booking.seats}</p>
                 </div>
 
                 <div className="flex w-full justify-start gap-2">
@@ -69,7 +78,7 @@ export function BookingCard({
                     View Ticket
                   </Button>
 
-                  {onChangeShowtime && booking.status === 'confirmed' && (
+                  {onChangeShowtime && booking.booking_status === 'confirmed' && (
                     <Button
                       variant="outline"
                       className="rounded-2xl border-blue-300 text-blue-600 hover:bg-blue-50"
@@ -83,7 +92,7 @@ export function BookingCard({
               </div>
 
               <div className="w-32 h-32">
-                <QRCodeSVG value={booking.id} size={128} level="H" includeMargin={true} />
+                <QRCodeSVG value={String(booking.booking_id)} size={128} level="H" includeMargin={true} />
               </div>
             </div>
           </div>

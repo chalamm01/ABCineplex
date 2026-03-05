@@ -22,7 +22,7 @@ const emptyMovie: MovieCreate = {
   synopsis: '',
   director: '',
   starring: [],
-  genre: '', // Schema uses singular 'genre'
+  genre: [], // string[] — stored in movie_genres join table
   audio_languages: [],
   subtitle_languages: [],
   imdb_score: undefined,
@@ -84,7 +84,7 @@ export default function MoviesSection() {
       synopsis: m.synopsis || '',
       director: m.director || '',
       starring: m.starring || [],
-      genre: m.genre || '', // Mapped from schema
+      genre: m.genre || [],
       audio_languages: m.audio_languages || [],
       subtitle_languages: m.subtitle_languages || [],
       imdb_score: m.imdb_score,
@@ -177,7 +177,7 @@ export default function MoviesSection() {
     return (
       m.title.toLowerCase().includes(q) ||
       (m.director ?? '').toLowerCase().includes(q) ||
-      (m.genre ?? '').toLowerCase().includes(q)
+      (Array.isArray(m.genre) ? m.genre.join(' ') : '').toLowerCase().includes(q)
     );
   });
 
@@ -320,8 +320,8 @@ export default function MoviesSection() {
                 <input className={inputCls} value={form.banner_url} onChange={e => f('banner_url', e.target.value)} />
               </Field>
             </div>
-            <Field label="Genre">
-              <input className={inputCls} value={form.genre ?? ''} onChange={e => f('genre', e.target.value)} />
+            <Field label="Genre (one per line)">
+              <textarea className={inputCls} rows={2} value={joinLines(form.genre || [])} onChange={e => f('genre', splitLines(e.target.value))} />
             </Field>
             <Field label="Director">
               <input className={inputCls} value={form.director ?? ''} onChange={e => f('director', e.target.value)} />

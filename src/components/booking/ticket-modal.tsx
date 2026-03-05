@@ -1,7 +1,16 @@
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Volume2, Ticket, Captions, Subtitles } from "lucide-react";
+import { MapPin, Ticket } from "lucide-react";
+// Helper functions for date/time formatting
+function formatDate(iso?: string) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+}
+function formatTime(iso?: string) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
 import { QRCodeSVG } from "qrcode.react";
 import type { BookingDetail } from "@/types/api";
 
@@ -62,8 +71,8 @@ export function MovieTicketModal({
               {/* Poster */}
               <div className="shrink-0 w-[116px] h-[162px] rounded-xl overflow-hidden shadow-md border border-gray-100">
                 <img
-                  src={booking.posterUrl || '/assets/images/placeholder.png'}
-                  alt={booking.title}
+                  src={booking.poster_url || '/assets/images/placeholder.png'}
+                  alt={booking.movie_title}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -75,26 +84,11 @@ export function MovieTicketModal({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <h2 className="text-xl font-black tracking-tight text-gray-900 leading-none">
-                      {booking.title}
+                      {booking.movie_title}
                     </h2>
-                    <div className="flex items-center gap-1 mt-1.5 text-gray-500 text-xs">
-                      {booking.audio && (
-                        <>
-                          <Volume2 size={12} />
-                          <span className="font-semibold">{booking.audio}</span>
-                        </>
-                      )}
-                      {booking.audio && booking.subtitle && <span>|</span>}
-                      {booking.subtitle && (
-                        <>
-                          <Captions size={12} />
-                          <span className="font-semibold">{booking.subtitle}</span>
-                        </>
-                      )}
-                    </div>
                   </div>
                   <div className="shrink-0 rounded-md border border-gray-200 overflow-hidden">
-                    <QRCodeSVG value={booking.id} size={64} level="H" includeMargin={false} />
+                    <QRCodeSVG value={String(booking.booking_id)} size={64} level="H" includeMargin={false} />
                   </div>
                 </div>
 
@@ -103,22 +97,21 @@ export function MovieTicketModal({
                 {/* Cinema */}
                 <div className="flex items-center gap-1 text-green-500 font-bold text-xs mb-3">
                   <MapPin size={12} />
-                  {booking.cinema}
+                  {booking.screen_name}
                 </div>
 
                 {/* Info grid */}
                 <div className="grid grid-cols-3 gap-x-4 gap-y-3">
-                  <InfoCell label="Date" value={booking.date} />
-                  <InfoCell label="Show Time" value={booking.showTime} />
-                  {booking.endTime && <InfoCell label="End Time" value={booking.endTime} />}
-                  <InfoCell label="Seat(s)" value={booking.seats} />
+                  <InfoCell label="Date" value={formatDate(booking.showtime_start)} />
+                  <InfoCell label="Show Time" value={formatTime(booking.showtime_start)} />
+                  <InfoCell label="Seat(s)" value={Array.isArray(booking.seats) ? booking.seats.join(', ') : (booking.seats ?? '')} />
                 </div>
               </div>
             </div>
 
             {/* Transaction */}
             <p className="text-[10px] text-gray-400 tracking-widest mt-4 uppercase">
-              Transaction No. {booking.transactionNo}
+              Transaction No. {String(booking.booking_id)}
             </p>
           </div>
 
@@ -129,10 +122,10 @@ export function MovieTicketModal({
 
           {/* Paid badge */}
           <div className="px-6 py-3 flex justify-end">
-            {booking.paid && (
+            {booking.booking_status === 'confirmed' && (
               <Badge className="bg-green-500 hover:bg-green-500 text-white text-[13px] font-bold px-4 py-2 rounded-xl flex items-center gap-2 shadow">
                 <Ticket size={14} />
-                Paid ({booking.paid})
+                Paid
               </Badge>
             )}
           </div>

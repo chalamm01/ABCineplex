@@ -361,18 +361,20 @@ export default function MovieBooking() {
                   onTimeChange={setSelectedTime}
                   summarizedShowtimes={summarizedShowtimes}
                 />
-                  <TicketSummary
-                    selectedSeats={selectedSeats}
-                    selectedDate={bookingDates[selectedDate]}
-                    selectedTime={selectedTime}
-                    totalPrice={seatsTotalPrice}
-                    onBook={handleBooking}
-                    isBooking={isBooking}
-                    ticketType={ticketType}
-                    isStudentEligible={isStudentEligible}
-                    onTicketTypeChange={setTicketType}
-                    endTime={currentCardEndTime}
-                  />
+                  // src/pages/MovieBooking.tsx
+
+<TicketSummary
+  selectedSeats={selectedSeats}
+  selectedDate={bookingDates[selectedDate]}
+  selectedTime={selectedTime}
+  totalPrice={seatsTotalPrice}
+  onBook={handleBooking}
+  isBooking={isBooking}
+  isStudentEligible={isStudentEligible}
+  onTicketTypeChange={setTicketType} // You already had this
+  ticketType={ticketType}            // ADD THIS LINE
+  endTime={currentCardEndTime}
+/>
 </div>
                   {seats.length > 0 ? (
                     <SeatMap seats={seats} onSeatToggle={toggleSeat} />
