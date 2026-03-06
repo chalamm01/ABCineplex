@@ -64,6 +64,7 @@ export default function MovieBooking() {
   const [showtimesLoading, setShowtimesLoading] = useState(true);
   const [ticketType, setTicketType] = useState<'normal' | 'student'>('normal');
   const [isStudentEligible, setIsStudentEligible] = useState(false);
+  const [showGuestDialog, setShowGuestDialog] = useState(false);
 
   // Fetch user profile for student eligibility check
   useEffect(() => {
@@ -104,6 +105,7 @@ export default function MovieBooking() {
 
         const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const dates: any[] = Object.keys(byDate)
           .sort((a, b) => a.localeCompare(b))
           .map((dateStr) => {
@@ -217,8 +219,7 @@ export default function MovieBooking() {
     if (!currentShowtimeId || selectedSeats.length === 0) return;
 
     if (!isAuthenticated) {
-      alert('Please sign in to book tickets.');
-      navigate('/login');
+      setShowGuestDialog(true);
       return;
     }
 
@@ -250,6 +251,22 @@ export default function MovieBooking() {
     } finally {
       setIsBooking(false);
     }
+  };
+
+  const handleContinueAsGuest = () => {
+    if (!currentShowtimeId || selectedSeats.length === 0) return;
+    setShowGuestDialog(false);
+    const selectedSeatIds = seats.filter((s) => s.status === 'selected').map((s) => s.id);
+    const seatLabels = seats.filter((s) => s.status === 'selected').map((s) => `${s.row}${s.col}`).join(',');
+    const params = new URLSearchParams({
+      showtime_id: String(currentShowtimeId),
+      seat_ids: selectedSeatIds.join(','),
+      seats: seatLabels,
+      total: String(seatsTotalPrice),
+      ticket_type: ticketType,
+      guest: 'true',
+    });
+    navigate(`/payment?${params.toString()}`);
   };
 
   const selectedSeats = seats
@@ -297,6 +314,7 @@ export default function MovieBooking() {
   // Get the correct duration (runtime_minutes or duration_minutes)
 
   return (
+    <>
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
         <section className="px-4 sm:px-6">
@@ -390,5 +408,36 @@ export default function MovieBooking() {
         </section>
       </div>
     </div>
+
+    {/* Guest / Auth choice dialog */}
+    {showGuestDialog && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/55"
+        onClick={() => setShowGuestDialog(false)}
+      >
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 className="text-xl font-bold text-gray-900">How would you like to continue?</h2>
+          <p className="text-sm text-gray-500">Sign in to earn loyalty points, or continue as a guest.</p>
+          <div className="flex flex-col gap-3 pt-1">
+            <button
+              onClick={() => { setShowGuestDialog(false); navigate('/login'); }}
+              className="w-full py-2.5 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-700"
+            >
+              Log in / Sign up
+            </button>
+            <button
+              onClick={handleContinueAsGuest}
+              className="w-full py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50"
+            >
+              Continue as Guest
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

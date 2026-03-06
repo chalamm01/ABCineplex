@@ -1,12 +1,18 @@
 import { ChevronDown } from 'lucide-react';
 
+export interface SeatInfo {
+  seat_id: number;
+  row_label: string;
+  seat_number: number;
+}
+
 export interface BookingDetails {
   movieTitle: string;
   posterUrl: string;
   cinemaName: string;
   showTime: string;
   endTime: string;
-  seats: string[];
+  seats: SeatInfo[];
   subtotal: number;
   discount: number;
   discountLabel?: string;
@@ -22,7 +28,6 @@ export function BookingSummary({ booking, countdown }: BookingSummaryProps) {
   const formatTitle = (title: string) => {
     const words = title.toUpperCase().split(' ');
     if (words.length <= 2) return title.toUpperCase();
-
     const midpoint = Math.ceil(words.length / 2);
     return (
       <>
@@ -33,6 +38,9 @@ export function BookingSummary({ booking, countdown }: BookingSummaryProps) {
     );
   };
 
+  const formatSeats = (seats: SeatInfo[]) =>
+    seats.map((s) => `${s.row_label}${s.seat_number}`).join(', ');
+  console.log(booking)
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -76,7 +84,7 @@ export function BookingSummary({ booking, countdown }: BookingSummaryProps) {
         </div>
         <div>
           <p className="text-sm text-slate-400 font-bold uppercase">Seat(s)</p>
-          <p className="text-lg font-bold">{booking.seats.join(', ')}</p>
+          <p className="text-lg font-bold">{formatSeats(booking.seats)}</p>
         </div>
       </div>
 

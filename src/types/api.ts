@@ -160,7 +160,7 @@ export interface Movie {
 export interface TopPicksItem {
   id: number;
   title: string;
-  poster_url?: string;
+  banner_url?: string;
   genre?: string[];
   consensus_score?: number;
   total_bookings?: number;
@@ -430,6 +430,7 @@ export interface InitiatePaymentRequest {
   booking_id: string;
   payment_method: 'mock_card' | 'mock_qr' | 'mock_cash';
   mock_should_succeed: boolean;
+  guest_token?: string;
 }
 
 export interface InitiatePaymentResponse {
@@ -487,6 +488,23 @@ export interface ReviewStatus {
   showtime_has_passed: boolean;
   movie_id?: number;
   showtime_id?: number;
+}
+
+export interface GuestBookingRequest {
+  showtime_id: number;
+  seat_ids: number[];
+  price_per_seat: number;
+  ticket_type?: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface GuestBookingResponse {
+  booking_id: string;
+  guest_token: string;
+  total_amount: number;
+  payment_deadline?: string;
+  message: string;
 }
 
 export interface MovieSnippet {

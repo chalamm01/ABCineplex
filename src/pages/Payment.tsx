@@ -9,6 +9,7 @@ import {
   BookingSummary,
   type PaymentMethod,
   type BookingDetails,
+  type SeatInfo,
 } from '@/components/payment';
 import { useCountdown } from '@/hooks/useCountdown';
 import { bookingsApi, paymentsApi, showtimesApi, userApi, ordersApi } from '@/services/api';
@@ -35,6 +36,17 @@ export default function Payment() {
   const seatsParam = searchParams.get('seats');
   const totalParam = searchParams.get('total');
   const deadlineParam = searchParams.get('deadline');
+
+  // Guest checkout mode
+  const isGuestMode = searchParams.get('guest') === 'true';
+  const guestShowtimeId = searchParams.get('showtime_id');
+  const guestSeatIdsParam = searchParams.get('seat_ids');
+  const guestTicketType = searchParams.get('ticket_type') ?? 'normal';
+
+  const [guestToken, setGuestToken] = useState<string | null>(null);
+  const [guestBookingId, setGuestBookingId] = useState<string | null>(null);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
 
   // Snack order result id
   const [snackOrderId, setSnackOrderId] = useState<string | null>(null);
@@ -83,7 +95,11 @@ export default function Payment() {
         cinemaName: 'Counter Pickup',
         showTime: 'Pick up before show',
         endTime: 'N/A',
-        seats: cart.map((i) => `${i.name} ×${i.quantity || 1}`),
+        seats: cart.map((i) => ({
+          seat_id: i.id,
+          row_label: i.name.charAt(0),
+          seat_number: parseInt(i.name.slice(1), 10),
+        })),
         subtotal: total,
         discount: 0,
         discountLabel: undefined,
@@ -93,6 +109,60 @@ export default function Payment() {
         userApi.getProfile().then((p) => setUserPoints(p.reward_points ?? 0)).catch(() => {});
       } catch { /* best-effort */ }
       setLoading(false);
+      return;
+    }
+
+    // Guest mode: populate from URL params + showtime API (no booking exists yet)
+    if (isGuestMode) {
+      if (!guestShowtimeId || !guestSeatIdsParam) {
+        setError('Missing guest booking parameters');
+        setLoading(false);
+        return;
+      }
+      const total = Number(totalParam) || 0;
+      const seatLabels = seatsParam?.split(',') ?? [];
+      const seats: SeatInfo[] = seatLabels.map((label, idx) => ({
+        seat_id: idx + 1,
+        row_label: label.charAt(0),
+        seat_number: parseInt(label.slice(1), 10) || idx + 1,
+      }));
+      showtimesApi.getShowtimeById(Number(guestShowtimeId))
+        .then((st) => {
+          const start = st.start_time ? new Date(st.start_time) : null;
+          const endIso = (st as unknown as { estimated_end_with_credits?: string; end_time?: string }).estimated_end_with_credits ?? (st as unknown as { end_time?: string }).end_time;
+          setBookingDetails({
+            movieTitle: (st as unknown as { movie?: { title?: string } }).movie?.title ?? 'Movie',
+            posterUrl: '',
+            cinemaName: (st as unknown as { theatre?: { name?: string } }).theatre?.name ?? 'ABCineplex',
+            showTime: start
+              ? start.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+              : 'N/A',
+            endTime: endIso
+              ? new Date(endIso).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+              : 'N/A',
+            seats,
+            subtotal: total,
+            discount: 0,
+            discountLabel: undefined,
+            total,
+          });
+        })
+        .catch(() => {
+          // Fallback: populate from URL params only
+          setBookingDetails({
+            movieTitle: 'Movie',
+            posterUrl: '',
+            cinemaName: 'ABCineplex',
+            showTime: 'N/A',
+            endTime: 'N/A',
+            seats,
+            subtotal: total,
+            discount: 0,
+            discountLabel: undefined,
+            total,
+          });
+        })
+        .finally(() => setLoading(false));
       return;
     }
 
@@ -107,9 +177,16 @@ export default function Payment() {
         if (booking.payment_deadline) {
           setPaymentDeadline(new Date(booking.payment_deadline));
         }
-        const seats = booking.seats?.length
+        const seats: SeatInfo[] = booking.seats?.length
           ? booking.seats
-          : seatsParam?.split(',') ?? [];
+          : (seatsParam?.split(',').map((seatStr: string, idx: number) => {
+              // fallback: try to parse seat string like "D4" to SeatInfo
+              return {
+                seat_id: idx + 1, // fallback id
+                row_label: seatStr.charAt(0),
+                seat_number: parseInt(seatStr.slice(1), 10),
+              };
+            }) ?? []);
         const total = booking.total_amount || Number(totalParam) || 0;
         const start = booking.showtime_start ? new Date(booking.showtime_start) : null;
 
@@ -155,7 +232,7 @@ export default function Payment() {
       })
       .catch(() => setError('Failed to load booking details'))
       .finally(() => setLoading(false));
-  }, [bookingId, seatsParam, totalParam]);
+  }, [bookingId, seatsParam, totalParam, isGuestMode, guestShowtimeId, guestSeatIdsParam]);
 
   const handlePayment = async () => {
     // ── Snack mode ─────────────────────────────────────────────────────────
@@ -170,6 +247,69 @@ export default function Payment() {
         setPaymentSuccess(true);
       } catch {
         alert('Order failed. Please try again.');
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // ── Guest booking mode ─────────────────────────────────────────────────
+    if (isGuestMode) {
+      if (!guestShowtimeId || !guestSeatIdsParam) {
+        alert('Missing booking information');
+        return;
+      }
+      if (!guestEmail && !guestPhone) {
+        alert('Please enter your email or phone number to continue.');
+        return;
+      }
+      try {
+        setIsProcessing(true);
+        const seatIds = guestSeatIdsParam.split(',').map(Number);
+        const total = bookingDetails?.subtotal ?? 0;
+        const pricePerSeat = seatIds.length > 0 ? total / seatIds.length : 0;
+
+        // Step 1: Create the guest booking
+        let activeBookingId = guestBookingId;
+        let activeToken = guestToken;
+        if (!activeBookingId || !activeToken) {
+          const guestBooking = await bookingsApi.createGuestBooking({
+            showtime_id: Number(guestShowtimeId),
+            seat_ids: seatIds,
+            price_per_seat: pricePerSeat,
+            ticket_type: guestTicketType,
+            email: guestEmail || undefined,
+            phone: guestPhone || undefined,
+          });
+          activeBookingId = guestBooking.booking_id;
+          activeToken = guestBooking.guest_token;
+          setGuestBookingId(activeBookingId);
+          setGuestToken(activeToken);
+        }
+
+        const mockMethod = paymentMethod === 'card' ? 'mock_card' : 'mock_qr';
+
+        // Step 2: Initiate payment (public — no auth)
+        const initiated = await paymentsApi.initiateGuest({
+          booking_id: activeBookingId,
+          payment_method: mockMethod as 'mock_card' | 'mock_qr' | 'mock_cash',
+          mock_should_succeed: true,
+          guest_token: activeToken,
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // Step 3: Confirm payment (public — no auth)
+        const result = await paymentsApi.confirmGuest(initiated.payment_id, true);
+
+        if (result.status === 'success') {
+          navigate(`/booking/guest?token=${encodeURIComponent(activeToken)}`);
+        } else {
+          alert(`Payment failed: ${result.message || 'Unknown error'}`);
+        }
+      } catch (err) {
+        console.error('Guest payment error:', err);
+        alert('Payment failed. Please try again.');
       } finally {
         setIsProcessing(false);
       }
@@ -298,6 +438,8 @@ export default function Payment() {
       );
     }
 
+    const formatSeats = (seats: SeatInfo[]) =>
+        seats.map((s) => `${s.row_label}${s.seat_number}`).join(', ');
     // Booking success screen
     return (
       <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
@@ -311,7 +453,7 @@ export default function Payment() {
             <p className="text-slate-500 mb-2">Booking ID: #{bookingId}</p>
             <p className="text-slate-600 mb-8">
               Your tickets for <span className="font-semibold">{bookingDetails.movieTitle}</span> have been confirmed.
-              Seats: <span className="font-semibold">{bookingDetails.seats.join(', ')}</span>
+              Seats: <span className="font-semibold">{formatSeats(bookingDetails.seats)}</span>
             </p>
             <div className="space-y-3">
               <Button
@@ -364,8 +506,30 @@ export default function Payment() {
               </button>
             </div>
 
+            {/* Guest contact fields */}
+            {isGuestMode && (
+              <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+                <p className="text-sm font-semibold text-blue-900 mb-3">Guest Contact (required)</p>
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <input
+                  type="tel"
+                  placeholder="Phone number (optional)"
+                  value={guestPhone}
+                  onChange={(e) => setGuestPhone(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <p className="text-xs text-blue-600 mt-2">We'll use this to send your booking confirmation.</p>
+              </div>
+            )}
+
             {/* EP-25: Redeem Loyalty Points */}
-            {userPoints > 0 && bookingDetails && (() => {
+            {!isGuestMode && userPoints > 0 && bookingDetails && (() => {
               const maxDiscount = Math.min(userPoints, Math.floor(bookingDetails.subtotal * 0.5));
               return (
                 <div className="mb-6 p-4 bg-violet-50 border-2 border-violet-200 rounded-xl">

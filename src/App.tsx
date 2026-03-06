@@ -18,6 +18,7 @@ import Community from "./pages/Community.tsx";
 
 import BookingHistoryPage from "./pages/BookingHistory";
 import SetPassword from "./pages/SetPassword.tsx";
+import GuestBooking from "./pages/GuestBooking.tsx";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="/bookings" element={<BookingHistoryPage />} />
           <Route path="/community" element={<Community />} />
           <Route path="/setup-password" element={<SetPassword />} />
+          <Route path="/booking/guest" element={<GuestBooking />} />
         </Routes>
       </div>
     </div>

@@ -59,6 +59,8 @@ import type {
   SnackOrder,
   OrderResponse,
   TopPicksResponse,
+  GuestBookingRequest,
+  GuestBookingResponse,
 } from '@/types/api';
 
 // --- Configuration ---
@@ -327,6 +329,12 @@ export const bookingsApi = {
   reserveSeats: (request: ReserveSeatRequest): Promise<ReserveSeatResponse> =>
     fetchAuth<ReserveSeatResponse>('POST', '/bookings', request),
 
+  createGuestBooking: (request: GuestBookingRequest): Promise<GuestBookingResponse> =>
+    fetchPublic<GuestBookingResponse>('POST', '/bookings/guest', request),
+
+  getGuestBooking: (token: string): Promise<BookingDetail> =>
+    fetchPublic<BookingDetail>('GET', `/bookings/guest?token=${encodeURIComponent(token)}`),
+
   confirmPayment: (request: ConfirmPaymentRequest): Promise<ConfirmPaymentResponse> =>
     fetchAuth<ConfirmPaymentResponse>('POST', '/bookings/confirm-payment', request),
 
@@ -385,6 +393,13 @@ export const paymentsApi = {
 
   getPaymentStatus: (paymentId: string): Promise<PaymentResponse> =>
     fetchAuth<PaymentResponse>('GET', `/payments/${paymentId}`),
+
+  // Guest-mode variants — no auth token sent, guest_token in body instead
+  initiateGuest: (request: InitiatePaymentRequest): Promise<InitiatePaymentResponse> =>
+    fetchPublic<InitiatePaymentResponse>('POST', '/payments/initiate', request),
+
+  confirmGuest: (paymentId: string, mockResult: boolean): Promise<PaymentResponse> =>
+    fetchPublic<PaymentResponse>('POST', `/payments/${paymentId}/confirm`, { mock_result: mockResult, points_redeemed: 0 }),
 };
 
 // --- paymentsApi is now the canonical name ---
