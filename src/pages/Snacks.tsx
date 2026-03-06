@@ -5,7 +5,6 @@ import { productsApi } from "@/services/api";
 import type { Product, ProductCategory } from "@/types/api";
 import { Spinner } from '@/components/ui/spinner';
 import { ShoppingCart, Plus } from "lucide-react";
-import { HeroCarousel } from "@/components/homepage/hero-carousel";
 
 // ── Item Detail Modal ──────────────────────────────────────────────────────────
 function ItemModal({
@@ -194,33 +193,17 @@ function Snacks() {
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <div className="min-h-screen bg-white/75 backdrop-blur-md">
 
-        {/* ── Hero Carousel ── */}
-        {!loading && !error && categories.length > 0 && (
-          <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8">
-            <HeroCarousel
-              slides={categories.map((cat) => ({
-                id: cat.id,
-                image_url: cat.image_url ?? '/assets/background/bg_snackbar.png',
-                title: cat.name,
-                description: cat.description ?? undefined,
-                is_active: true,
-              }))}
-              onSlideClick={scrollToCategory}
-            />
+        {/* ── Hero Banner ── */}
+        <div className="relative bg-gradient-to-br from-violet-900 via-purple-800 to-indigo-900 text-white overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/assets/background/bg_snackbar.png')] bg-cover bg-center opacity-20" />
+          <div className="relative max-w-5xl mx-auto px-6 py-14 text-center">
+            <p className="text-violet-300 text-sm font-semibold uppercase tracking-widest mb-2">ABCineplex</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">Snack Bar</h1>
+            <p className="text-violet-200 text-base max-w-md mx-auto">
+              Order popcorn, drinks &amp; combos for pickup at the counter — ready before the show.
+            </p>
           </div>
-        )}
-        {(loading || error || categories.length === 0) && (
-          <div className="relative bg-gradient-to-br from-violet-900 via-purple-800 to-indigo-900 text-white overflow-hidden">
-            <div className="absolute inset-0 bg-[url('/assets/background/bg_snackbar.png')] bg-cover bg-center opacity-20" />
-            <div className="relative max-w-5xl mx-auto px-6 py-14 text-center">
-              <p className="text-violet-300 text-sm font-semibold uppercase tracking-widest mb-2">ABCineplex</p>
-              <h1 className="text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">Snack Bar</h1>
-              <p className="text-violet-200 text-base max-w-md mx-auto">
-                Order popcorn, drinks &amp; combos for pickup at the counter — ready before the show.
-              </p>
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* ── Category Pill Tabs ── */}
         {!loading && !error && categories.length > 0 && (
