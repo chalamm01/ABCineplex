@@ -153,6 +153,23 @@ export interface Movie {
   is_active?: boolean;
   allow_student_discount?: boolean;
   allow_member_discount?: boolean;
+  consensus_score?: number;
+  total_bookings?: number;
+}
+
+export interface TopPicksItem {
+  id: number;
+  title: string;
+  poster_url?: string;
+  genre?: string[];
+  consensus_score?: number;
+  total_bookings?: number;
+  release_status?: string;
+}
+
+export interface TopPicksResponse {
+  top_picks: TopPicksItem[];
+  total: number;
 }
 
 export interface MovieDetail extends Movie {
@@ -186,6 +203,9 @@ export interface ShowtimeCard {
   member_discount_baht?: number;
   total_time_commitment_minutes: number;
   risk_adjusted_quality_score: number;
+  demand_badge?: 'selling_fast' | 'filling_up' | 'available' | 'plenty_of_space';
+  badge_label?: string | null;
+  seats_remaining_percent?: number;
 }
 
 export interface MovieShowtimesResponse {
@@ -242,6 +262,9 @@ export interface ShowtimeDetail {
   member_discount_baht?: number;
   total_time_commitment_minutes: number;
   risk_adjusted_quality_score: number;
+  demand_badge?: 'selling_fast' | 'filling_up' | 'available' | 'plenty_of_space';
+  badge_label?: string | null;
+  seats_remaining_percent?: number;
 }
 
 export interface TTCComponents {
@@ -438,6 +461,7 @@ export interface ReviewBase {
 
 export interface ReviewCreate extends ReviewBase {
   movie_id: number;
+  booking_id?: string;
 }
 
 export interface ReviewResponse extends ReviewBase {
@@ -451,6 +475,18 @@ export interface ReviewResponse extends ReviewBase {
   like_count?: number;
   user_liked?: boolean;
   updated_at?: string;
+  booking_id?: string;
+  showtime_id?: number;
+  showtime_label?: string;
+}
+
+export interface ReviewStatus {
+  booking_id: string;
+  can_review: boolean;
+  already_reviewed: boolean;
+  showtime_has_passed: boolean;
+  movie_id?: number;
+  showtime_id?: number;
 }
 
 export interface MovieSnippet {

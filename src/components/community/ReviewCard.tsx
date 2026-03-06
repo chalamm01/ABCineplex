@@ -72,6 +72,9 @@ export function ReviewCard({ review, isLiked, isAuthenticated, onLike, onMovieCl
             </Avatar>
             <span className="text-sm font-medium text-neutral-700">{displayName}</span>
           </div>
+          {review.showtime_label && (
+            <p className="text-xs text-muted-foreground">Watched: {review.showtime_label}</p>
+          )}
 
           {/* Stars */}
           <div className="flex items-center gap-2">

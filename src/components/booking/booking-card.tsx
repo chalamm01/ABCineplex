@@ -12,19 +12,32 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { QRCodeSVG } from 'qrcode.react';
-import { Ticket } from "lucide-react";
+import { Ticket, Star } from "lucide-react";
 import { MovieTicketModal } from "./ticket-modal";
+import { WriteReviewModal } from "@/components/community/WriteReviewModal";
 import type { BookingDetail } from "@/types/api";
+
 interface BookingCardProps {
   booking: BookingDetail;
   onChangeShowtime?: () => void;
+  canReview?: boolean;
+  movieId?: number;
+  movieTitle?: string;
+  bookingId?: string;
+  onReviewSubmitted?: () => void;
 }
 
 export function BookingCard({
   booking,
   onChangeShowtime,
+  canReview,
+  movieId,
+  movieTitle,
+  bookingId,
+  onReviewSubmitted,
 }: BookingCardProps) {
   const [ticketOpen, setTicketOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   return (
     <>
@@ -88,6 +101,18 @@ export function BookingCard({
                       Change Showtime
                     </Button>
                   )}
+
+                  {canReview && movieId && bookingId && (
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl border-amber-300 text-amber-600 hover:bg-amber-50"
+                      size="sm"
+                      onClick={() => setReviewOpen(true)}
+                    >
+                      <Star className="mr-2 h-4 w-4" />
+                      Write a Review
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -104,6 +129,20 @@ export function BookingCard({
         onOpenChange={setTicketOpen}
         booking={booking}
       />
+
+      {canReview && movieId && bookingId && (
+        <WriteReviewModal
+          isOpen={reviewOpen}
+          onClose={() => setReviewOpen(false)}
+          movieId={movieId}
+          bookingId={bookingId}
+          movieTitle={movieTitle}
+          onSuccess={() => {
+            setReviewOpen(false);
+            onReviewSubmitted?.();
+          }}
+        />
+      )}
     </>
   );
 }

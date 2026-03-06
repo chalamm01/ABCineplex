@@ -34,6 +34,7 @@ import type {
   PaymentResponse,
   ReviewCreate,
   ReviewResponse,
+  ReviewStatus,
   ReviewWithMovieListResponse,
   HeroSlide,
   Promotion,
@@ -57,6 +58,7 @@ import type {
   SnackOrderItem,
   SnackOrder,
   OrderResponse,
+  TopPicksResponse,
 } from '@/types/api';
 
 // --- Configuration ---
@@ -233,6 +235,9 @@ export const moviesApi = {
 
   getQualityScore: (movieId: number): Promise<QualityScoreResponse> =>
     fetchPublic<QualityScoreResponse>('GET', `/movies/${movieId}/quality-score`),
+
+  getTopPicks: (limit: number = 10): Promise<TopPicksResponse> =>
+    fetchPublic<TopPicksResponse>('GET', `/movies/top-picks?limit=${limit}`),
 
   getShowtimesByMovie: (movieId: number, active?: boolean): Promise<MovieShowtimesResponse> =>
     moviesApi.getMovieShowtimes(movieId, undefined, 7, active),
@@ -412,6 +417,9 @@ export const reviewApi = {
 
   unlikeReview: (reviewId: number): Promise<{ status: string }> =>
     fetchAuth<{ status: string }>('DELETE', `/reviews/${reviewId}/likes`),
+
+  getReviewStatus: (bookingId: string): Promise<ReviewStatus> =>
+    fetchAuth<ReviewStatus>('GET', `/reviews/booking/${bookingId}/status`),
 };
 
 // ============================================================================
@@ -539,6 +547,9 @@ export const adminApi = {
 
   fetchFromTmdb: (tmdbId: number): Promise<Partial<MovieCreate> & { rating_count?: number }> =>
     fetchAuth<Partial<MovieCreate> & { rating_count?: number }>('GET', `/admin/movies/tmdb/${tmdbId}`),
+
+  recalculateConsensus: (): Promise<{ message: string; count: number }> =>
+    fetchAuth<{ message: string; count: number }>('POST', '/admin/movies/recalculate-consensus'),
 
   toggleMovieActive: (movieId: number, isActive: boolean): Promise<Movie> =>
     fetchAuth<Movie>('PATCH', `/admin/movies/${movieId}`, { is_active: isActive }),

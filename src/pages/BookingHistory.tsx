@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { BookingCard } from "@/components/booking/booking-card";
-import { bookingsApi, showtimesApi, moviesApi } from "@/services/api";
+import { bookingsApi, showtimesApi, moviesApi, reviewApi } from "@/services/api";
 import { Spinner } from "@/components/ui/spinner";
-import type { BookingSummary, ShowtimeCard } from "@/types/api";
+import type { BookingSummary, ShowtimeCard, ReviewStatus } from "@/types/api";
 
 // Format seats for display - handles both string and object formats
 
@@ -11,6 +11,18 @@ export default function BookingHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [reviewStatuses, setReviewStatuses] = useState<Record<string, ReviewStatus>>({});
+
+  const refreshReviewStatuses = async (confirmed: BookingSummary[]) => {
+    const results = await Promise.allSettled(
+      confirmed.map(b => reviewApi.getReviewStatus(b.booking_id.toString()))
+    );
+    const map: Record<string, ReviewStatus> = {};
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') map[confirmed[i].booking_id.toString()] = r.value;
+    });
+    setReviewStatuses(map);
+  };
 
   // Change-showtime dialog state
   const [changingBooking, setChangingBooking] = useState<BookingSummary | null>(null);
@@ -24,7 +36,11 @@ export default function BookingHistoryPage() {
     setError(null);
     bookingsApi
       .getUserBookings(undefined, 1, 50)
-      .then((res) => setBookings(res.bookings.filter((b) => b.booking_status === "confirmed")))
+      .then((res) => {
+        const confirmed = res.bookings.filter((b) => b.booking_status === "confirmed");
+        setBookings(confirmed);
+        refreshReviewStatuses(confirmed);
+      })
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : "Failed to fetch booking history.")
       )
@@ -107,23 +123,31 @@ export default function BookingHistoryPage() {
             {bookings.length === 0 ? (
               <div className="col-span-2 text-center text-gray-500">No bookings found.</div>
             ) : (
-              bookings.map((b) => (
-                <BookingCard
-                  key={b.booking_id.toString()}
-                  booking={{
-                    booking_id: b.booking_id,
-                    movie_title: b.movie_title,
-                    screen_name: b.screen_name,
-                    showtime_start: b.showtime_start,
-                    poster_url: b.poster_url,
-                    seats: Array.isArray(b.seats)
-                      ? b.seats.map(seat => typeof seat === 'string' ? seat : (seat.row_label && seat.seat_number ? `${seat.row_label}${seat.seat_number}` : 'N/A'))
-                      : [],
-                    booking_status: b.booking_status,
-                  } as any}
-                  onChangeShowtime={canChange(b) ? () => openChangeShowtime(b) : undefined}
-                />
-              ))
+              bookings.map((b) => {
+                const rs = reviewStatuses[b.booking_id.toString()];
+                return (
+                  <BookingCard
+                    key={b.booking_id.toString()}
+                    booking={{
+                      booking_id: b.booking_id,
+                      movie_title: b.movie_title,
+                      screen_name: b.screen_name,
+                      showtime_start: b.showtime_start,
+                      poster_url: b.poster_url,
+                      seats: Array.isArray(b.seats)
+                        ? b.seats.map(seat => typeof seat === 'string' ? seat : (seat.row_label && seat.seat_number ? `${seat.row_label}${seat.seat_number}` : 'N/A'))
+                        : [],
+                      booking_status: b.booking_status,
+                    } as any}
+                    onChangeShowtime={canChange(b) ? () => openChangeShowtime(b) : undefined}
+                    canReview={rs?.can_review}
+                    movieId={rs?.movie_id}
+                    movieTitle={b.movie_title}
+                    bookingId={b.booking_id.toString()}
+                    onReviewSubmitted={() => refreshReviewStatuses(bookings)}
+                  />
+                );
+              })
             )}
           </div>
         )}

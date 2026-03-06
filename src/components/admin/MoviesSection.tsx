@@ -47,8 +47,22 @@ export default function MoviesSection() {
   const [tmdbId, setTmdbId] = useState('');
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [tmdbError, setTmdbError] = useState('');
+  const [recalculating, setRecalculating] = useState(false);
 
   const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
+
+  const handleRecalculateConsensus = async () => {
+    setRecalculating(true);
+    try {
+      const res = await adminApi.recalculateConsensus();
+      alert(res.message);
+      refresh();
+    } catch {
+      alert('Failed to recalculate consensus scores.');
+    } finally {
+      setRecalculating(false);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -186,6 +200,16 @@ export default function MoviesSection() {
   return (
     <div>
       <SectionHeader title="Movies" count={movies.length} onAdd={openAdd} addLabel="+ Add Movie" />
+
+      <div className="mb-4 flex items-center gap-3">
+        <button
+          onClick={handleRecalculateConsensus}
+          disabled={recalculating}
+          className="text-sm px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+        >
+          {recalculating ? 'Recalculating…' : '↻ Recalculate Consensus Scores'}
+        </button>
+      </div>
 
       <div className="mb-4">
         <input

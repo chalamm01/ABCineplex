@@ -6,6 +6,23 @@ interface ShowtimeInfo {
   status: 'available' | 'selected' | 'sold_out' | 'past';
   raqs?: number;
   ttc?: number;
+  demand_badge?: 'selling_fast' | 'filling_up' | 'available' | 'plenty_of_space';
+  badge_label?: string | null;
+}
+
+const _BADGE_COLORS: Record<string, string> = {
+  selling_fast:    'bg-red-100 text-red-700 border-red-200',
+  filling_up:      'bg-orange-100 text-orange-700 border-orange-200',
+  plenty_of_space: 'bg-green-100 text-green-700 border-green-200',
+};
+
+export function DemandBadge({ badge, label }: { badge?: string; label?: string | null }) {
+  if (!badge || badge === 'available' || !label) return null;
+  return (
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${_BADGE_COLORS[badge] ?? ''}`}>
+      {label}
+    </span>
+  );
 }
 
 // This type extends BookingDate with additional showtime detail - used for rendering
@@ -93,22 +110,23 @@ export function DateTimeSelection({
         <div>
           <h4 className="text-xs font-bold text-neutral-600 uppercase tracking-wide mb-2">Select Time</h4>
           <div className="flex flex-wrap gap-2">
-            {selectedDateGroup.showtimes.map((showtime) => (
-              <button
-                key={`${selectedDate}-${showtime.time}`}
-                onClick={() => onTimeChange(showtime.time)}
-                disabled={showtime.status === 'sold_out' || showtime.status === 'past'}
-                className={`px-3 py-1 rounded-md font-semibold text-xs transition-all ${
-                  showtime.status === 'selected'
-                    ? 'bg-orange-600 text-white'
-                    : showtime.status === 'available'
-                      ? 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
-                      : 'bg-neutral-100 text-neutral-400 cursor-not-allowed opacity-50'
-                }`}
-              >
-                {showtime.time}
-              </button>
-            ))}
+            {selectedDateGroup.showtimes.map((showtime) => {
+              let btnClass = 'bg-neutral-100 text-neutral-400 cursor-not-allowed opacity-50';
+              if (showtime.status === 'selected') btnClass = 'bg-orange-600 text-white';
+              else if (showtime.status === 'available') btnClass = 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200';
+              return (
+                <div key={`${selectedDate}-${showtime.time}`} className="flex flex-col items-start gap-1">
+                  <button
+                    onClick={() => onTimeChange(showtime.time)}
+                    disabled={showtime.status === 'sold_out' || showtime.status === 'past'}
+                    className={`px-3 py-1 rounded-md font-semibold text-xs transition-all ${btnClass}`}
+                  >
+                    {showtime.time}
+                  </button>
+                  <DemandBadge badge={showtime.demand_badge} label={showtime.badge_label} />
+                </div>
+              );
+            })}
           </div>
 
           {/* Compact Info Display */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { HeroCarousel } from '@/components/homepage/hero-carousel';
 import { MoviesSection } from '@/components/homepage/movies-section';
 import { PromotionalSection } from '@/components/homepage/promotional-section';
+import { TopPicksSection } from '@/components/homepage/TopPicksSection';
 import { moviesApi, publicApi } from '@/services/api';
 import type { HeroSlide, Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
@@ -77,6 +78,8 @@ export default function Home() {
         {!loading && !error && (
           <main className="space-y-12">
             <HeroCarousel slides={slides} />
+
+            <TopPicksSection />
 
             {/* FIXED PROPS: Changed comingSoon to upcoming to match MoviesSectionProps */}
             <MoviesSection

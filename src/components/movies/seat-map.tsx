@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Check } from 'lucide-react';
+import { DemandBadge } from '@/components/movies/date-time-selection';
 
 type SeatStatus = 'available' | 'reserved' | 'selected' | 'locked';
 
@@ -14,6 +15,8 @@ interface Seat {
 interface SeatMapProps {
   readonly seats: Seat[];
   readonly onSeatToggle: (row: string, col: number) => void;
+  readonly demandBadge?: string;
+  readonly badgeLabel?: string | null;
 }
 
 /** Cinema seat SVG icon matching the screenshot style */
@@ -58,7 +61,7 @@ function SeatButton({ seat, onToggle }: { seat: Seat | undefined; onToggle: () =
   );
 }
 
-export function SeatMap({ seats, onSeatToggle }: SeatMapProps) {
+export function SeatMap({ seats, onSeatToggle, demandBadge, badgeLabel }: SeatMapProps) {
   const { rows, leftColumns, rightColumns } = useMemo(() => {
     const uniqueRows = [...new Set(seats.map(s => s.row))].sort((a, b) => a.localeCompare(b));
     const uniqueCols = [...new Set(seats.map(s => s.col))].sort((a, b) => a - b);
@@ -85,7 +88,10 @@ export function SeatMap({ seats, onSeatToggle }: SeatMapProps) {
       {/* Screen */}
       <div className="mb-8 sm:mb-12">
         <div className="w-full h-1.5 bg-gradient-to-r from-neutral-700 via-neutral-700 to-neutral-700 rounded-full mb-2" />
-        <p className="text-center text-neutral-500 text-xs font-semibold tracking-widest uppercase">Screen</p>
+        <div className="flex items-center justify-center gap-2">
+          <p className="text-center text-neutral-500 text-xs font-semibold tracking-widest uppercase">Screen</p>
+          <DemandBadge badge={demandBadge} label={badgeLabel} />
+        </div>
       </div>
 
       {/* Seats Grid */}
