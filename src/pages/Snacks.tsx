@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { CartContext } from "@/providers/CartContextDef";
 import { useNavigate } from "react-router-dom";
 import { productsApi } from "@/services/api";
-import type { Product, Category } from "@/services/api";
+import type { Product, ProductCategory } from "@/types/api";
 import { Spinner } from '@/components/ui/spinner';
 
 // ── Item Detail Modal ──────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ function Snacks() {
   const context = useContext(CartContext);
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedItem, setSelectedItem] = useState<Product | null>(null);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { productsApi, type ProductCreate, type Product, type Category } from '@/services/api';
+import { productsApi } from '@/services/api';
+import type { Product, ProductCategory } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
@@ -7,7 +8,7 @@ import {
   EditButton, DeleteButton,
 } from './AdminShared';
 
-const emptyProduct: ProductCreate = {
+const emptyProduct: Omit<Product, 'id'> = {
   name: '', category_id: '', price: 0, description: '', image_url: '', is_active: true, stock_quantity: 0,
 };
 
@@ -15,10 +16,10 @@ type ModalMode = 'add' | 'edit' | null;
 
 export default function ProductsSection() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalMode>(null);
-  const [form, setForm] = useState<ProductCreate>(emptyProduct);
+  const [form, setForm] = useState<Omit<Product, 'id'>>(emptyProduct);
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -83,7 +84,7 @@ export default function ProductsSection() {
   }
 
   const catName = (id: string) => categories.find(c => c.id === id)?.name ?? id;
-  const f = (field: keyof ProductCreate, value: unknown) => setForm(prev => ({ ...prev, [field]: value }));
+  const f = (field: keyof Omit<Product, 'id'>, value: unknown) => setForm(prev => ({ ...prev, [field]: value }));
 
   return (
     <div>

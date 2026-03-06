@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TabNavigation } from '@/components/movies/tab-navigation';
 import { MoviesGrid } from '@/components/movies/movies-grid';
-import { movieApi } from '@/services/api';
+import { moviesApi } from '@/services/api';
 import type { Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -20,7 +20,7 @@ function Movies() {
         // Backend expects 'now_showing' or 'upcoming'
         const statusParam = activeTab === 'now' ? 'now_showing' : 'upcoming';
 
-        const response = await movieApi.getMovies(1, 40, statusParam);
+        const response = await moviesApi.getMovies(1, 40, statusParam);
 
         const allFetched = response?.movies || [];
         const filtered = allFetched.filter((m: Movie) => m.release_status === statusParam);

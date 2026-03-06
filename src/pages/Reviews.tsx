@@ -158,7 +158,8 @@ export default function Reviews() {
           prev.map((r) => (r.id === editingReview.id ? { ...r, ...updated } : r))
         )
       } else {
-        const created = await reviewApi.createReview(movieId, {
+        const created = await reviewApi.createReview({
+          movie_id: movieId,
           rating: formRating,
           review_text: formText,
         })

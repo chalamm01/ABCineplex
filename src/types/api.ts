@@ -3,9 +3,7 @@
  * Aligned with refactored backend (app/schemas/)
  */
 
-// ============================================================================
-// SHARED TYPES
-// ============================================================================
+// --- Shared types ---
 
 export interface ErrorResponse {
   message: string;
@@ -15,9 +13,7 @@ export interface ErrorResponse {
   }>;
 }
 
-// ============================================================================
-// AUTH TYPES
-// ============================================================================
+// --- Auth types ---
 
 export interface LoginRequest {
   email: string;
@@ -58,9 +54,7 @@ export interface SetupInfoRequest {
   date_of_birth?: string;
 }
 
-// ============================================================================
-// USER & PROFILE TYPES
-// ============================================================================
+// --- User & profile types ---
 
 export interface UserProfile {
   id: string;
@@ -133,9 +127,7 @@ export interface AdminUserResponse {
   updated_at?: string;
 }
 
-// ============================================================================
-// MOVIE TYPES
-// ============================================================================
+// --- Movie types ---
 
 export interface Movie {
   id: number;
@@ -218,9 +210,7 @@ export interface QualityScoreResponse {
   score_breakdown: RAQSBreakdown;
 }
 
-// ============================================================================
-// SHOWTIME TYPES
-// ============================================================================
+// --- Showtime types ---
 
 export interface Showtime {
   id: number;
@@ -292,9 +282,7 @@ export interface SeatMapResponse {
   seats: SeatInMap[];
 }
 
-// ============================================================================
-// THEATRE & SEAT TYPES
-// ============================================================================
+// --- Theatre & seat types ---
 
 export interface Theatre {
   id: number;
@@ -336,9 +324,7 @@ export interface SeatUpdate {
   is_active?: boolean;
 }
 
-// ============================================================================
-// BOOKING TYPES
-// ============================================================================
+// --- Booking types ---
 
 export interface ReserveSeatRequest {
   showtime_id: number;
@@ -415,9 +401,7 @@ export interface CancelBookingResponse {
   message: string;
 }
 
-// ============================================================================
-// PAYMENT TYPES
-// ============================================================================
+// --- Payment types ---
 
 export interface InitiatePaymentRequest {
   booking_id: string;
@@ -445,9 +429,7 @@ export interface PaymentResponse {
   message?: string;
 }
 
-// ============================================================================
-// REVIEW TYPES
-// ============================================================================
+// --- Review types ---
 
 export interface ReviewBase {
   rating: number; // 1.0-5.0
@@ -487,9 +469,7 @@ export interface ReviewWithMovieListResponse {
   items: ReviewWithMovie[];
 }
 
-// ============================================================================
-// PUBLIC/CMS TYPES
-// ============================================================================
+// --- Public/CMS types ---
 
 export interface HeroSlide {
   id: string;
@@ -513,9 +493,7 @@ export interface Promotion {
   end_date?: string;
 }
 
-// ============================================================================
-// PRODUCTS & SNACKS TYPES
-// ============================================================================
+// --- Products & snacks types ---
 
 export interface ProductCategory {
   id: string;
@@ -579,9 +557,7 @@ export interface SnackOrder {
   updated_at?: string;
 }
 
-// ============================================================================
-// ADMIN TYPES
-// ============================================================================
+// --- Admin types ---
 
 export interface MovieCreate {
   title: string;
@@ -674,16 +650,8 @@ export interface DashboardStats {
   seats_filled_percent: number;
 }
 
-// ============================================================================
-// TYPE ALIASES & CONVENIENCE TYPES
-// ============================================================================
+// --- Type aliases & convenience types ---
 
-export type CategoryCreate = Omit<ProductCategory, 'id'>;
-export type Category = ProductCategory;
-export type ProductCreate = Omit<Product, 'id'>;
-export type APISeat = SeatInMap;
-export type PromoEvent = Promotion;
-export type HeroCarouselItem = HeroSlide;
 
 export interface DateGroupShowtime extends ShowtimeCard {
   dayName?: string;
@@ -691,42 +659,4 @@ export interface DateGroupShowtime extends ShowtimeCard {
   month?: number;
 }
 
-// ============================================================================
-// UTILITY TYPES & FUNCTIONS
-// ============================================================================
-
-export function transformCarouselItem(item: HeroSlide) {
-  return {
-    id: item.id,
-    image: item.image_url,
-    title: item.title,
-    description: item.description,
-    ctaLink: item.cta_link,
-    ctaText: item.cta_text,
-  };
-}
-
-export function formatYear(dateString?: string): string {
-  if (!dateString) return 'N/A';
-  try {
-    const date = new Date(dateString);
-    return date.getFullYear().toString();
-  } catch {
-    return 'N/A';
-  }
-}
-
-export function formatDuration(minutes?: number): string {
-  if (!minutes) return 'N/A';
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours === 0) return `${mins}m`;
-  if (mins === 0) return `${hours}h`;
-  return `${hours}h ${mins}m`;
-}
-
-export function formatLanguages(languages?: string[]): string {
-  if (!languages || languages.length === 0) return 'N/A';
-  if (languages.length === 1) return languages[0];
-  return languages.slice(0, 2).join(', ');
-}
+// --- Utility types & functions ---

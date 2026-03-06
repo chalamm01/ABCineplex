@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { publicApi, adminApi } from '@/services/api';
-import type { HeroCarouselItem, Movie } from '@/types/api';
+import type { HeroSlide, Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, ActiveIcon,
@@ -27,7 +27,7 @@ const emptySlide: SlideForm = {
 type ModalMode = 'add' | 'edit' | null;
 
 export default function HeroCarouselSection() {
-  const [slides, setSlides] = useState<HeroCarouselItem[]>([]);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -95,7 +95,7 @@ export default function HeroCarouselSection() {
     setError('');
   }
 
-  function openEdit(s: HeroCarouselItem) {
+  function openEdit(s: HeroSlide) {
     setForm({
       image_url: s.image_url ?? '',
       title: s.title ?? '',

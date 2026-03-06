@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { publicApi, adminApi } from '@/services/api';
-import type { PromoEvent } from '@/types/api';
+import type { Promotion } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
@@ -20,7 +20,7 @@ const emptyPromo: PromoForm = { title: '', promo_type: 'promo', image_url: '', i
 type ModalMode = 'add' | 'edit' | null;
 
 export default function PromoEventsSection() {
-  const [promos, setPromos] = useState<PromoEvent[]>([]);
+  const [promos, setPromos] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalMode>(null);
   const [form, setForm] = useState<PromoForm>(emptyPromo);
@@ -45,7 +45,7 @@ export default function PromoEventsSection() {
     setError('');
   }
 
-  function openEdit(p: PromoEvent) {
+  function openEdit(p: Promotion) {
     setForm({ title: p.title, promo_type: p.promo_type || 'promo', image_url: p.image_url || '', is_active: p.is_active });
     setEditId(String(p.id));
     setModal('edit');

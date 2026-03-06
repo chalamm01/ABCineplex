@@ -5,18 +5,6 @@ import { Spinner } from "@/components/ui/spinner";
 import type { BookingSummary, ShowtimeCard } from "@/types/api";
 
 // Format seats for display - handles both string and object formats
-const formatSeats = (seats?: Array<{ seat_id?: number; row_label?: string; seat_number?: number } | string>) => {
-  if (!seats || seats.length === 0) return "N/A";
-  return seats
-    .map((seat) => {
-      if (typeof seat === "string") return seat;
-      if (typeof seat === "object" && seat && "row_label" in seat && "seat_number" in seat) {
-        return `${seat.row_label}${seat.seat_number}`;
-      }
-      return "N/A";
-    })
-    .join(", ");
-};
 
 export default function BookingHistoryPage() {
   const [bookings, setBookings] = useState<BookingSummary[]>([]);
@@ -88,16 +76,6 @@ export default function BookingHistoryPage() {
     }
   };
 
-  const formatDate = (iso?: string) => {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-  };
-
-  const formatTime = (iso?: string) => {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  };
-
   /** True if the booking was created within the last 30 minutes. */
   const isWithin30Min = (b: BookingSummary) => {
     if (!b.created_at) return true; // unknown — allow and let backend enforce
@@ -133,17 +111,15 @@ export default function BookingHistoryPage() {
                 <BookingCard
                   key={b.booking_id.toString()}
                   booking={{
-                    id: b.booking_id.toString(),
-                    title: b.movie_title || "Unknown Movie",
-                    cinema: b.screen_name || "Unknown Hall",
-                    date: formatDate(b.showtime_start),
-                    showTime: formatTime(b.showtime_start),
-                    transactionNo: b.booking_id.toString(),
-                    posterUrl: b.poster_url || "",
-                    seats: formatSeats(b.seats),
-                    status: b.booking_status,
-                    audio: "English",
-                    subtitle: "Thai",
+                    booking_id: b.booking_id,
+                    movie_title: b.movie_title,
+                    screen_name: b.screen_name,
+                    showtime_start: b.showtime_start,
+                    poster_url: b.poster_url,
+                    seats: Array.isArray(b.seats)
+                      ? b.seats.map(seat => typeof seat === 'string' ? seat : (seat.row_label && seat.seat_number ? `${seat.row_label}${seat.seat_number}` : 'N/A'))
+                      : [],
+                    booking_status: b.booking_status,
                   } as any}
                   onChangeShowtime={canChange(b) ? () => openChangeShowtime(b) : undefined}
                 />

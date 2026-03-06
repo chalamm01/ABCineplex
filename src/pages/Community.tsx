@@ -114,7 +114,7 @@ export default function CommunityPage() {
     if (!formText.trim()) { setFormError("Review text cannot be empty."); return }
     setSubmitting(true)
     try {
-      await reviewApi.createReview(Number(selectedMovieId), { rating: formRating, review_text: formText })
+      await reviewApi.createReview({ movie_id: Number(selectedMovieId), rating: formRating, review_text: formText })
       setWriteOpen(false)
       fetchFeed()
     } catch (err: unknown) {

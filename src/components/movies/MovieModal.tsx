@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { X, Star, Clock, Film, Heart } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
-import { movieApi, reviewApi } from "@/services/api"
+import { moviesApi, reviewApi } from "@/services/api"
 import type { MovieDetail, ReviewWithMovie } from "@/types/api"
 interface MovieModalProps {
   movieId: number
@@ -35,7 +35,7 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
     setLoading(true)
     setError("")
     Promise.all([
-      movieApi.getMovieById(movieId),
+      moviesApi.getMovieById(movieId),
       reviewApi.getMovieReviews(movieId),
     ])
       .then(([m, r]) => {

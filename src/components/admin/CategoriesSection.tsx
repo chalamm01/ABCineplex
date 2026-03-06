@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { productsApi, type CategoryCreate, type Category } from '@/services/api';
+import { productsApi } from '@/services/api';
+import type { ProductCategory } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, ActiveIcon,
@@ -7,16 +8,16 @@ import {
   EditButton, DeleteButton,
 } from './AdminShared';
 
-const emptyCategory: CategoryCreate = { name: '', display_order: 0, is_active: true };
+const emptyCategory: Omit<ProductCategory, 'id'> = { name: '', display_order: 0, is_active: true };
 
 type ModalMode = 'add' | 'edit' | null;
 
 export default function CategoriesSection() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [modal, setModal] = useState<ModalMode>(null);
-  const [form, setForm] = useState<CategoryCreate>(emptyCategory);
+  const [form, setForm] = useState<Omit<ProductCategory, 'id'>>(emptyCategory);
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -42,7 +43,7 @@ export default function CategoriesSection() {
     setError('');
   }
 
-  function openEdit(c: Category) {
+  function openEdit(c: ProductCategory) {
     setForm({ name: c.name, display_order: c.display_order, is_active: c.is_active });
     setEditId(c.id);
     setModal('edit');

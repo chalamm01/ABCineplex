@@ -59,15 +59,11 @@ import type {
   OrderResponse,
 } from '@/types/api';
 
-// ============================================================================
-// CONFIGURATION
-// ============================================================================
+// --- Configuration ---
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
-// ============================================================================
-// UTILITIES
-// ============================================================================
+// --- Utilities ---
 
 class APIError extends Error {
   status: number;
@@ -88,7 +84,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const data = isJson ? await response.json() : null;
 
   if (!response.ok) {
-    // Try to extract error message from standardized format or FastAPI detail field
     const errorData: ErrorResponse = {
       message: data?.message || data?.detail || `HTTP ${response.status}`,
     };
@@ -108,78 +103,70 @@ function getAuthToken(): string | null {
   );
 }
 
-function buildHeaders(includeAuth: boolean = true): HeadersInit {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
 
-  if (includeAuth) {
-    const token = getAuthToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-  }
 
-  return headers;
-}
-
-async function request<T>(
-  method: string,
-  path: string,
-  body?: unknown,
-  includeAuth: boolean = true,
-): Promise<T> {
-  const url = `${API_BASE_URL}${path}`;
-  const options: RequestInit = {
+// For public endpoints — no token sent
+async function fetchPublic<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers: buildHeaders(includeAuth),
-  };
-
-  if (body) {
-    options.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(url, options);
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
   return handleResponse<T>(response);
 }
 
-// ============================================================================
-// AUTH API
-// ============================================================================
+// For authenticated endpoints — Bearer token always sent if present
+async function fetchAuth<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const token =
+    localStorage.getItem('token') ||
+    localStorage.getItem('authToken') ||
+    sessionStorage.getItem('token') ||
+    null;
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return handleResponse<T>(response);
+}
+
+// --- Auth API ---
 
 export const authApi = {
   login: (credentials: LoginRequest): Promise<LoginResponse> =>
-    request<LoginResponse>('POST', '/auth/login', credentials, false),
+    fetchPublic<LoginResponse>('POST', '/auth/login', credentials),
 
   register: (data: RegisterRequest): Promise<RegisterResponse> =>
-    request<RegisterResponse>('POST', '/auth/register', data, false),
+    fetchPublic<RegisterResponse>('POST', '/auth/register', data),
 
   logout: (): Promise<{ message: string }> =>
-    request<{ message: string }>('POST', '/auth/logout'),
+    fetchAuth<{ message: string }>('POST', '/auth/logout'),
 
   refresh: (refreshToken: string): Promise<LoginResponse> =>
-    request<LoginResponse>('POST', '/auth/refresh', { refresh_token: refreshToken }, false),
+    fetchPublic<LoginResponse>('POST', '/auth/refresh', { refresh_token: refreshToken }),
 
   getGoogleOAuthUrl: (): Promise<{ url: string }> =>
-    request<{ url: string }>('GET', '/auth/google', undefined, false),
+    fetchPublic<{ url: string }>('GET', '/auth/google'),
 
   setPassword: (data: SetPasswordRequest): Promise<{ message: string }> =>
-    request<{ message: string }>('POST', '/auth/set-password', data),
+    fetchAuth<{ message: string }>('POST', '/auth/set-password', data),
 
   setupInfo: (data: SetupInfoRequest): Promise<{ message: string }> =>
-    request<{ message: string }>('POST', '/auth/setup-info', data),
+    fetchAuth<{ message: string }>('POST', '/auth/setup-info', data),
 };
 
-// ============================================================================
-// USER API
-// ============================================================================
+// --- User API ---
 
 export const userApi = {
   getProfile: (): Promise<UserProfile> =>
-    request<UserProfile>('GET', '/users/me'),
+    fetchAuth<UserProfile>('GET', '/users/me'),
 
   updateProfile: (data: UserUpdate): Promise<UserProfile> =>
-    request<UserProfile>('PATCH', '/users/me', data),
+    fetchAuth<UserProfile>('PATCH', '/users/me', data),
 
   submitStudentVerification: (file: File): Promise<{ message: string }> => {
     const formData = new FormData();
@@ -194,26 +181,24 @@ export const userApi = {
   },
 
   getBookings: (status?: string, page: number = 1, limit: number = 10): Promise<UserBookingsResponse> =>
-    request<UserBookingsResponse>(
+    fetchAuth<UserBookingsResponse>(
       'GET',
       `/users/me/bookings?status=${status || ''}&page=${page}&limit=${limit}`,
     ),
 
   getPoints: (): Promise<UserPointsResponse> =>
-    request<UserPointsResponse>('GET', '/users/me/points'),
+    fetchAuth<UserPointsResponse>('GET', '/users/me/points'),
 
   getUserById: (userId: string): Promise<AdminUserResponse> =>
-    request<AdminUserResponse>('GET', `/users/${userId}`),
+    fetchAuth<AdminUserResponse>('GET', `/users/${userId}`),
 
   deactivateAccount: (userId: string): Promise<{ message: string }> =>
-    request<{ message: string }>('DELETE', `/users/${userId}`),
+    fetchAuth<{ message: string }>('DELETE', `/users/${userId}`),
 };
 
-// ============================================================================
-// MOVIE API
-// ============================================================================
+// --- Movie API ---
 
-export const movieApi = {
+export const moviesApi = {
   getMovies: (
     page: number = 1,
     limit: number = 20,
@@ -224,11 +209,11 @@ export const movieApi = {
     params.append('page', page.toString());
     params.append('limit', limit.toString());
     console.log("/movies/?",params.toString())
-    return request<MovieListResponse>('GET', `/movies?${params.toString()}`, undefined, false);
+    return fetchPublic<MovieListResponse>('GET', `/movies?${params.toString()}`);
   },
 
   getMovieById: (movieId: number): Promise<MovieDetail> =>
-    request<MovieDetail>('GET', `/movies/${movieId}`, undefined, false),
+    fetchPublic<MovieDetail>('GET', `/movies/${movieId}`),
 
   getMovieShowtimes: (
     movieId: number,
@@ -240,205 +225,193 @@ export const movieApi = {
     if (dateFrom) params.append('date_from', dateFrom);
     params.append('days', days.toString());
     if (active !== undefined) params.append('active', active.toString());
-    return request<MovieShowtimesResponse>(
+    return fetchPublic<MovieShowtimesResponse>(
       'GET',
-      `/movies/${movieId}/showtimes?${params.toString()}`,
-      undefined,
-      false,
+      `/movies/${movieId}/showtimes?${params.toString()}`
     );
   },
 
   getQualityScore: (movieId: number): Promise<QualityScoreResponse> =>
-    request<QualityScoreResponse>('GET', `/movies/${movieId}/quality-score`, undefined, false),
+    fetchPublic<QualityScoreResponse>('GET', `/movies/${movieId}/quality-score`),
 
   getShowtimesByMovie: (movieId: number, active?: boolean): Promise<MovieShowtimesResponse> =>
-    movieApi.getMovieShowtimes(movieId, undefined, 7, active),
+    moviesApi.getMovieShowtimes(movieId, undefined, 7, active),
 
   createMovie: (movie: MovieCreate): Promise<Movie> =>
-    requestWithAuth<Movie>('POST', '/admin/movies', movie),
+    fetchAuth<Movie>('POST', '/admin/movies', movie),
 
   updateMovie: (movieId: number, movie: MovieUpdate): Promise<Movie> =>
-    requestWithAuth<Movie>('PATCH', `/admin/movies/${movieId}`, movie),
+    fetchAuth<Movie>('PATCH', `/admin/movies/${movieId}`, movie),
 
   deleteMovie: (movieId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/admin/movies/${movieId}`),
+    fetchAuth<{ message: string }>('DELETE', `/admin/movies/${movieId}`),
 };
 
-export const moviesApi = movieApi; // Alias for backward compatibility
+// --- moviesApi is now the canonical name ---
 
-// ============================================================================
-// SHOWTIME API
-// ============================================================================
+// --- Showtime API ---
 
-export const showtimeApi = {
+export const showtimesApi = {
   getShowtimeById: (showtimeId: number): Promise<ShowtimeDetail> =>
-    request<ShowtimeDetail>('GET', `/showtimes/${showtimeId}`, undefined, false),
+    fetchPublic<ShowtimeDetail>('GET', `/showtimes/${showtimeId}`),
 
   getShowtime: (showtimeId: number): Promise<ShowtimeDetail> =>
-    showtimeApi.getShowtimeById(showtimeId),
+    showtimesApi.getShowtimeById(showtimeId),
 
   getSeats: (showtimeId: number): Promise<SeatMapResponse> =>
-    request<SeatMapResponse>('GET', `/showtimes/${showtimeId}/seats`, undefined, false),
+    fetchPublic<SeatMapResponse>('GET', `/showtimes/${showtimeId}/seats`),
 
   getAllSeats: (showtimeId: number): Promise<SeatMapResponse> =>
-    request<SeatMapResponse>('GET', `/showtimes/${showtimeId}/seats/all`, undefined, false),
+    fetchPublic<SeatMapResponse>('GET', `/showtimes/${showtimeId}/seats/all`),
 
   getTimeCommitment: (showtimeId: number, travelMinutes?: number): Promise<TimeCommitmentResponse> => {
     const params = new URLSearchParams();
     if (travelMinutes !== undefined) params.append('travel_minutes', travelMinutes.toString());
-    return request<TimeCommitmentResponse>(
+    return fetchPublic<TimeCommitmentResponse>(
       'GET',
-      `/showtimes/${showtimeId}/time-commitment?${params.toString()}`,
-      undefined,
-      false,
+      `/showtimes/${showtimeId}/time-commitment?${params.toString()}`
     );
   },
 
   getShowtimesByMovie: (movieId: number): Promise<Showtime[]> =>
-    request<Showtime[]>('GET', `/showtimes/movie/${movieId}`, undefined, false),
+    fetchPublic<Showtime[]>('GET', `/showtimes/movie/${movieId}`),
 
   holdSeats: (showtimeId: number, seatIds: number[], ticketType: 'normal' | 'student' = 'normal'): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
-    request<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
+    fetchAuth<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
       seat_ids: seatIds,
       ticket_type: ticketType,
     }),
 
   createShowtime: (showtime: ShowtimeCreate): Promise<Showtime> =>
-    requestWithAuth<Showtime>('POST', '/admin/showtimes', showtime),
+    fetchAuth<Showtime>('POST', '/admin/showtimes', showtime),
 
   updateShowtime: (showtimeId: number, showtime: ShowtimeUpdate): Promise<Showtime> =>
-    requestWithAuth<Showtime>('PATCH', `/admin/showtimes/${showtimeId}`, showtime),
+    fetchAuth<Showtime>('PATCH', `/admin/showtimes/${showtimeId}`, showtime),
 
   deleteShowtime: (showtimeId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
+    fetchAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
 };
 
-export const showtimesApi = showtimeApi; // Alias
+// --- showtimesApi is now the canonical name ---
 
-// ============================================================================
-// SEAT HOLD API
-// ============================================================================
+// --- Seat Hold API ---
 
 export const seatApi = {
   holdSeats: (showtimeId: number, seatIds: number[], ticketType: 'normal' | 'student' = 'normal'): Promise<{ hold_id: string; expires_at: string; expires_in_seconds: number }> =>
-    request<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
+    fetchAuth<{ hold_id: string; expires_at: string; expires_in_seconds: number }>('POST', `/showtimes/${showtimeId}/seats/hold`, {
       seat_ids: seatIds,
       ticket_type: ticketType,
     }),
 
   releaseHold: (showtimeId: number, holdId: string): Promise<{ message: string }> =>
-    request<{ message: string }>('DELETE', `/showtimes/${showtimeId}/seats/hold`, { hold_id: holdId }),
+    fetchAuth<{ message: string }>('DELETE', `/showtimes/${showtimeId}/seats/hold`, { hold_id: holdId }),
 
   getHoldStatus: (showtimeId: number, holdId: string): Promise<{ is_active: boolean; expires_in_seconds: number }> =>
-    request<{ is_active: boolean; expires_in_seconds: number }>(
+    fetchAuth<{ is_active: boolean; expires_in_seconds: number }>(
       'GET',
-      `/showtimes/${showtimeId}/seats/hold/status?hold_id=${holdId}`,
-      undefined,
-      false,
+      `/showtimes/${showtimeId}/seats/hold/status?hold_id=${holdId}`
     ),
 };
 
-// ============================================================================
-// BOOKING API
-// ============================================================================
+// --- Booking API ---
 
-export const bookingApi = {
+export const bookingsApi = {
   createBooking: (request: ReserveSeatRequest): Promise<ReserveSeatResponse> =>
-    bookingApi.reserveSeats(request),
+    bookingsApi.reserveSeats(request),
 
   reserveSeats: (request: ReserveSeatRequest): Promise<ReserveSeatResponse> =>
-    requestWithAuth<ReserveSeatResponse>('POST', '/bookings', request),
+    fetchAuth<ReserveSeatResponse>('POST', '/bookings', request),
 
   confirmPayment: (request: ConfirmPaymentRequest): Promise<ConfirmPaymentResponse> =>
-    requestWithAuth<ConfirmPaymentResponse>('POST', '/bookings/confirm-payment', request),
+    fetchAuth<ConfirmPaymentResponse>('POST', '/bookings/confirm-payment', request),
 
   getBookingById: (bookingId: string): Promise<BookingDetail> =>
-    requestWithAuth<BookingDetail>('GET', `/bookings/${bookingId}`),
+    fetchAuth<BookingDetail>('GET', `/bookings/${bookingId}`),
 
   getBooking: (bookingId: string): Promise<BookingDetail> =>
-    bookingApi.getBookingById(bookingId),
+    bookingsApi.getBookingById(bookingId),
 
   getBookingTickets: (bookingId: string): Promise<{ tickets: any[] }> =>
-    requestWithAuth<{ tickets: any[] }>('GET', `/bookings/${bookingId}/tickets`),
+    fetchAuth<{ tickets: any[] }>('GET', `/bookings/${bookingId}/tickets`),
 
   getUserBookings: (status?: string, page: number = 1, limit: number = 10): Promise<UserBookingsResponse> =>
-    requestWithAuth<UserBookingsResponse>(
+    fetchAuth<UserBookingsResponse>(
       'GET',
       `/users/me/bookings?status=${status || ''}&page=${page}&limit=${limit}`,
     ),
 
   cancelBooking: (bookingId: string): Promise<CancelBookingResponse> =>
-    requestWithAuth<CancelBookingResponse>('DELETE', `/bookings/${bookingId}`),
+    fetchAuth<CancelBookingResponse>('DELETE', `/bookings/${bookingId}`),
 
   changeShowtime: (
     bookingId: string,
     newShowtimeId: number,
     newSeatIds: number[],
   ): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('POST', `/bookings/${bookingId}/change-showtime`, {
+    fetchAuth<{ message: string }>('POST', `/bookings/${bookingId}/change-showtime`, {
       new_showtime_id: newShowtimeId,
       new_seat_ids: newSeatIds,
     }),
 
   changeSeat: (bookingId: string, newSeatIds: number[]): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('POST', `/bookings/${bookingId}/change-seat`, {
+    fetchAuth<{ message: string }>('POST', `/bookings/${bookingId}/change-seat`, {
       new_seat_ids: newSeatIds,
     }),
 };
 
-export const bookingsApi = bookingApi; // Alias
+// --- bookingsApi is now the canonical name ---
 
 // ============================================================================
 // PAYMENT API
 // ============================================================================
 
-export const paymentApi = {
+export const paymentsApi = {
   initiatePayment: (request: InitiatePaymentRequest): Promise<InitiatePaymentResponse> =>
-    requestWithAuth<InitiatePaymentResponse>('POST', '/payments/initiate', request),
+    fetchAuth<InitiatePaymentResponse>('POST', '/payments/initiate', request),
 
   initiate: (request: InitiatePaymentRequest): Promise<InitiatePaymentResponse> =>
-    paymentApi.initiatePayment(request),
+    paymentsApi.initiatePayment(request),
 
   confirmPayment: (paymentId: string, mockResult: boolean, pointsRedeemed: number = 0): Promise<PaymentResponse> =>
-    requestWithAuth<PaymentResponse>('POST', `/payments/${paymentId}/confirm`, { mock_result: mockResult, points_redeemed: pointsRedeemed }),
+    fetchAuth<PaymentResponse>('POST', `/payments/${paymentId}/confirm`, { mock_result: mockResult, points_redeemed: pointsRedeemed }),
 
   confirm: (paymentId: string, mockResult: boolean, pointsRedeemed: number = 0): Promise<PaymentResponse> =>
-    paymentApi.confirmPayment(paymentId, mockResult, pointsRedeemed),
+    paymentsApi.confirmPayment(paymentId, mockResult, pointsRedeemed),
 
   getPaymentStatus: (paymentId: string): Promise<PaymentResponse> =>
-    requestWithAuth<PaymentResponse>('GET', `/payments/${paymentId}`),
+    fetchAuth<PaymentResponse>('GET', `/payments/${paymentId}`),
 };
 
-export const paymentsApi = paymentApi; // Alias for backward compatibility
+// --- paymentsApi is now the canonical name ---
 
 // ============================================================================
 // REVIEW API
 // ============================================================================
 
 export const reviewApi = {
-  createReview: (movieId: number, review: Omit<ReviewCreate, 'movie_id'>): Promise<ReviewResponse> =>
-    requestWithAuth<ReviewResponse>('POST', `/reviews`, { ...review, movie_id: movieId }),
+  createReview: (data: ReviewCreate): Promise<ReviewResponse> =>
+    fetchAuth<ReviewResponse>('POST', `/reviews`, data),
 
   updateReview: (reviewId: number, review: Partial<ReviewCreate>): Promise<ReviewResponse> =>
-    requestWithAuth<ReviewResponse>('PATCH', `/reviews/${reviewId}`, review),
+    fetchAuth<ReviewResponse>('PATCH', `/reviews/${reviewId}`, review),
 
   getMovieReviews: (movieId: number): Promise<ReviewWithMovieListResponse> =>
-    request<ReviewWithMovieListResponse>('GET', `/reviews/movie/${movieId}`, undefined, false),
+    fetchPublic<ReviewWithMovieListResponse>('GET', `/reviews/movie/${movieId}`),
 
   deleteReview: (reviewId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/reviews/${reviewId}`),
+    fetchAuth<{ message: string }>('DELETE', `/reviews/${reviewId}`),
 
   getLatestReviews: (limit = 20): Promise<ReviewWithMovieListResponse> =>
-    request<ReviewWithMovieListResponse>('GET', `/reviews/latest?limit=${limit}`, undefined, false),
+    fetchPublic<ReviewWithMovieListResponse>('GET', `/reviews/latest?limit=${limit}`),
 
   getMyReviews: (): Promise<ReviewWithMovieListResponse> =>
-    requestWithAuth<ReviewWithMovieListResponse>('GET', `/reviews/me`),
+    fetchAuth<ReviewWithMovieListResponse>('GET', `/reviews/me`),
 
   likeReview: (reviewId: number): Promise<{ status: string }> =>
-    requestWithAuth<{ status: string }>('POST', `/reviews/${reviewId}/likes`),
+    fetchAuth<{ status: string }>('POST', `/reviews/${reviewId}/likes`),
 
   unlikeReview: (reviewId: number): Promise<{ status: string }> =>
-    requestWithAuth<{ status: string }>('DELETE', `/reviews/${reviewId}/likes`),
+    fetchAuth<{ status: string }>('DELETE', `/reviews/${reviewId}/likes`),
 };
 
 // ============================================================================
@@ -448,68 +421,68 @@ export const reviewApi = {
 export const productsApi = {
   // Products (Categories)
   getCategories: (): Promise<ProductCategory[]> =>
-    request<ProductCategory[]>('GET', '/products/categories'),
+    fetchPublic<ProductCategory[]>('GET', '/products/categories'),
 
   getCategory: (categoryId: string): Promise<ProductCategory> =>
-    request<ProductCategory>('GET', `/products/categories/${categoryId}`),
+    fetchPublic<ProductCategory>('GET', `/products/categories/${categoryId}`),
 
   createCategory: (category: Omit<ProductCategory, 'id'>): Promise<ProductCategory> =>
-    requestWithAuth<ProductCategory>('POST', '/products/categories', category),
+    fetchAuth<ProductCategory>('POST', '/products/categories', category),
 
   updateCategory: (categoryId: string, category: Partial<ProductCategory>): Promise<ProductCategory> =>
-    requestWithAuth<ProductCategory>('PATCH', `/products/categories/${categoryId}`, category),
+    fetchAuth<ProductCategory>('PATCH', `/products/categories/${categoryId}`, category),
 
   deleteCategory: (categoryId: string): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/products/categories/${categoryId}`),
+    fetchAuth<{ message: string }>('DELETE', `/products/categories/${categoryId}`),
 
   // Products
   listProducts: (categoryId?: string, limit: number = 50, offset: number = 0): Promise<Product[]> =>
-    request<Product[]>('GET', `/products?${categoryId ? `category_id=${categoryId}&` : ''}limit=${limit}&offset=${offset}`),
+    fetchPublic<Product[]>('GET', `/products?${categoryId ? `category_id=${categoryId}&` : ''}limit=${limit}&offset=${offset}`),
 
   getAllProducts: (limit: number = 50, offset: number = 0): Promise<Product[]> =>
     productsApi.listProducts(undefined, limit, offset),
 
   getProduct: (productId: string): Promise<Product> =>
-    request<Product>('GET', `/products/${productId}`),
+    fetchPublic<Product>('GET', `/products/${productId}`),
 
   createProduct: (product: Omit<Product, 'id'>): Promise<Product> =>
-    requestWithAuth<Product>('POST', '/products', product),
+    fetchAuth<Product>('POST', '/products', product),
 
   updateProduct: (productId: string, product: Partial<Product>): Promise<Product> =>
-    requestWithAuth<Product>('PATCH', `/products/${productId}`, product),
+    fetchAuth<Product>('PATCH', `/products/${productId}`, product),
 
   deleteProduct: (productId: string): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/products/${productId}`),
+    fetchAuth<{ message: string }>('DELETE', `/products/${productId}`),
 };
 
 export const ordersApi = {
   createOrder: (items: { product_id: string; quantity: number }[]): Promise<OrderResponse> =>
-    requestWithAuth<OrderResponse>('POST', '/orders', { items }),
+    fetchAuth<OrderResponse>('POST', '/orders', { items }),
 
   getOrders: (): Promise<OrderResponse[]> =>
-    requestWithAuth<OrderResponse[]>('GET', '/orders'),
+    fetchAuth<OrderResponse[]>('GET', '/orders'),
 
   getOrder: (orderId: string): Promise<OrderResponse> =>
-    requestWithAuth<OrderResponse>('GET', `/orders/${orderId}`),
+    fetchAuth<OrderResponse>('GET', `/orders/${orderId}`),
 };
 
 export const snacksApi = {
   // Menu items
   getMenu: (): Promise<SnackMenuItem[]> =>
-    request<SnackMenuItem[]>('GET', '/snacks'),
+    fetchPublic<SnackMenuItem[]>('GET', '/snacks'),
 
   getMenuItem: (itemId: string): Promise<SnackMenuItem> =>
-    request<SnackMenuItem>('GET', `/snacks/${itemId}`),
+    fetchPublic<SnackMenuItem>('GET', `/snacks/${itemId}`),
 
   // Pre-order for booking
   getSnackOrder: (bookingId: string): Promise<SnackOrder> =>
-    requestWithAuth<SnackOrder>('GET', `/snacks/orders/${bookingId}`),
+    fetchAuth<SnackOrder>('GET', `/snacks/orders/${bookingId}`),
 
   updateSnackOrder: (bookingId: string, items: SnackOrderItem[]): Promise<SnackOrder> =>
-    requestWithAuth<SnackOrder>('PATCH', `/snacks/orders/${bookingId}`, { items }),
+    fetchAuth<SnackOrder>('PATCH', `/snacks/orders/${bookingId}`, { items }),
 
   deleteSnackOrder: (bookingId: string): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/snacks/orders/${bookingId}`),
+    fetchAuth<{ message: string }>('DELETE', `/snacks/orders/${bookingId}`),
 };
 
 // ============================================================================
@@ -518,28 +491,28 @@ export const snacksApi = {
 
 export const publicApi = {
   getHeroCarousel: (): Promise<HeroSlide[]> =>
-    request<HeroSlide[]>('GET', '/hero-carousel', undefined, false),
+    fetchPublic<HeroSlide[]>('GET', '/hero-carousel'),
 
   createHeroSlide: (slide: Omit<HeroSlide, 'id'>): Promise<HeroSlide> =>
-    requestWithAuth<HeroSlide>('POST', '/hero-carousel', slide),
+    fetchAuth<HeroSlide>('POST', '/hero-carousel', slide),
 
   updateHeroSlide: (slideId: string, slide: Partial<HeroSlide>): Promise<HeroSlide> =>
-    requestWithAuth<HeroSlide>('PATCH', `/hero-carousel/${slideId}`, slide),
+    fetchAuth<HeroSlide>('PATCH', `/hero-carousel/${slideId}`, slide),
 
   deleteHeroSlide: (slideId: string): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/hero-carousel/${slideId}`),
+    fetchAuth<{ message: string }>('DELETE', `/hero-carousel/${slideId}`),
 
   getPromoEvents: (): Promise<Promotion[]> =>
-    request<Promotion[]>('GET', '/promo-events', undefined, false),
+    fetchPublic<Promotion[]>('GET', '/promo-events'),
 
   createPromoEvent: (promo: Omit<Promotion, 'id'>): Promise<Promotion> =>
-    requestWithAuth<Promotion>('POST', '/promo-events', promo),
+    fetchAuth<Promotion>('POST', '/promo-events', promo),
 
   updatePromoEvent: (promoId: string, promo: Partial<Promotion>): Promise<Promotion> =>
-    requestWithAuth<Promotion>('PATCH', `/promo-events/${promoId}`, promo),
+    fetchAuth<Promotion>('PATCH', `/promo-events/${promoId}`, promo),
 
   deletePromoEvent: (promoId: string): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/promo-events/${promoId}`),
+    fetchAuth<{ message: string }>('DELETE', `/promo-events/${promoId}`),
 };
 
 // ============================================================================
@@ -549,41 +522,41 @@ export const publicApi = {
 export const adminApi = {
   // Dashboard
   getDashboard: (): Promise<DashboardStats> =>
-    requestWithAuth<DashboardStats>('GET', '/admin/dashboard'),
+    fetchAuth<DashboardStats>('GET', '/admin/dashboard'),
 
   // Movies
   listMovies: (): Promise<Movie[]> =>
-    requestWithAuth<Movie[]>('GET', '/admin/movies'),
+    fetchAuth<Movie[]>('GET', '/admin/movies'),
 
   createMovie: (movie: MovieCreate): Promise<Movie> =>
-    requestWithAuth<Movie>('POST', '/admin/movies', movie),
+    fetchAuth<Movie>('POST', '/admin/movies', movie),
 
   updateMovie: (movieId: number, movie: MovieUpdate): Promise<Movie> =>
-    requestWithAuth<Movie>('PATCH', `/admin/movies/${movieId}`, movie),
+    fetchAuth<Movie>('PATCH', `/admin/movies/${movieId}`, movie),
 
   deleteMovie: (movieId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/admin/movies/${movieId}`),
+    fetchAuth<{ message: string }>('DELETE', `/admin/movies/${movieId}`),
 
   fetchFromTmdb: (tmdbId: number): Promise<Partial<MovieCreate> & { rating_count?: number }> =>
-    requestWithAuth<Partial<MovieCreate> & { rating_count?: number }>('GET', `/admin/movies/tmdb/${tmdbId}`),
+    fetchAuth<Partial<MovieCreate> & { rating_count?: number }>('GET', `/admin/movies/tmdb/${tmdbId}`),
 
   toggleMovieActive: (movieId: number, isActive: boolean): Promise<Movie> =>
-    requestWithAuth<Movie>('PATCH', `/admin/movies/${movieId}`, { is_active: isActive }),
+    fetchAuth<Movie>('PATCH', `/admin/movies/${movieId}`, { is_active: isActive }),
 
   // Showtimes
   createShowtime: (showtime: ShowtimeCreate): Promise<Showtime> =>
-    requestWithAuth<Showtime>('POST', '/admin/showtimes', showtime),
+    fetchAuth<Showtime>('POST', '/admin/showtimes', showtime),
 
   updateShowtime: (showtimeId: number, showtime: ShowtimeUpdate): Promise<Showtime> =>
-    requestWithAuth<Showtime>('PATCH', `/admin/showtimes/${showtimeId}`, showtime),
+    fetchAuth<Showtime>('PATCH', `/admin/showtimes/${showtimeId}`, showtime),
 
   deleteShowtime: (showtimeId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
+    fetchAuth<{ message: string }>('DELETE', `/admin/showtimes/${showtimeId}`),
 
   listAllShowtimes: (active?: boolean): Promise<Showtime[]> => {
     const params = new URLSearchParams();
     if (active !== undefined) params.append('active', active.toString());
-    return requestWithAuth<{ showtimes: Showtime[] }>(
+    return fetchAuth<{ showtimes: Showtime[] }>(
       'GET',
       `/movies/bulk/all-active-showtimes?${params.toString()}`,
       undefined,
@@ -592,49 +565,49 @@ export const adminApi = {
 
   // Theatres
   listTheatres: (): Promise<Theatre[]> =>
-    requestWithAuth<Theatre[]>('GET', '/admin/theatres'),
+    fetchAuth<Theatre[]>('GET', '/admin/theatres'),
 
   getTheatre: (theatreId: number): Promise<Theatre> =>
-    requestWithAuth<Theatre>('GET', `/admin/theatres/${theatreId}`),
+    fetchAuth<Theatre>('GET', `/admin/theatres/${theatreId}`),
 
   createTheatre: (theatre: TheatreCreate): Promise<Theatre> =>
-    requestWithAuth<Theatre>('POST', '/admin/theatres', theatre),
+    fetchAuth<Theatre>('POST', '/admin/theatres', theatre),
 
   updateTheatre: (theatreId: number, theatre: TheatreUpdate): Promise<Theatre> =>
-    requestWithAuth<Theatre>('PATCH', `/admin/theatres/${theatreId}`, theatre),
+    fetchAuth<Theatre>('PATCH', `/admin/theatres/${theatreId}`, theatre),
 
   deleteTheatre: (theatreId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/admin/theatres/${theatreId}`),
+    fetchAuth<{ message: string }>('DELETE', `/admin/theatres/${theatreId}`),
 
   // Seats
   listSeats: (theatreId: number): Promise<Seat[]> =>
-    requestWithAuth<Seat[]>('GET', `/admin/theatres/${theatreId}/seats`),
+    fetchAuth<Seat[]>('GET', `/admin/theatres/${theatreId}/seats`),
 
   createSeat: (theatreId: number, seat: SeatCreate): Promise<Seat> =>
-    requestWithAuth<Seat>('POST', `/admin/theatres/${theatreId}/seats`, seat),
+    fetchAuth<Seat>('POST', `/admin/theatres/${theatreId}/seats`, seat),
 
   updateSeat: (theatreId: number, seatId: number, seat: SeatUpdate): Promise<Seat> =>
-    requestWithAuth<Seat>('PATCH', `/admin/theatres/${theatreId}/seats/${seatId}`, seat),
+    fetchAuth<Seat>('PATCH', `/admin/theatres/${theatreId}/seats/${seatId}`, seat),
 
   deleteSeat: (theatreId: number, seatId: number): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/admin/theatres/${theatreId}/seats/${seatId}`),
+    fetchAuth<{ message: string }>('DELETE', `/admin/theatres/${theatreId}/seats/${seatId}`),
 
   // Showtime Seats (Showtime-specific seat configurations)
   listShowtimeSeats: (showtimeId: number): Promise<any[]> =>
-    requestWithAuth<any[]>('GET', `/admin/showtimes/${showtimeId}/seats`),
+    fetchAuth<any[]>('GET', `/admin/showtimes/${showtimeId}/seats`),
 
   updateShowtimeSeats: (showtimeId: number, seatConfigs: Record<number, boolean>): Promise<any[]> =>
-    requestWithAuth<any[]>('PATCH', `/admin/showtimes/${showtimeId}/seats/batch`, seatConfigs),
+    fetchAuth<any[]>('PATCH', `/admin/showtimes/${showtimeId}/seats/batch`, seatConfigs),
 
   updateSingleShowtimeSeat: (showtimeSeatId: number, isAvailable: boolean): Promise<any> =>
-    requestWithAuth<any>('PATCH', `/admin/showtime-seats/${showtimeSeatId}`, { is_available: isAvailable }),
+    fetchAuth<any>('PATCH', `/admin/showtime-seats/${showtimeSeatId}`, { is_available: isAvailable }),
 
   // Bookings
   listBookings: (_userId?: string, _showtimeId?: number, _status?: string, limit: number = 100, offset: number = 0) =>
-    requestWithAuth<{ bookings: BookingDetail[] }>('GET', `/admin/bookings?limit=${limit}&offset=${offset}`, undefined),
+    fetchAuth<{ bookings: BookingDetail[] }>('GET', `/admin/bookings?limit=${limit}&offset=${offset}`, undefined),
 
   updateBooking: (bookingId: number, newShowtimeId?: number, newSeatIds?: number[], adminNote?: string) =>
-    requestWithAuth<BookingDetail>('PATCH', `/admin/bookings/${bookingId}`, {
+    fetchAuth<BookingDetail>('PATCH', `/admin/bookings/${bookingId}`, {
       new_showtime_id: newShowtimeId,
       new_seat_ids: newSeatIds,
       admin_note: adminNote,
@@ -642,45 +615,42 @@ export const adminApi = {
 
   // Users
   listUsers: (search?: string, skip: number = 0, limit: number = 100): Promise<AdminUserResponse[]> =>
-    requestWithAuth<AdminUserResponse[]>('GET', `/admin/users?search=${search || ''}&skip=${skip}&limit=${limit}`),
+    fetchAuth<AdminUserResponse[]>('GET', `/admin/users?search=${search || ''}&skip=${skip}&limit=${limit}`),
 
   getUsers: (search?: string, skip: number = 0, limit: number = 100): Promise<AdminUserResponse[]> =>
     adminApi.listUsers(search, skip, limit),
 
   updateUser: (userId: string, user: AdminUserUpdate): Promise<AdminUserResponse> =>
-    requestWithAuth<AdminUserResponse>('PATCH', `/admin/users/${userId}`, user),
+    fetchAuth<AdminUserResponse>('PATCH', `/admin/users/${userId}`, user),
 
   deleteUser: (userId: string): Promise<{ message: string }> =>
-    requestWithAuth<{ message: string }>('DELETE', `/admin/users/${userId}`),
+    fetchAuth<{ message: string }>('DELETE', `/admin/users/${userId}`),
 
   // Hero Carousel (CMS)
   createHeroSlide: (slide: Omit<HeroSlide, 'id'>): Promise<HeroSlide> =>
-    requestWithAuth<HeroSlide>('POST', '/admin/hero-carousel', slide),
+    fetchAuth<HeroSlide>('POST', '/admin/hero-carousel', slide),
 
   updateHeroSlide: (slideId: string, slide: Partial<HeroSlide>): Promise<HeroSlide> =>
-    requestWithAuth<HeroSlide>('PUT', `/admin/hero-carousel/${slideId}`, slide),
+    fetchAuth<HeroSlide>('PUT', `/admin/hero-carousel/${slideId}`, slide),
 
   deleteHeroSlide: (slideId: string): Promise<{ status: string }> =>
-    requestWithAuth<{ status: string }>('DELETE', `/admin/hero-carousel/${slideId}`),
+    fetchAuth<{ status: string }>('DELETE', `/admin/hero-carousel/${slideId}`),
 
   // Promo Events (CMS)
   createPromotion: (promo: Omit<Promotion, 'id'>): Promise<Promotion> =>
-    requestWithAuth<Promotion>('POST', '/admin/promo-events', promo),
+    fetchAuth<Promotion>('POST', '/admin/promo-events', promo),
 
   updatePromotion: (promoId: string, promo: Partial<Promotion>): Promise<Promotion> =>
-    requestWithAuth<Promotion>('PUT', `/admin/promo-events/${promoId}`, promo),
+    fetchAuth<Promotion>('PUT', `/admin/promo-events/${promoId}`, promo),
 
   deletePromotion: (promoId: string): Promise<{ status: string }> =>
-    requestWithAuth<{ status: string }>('DELETE', `/admin/promo-events/${promoId}`),
+    fetchAuth<{ status: string }>('DELETE', `/admin/promo-events/${promoId}`),
 };
 
 // ============================================================================
 // HELPER: Auth-required requests
 // ============================================================================
 
-function requestWithAuth<T>(method: string, path: string, body?: unknown): Promise<T> {
-  return request<T>(method, path, body, true);
-}
 
 // ============================================================================
 // ERROR HANDLING
@@ -696,15 +666,9 @@ export type {
   UserProfile,
   ProductCategory,
   Product,
-  ProductCreate,
   SeatInMap,
   Promotion,
   HeroSlide,
-  CategoryCreate,
-  Category,
-  APISeat,
-  PromoEvent,
-  HeroCarouselItem,
   DateGroupShowtime,
   Theatre,
   TheatreCreate,

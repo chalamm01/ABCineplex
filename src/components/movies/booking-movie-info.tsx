@@ -1,7 +1,7 @@
 import { Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Movie } from '@/types/api';
-import { formatDuration, formatYear } from '@/types/api';
+import { formatDuration, formatYear } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
 interface BookingMovieInfoProps {
   readonly movie: Movie;

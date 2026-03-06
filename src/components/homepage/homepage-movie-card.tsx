@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Movie } from '@/types/api';
-import { formatDuration, formatYear, formatLanguages } from '@/types/api';
+import { formatDuration, formatYear, formatLanguages } from '@/lib/utils';
 
 interface HomepageMovieCardProps {
   readonly movie: Movie;
