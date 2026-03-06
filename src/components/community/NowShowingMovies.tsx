@@ -25,10 +25,10 @@ export function NowShowingMovies({ movies, onMovieClick }: NowShowingMoviesProps
               <img
                 src={movie.poster_url || "https://placehold.co/50x70?text=?"}
                 alt=""
-                className="aspect-2/3 max-w-12 max-h-16 rounded shadow-sm group-hover:ring-2 group-hover:ring-orange-400 transition-all object-cover flex-shrink-0"
+                className="aspect-2/3 max-w-12 max-h-16 rounded shadow-sm group-hover:ring-2 group-hover:ring-violet-400 transition-all object-cover flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-orange-600 transition-colors line-clamp-2">
+                <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-violet-700 transition-colors line-clamp-2">
                   {movie.title}
                 </h3>
                 <p className="text-xs text-neutral-500 mt-0.5">

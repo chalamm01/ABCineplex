@@ -379,7 +379,6 @@ export default function MovieBooking() {
                   onTimeChange={setSelectedTime}
                   summarizedShowtimes={summarizedShowtimes}
                 />
-                  // src/pages/MovieBooking.tsx
 
 <TicketSummary
   selectedSeats={selectedSeats}

@@ -145,7 +145,7 @@ export default function CommunityPage() {
           {isAuthenticated && (
             <Button
               onClick={openWriteDialog}
-              className="bg-orange-600 hover:bg-orange-700 text-white gap-2"
+              className="bg-violet-700 hover:bg-violet-800 text-white gap-2"
             >
               <Plus className="w-4 h-4" />
               Write Review
@@ -208,7 +208,7 @@ export default function CommunityPage() {
               <select
                 value={selectedMovieId}
                 onChange={(e) => setSelectedMovieId(Number(e.target.value))}
-                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
               >
                 <option value="">Select a movie...</option>
                 {nowShowing.map((m) => (
@@ -251,7 +251,7 @@ export default function CommunityPage() {
             <Button
               onClick={handleSubmitReview}
               disabled={submitting}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
+              className="bg-violet-700 hover:bg-violet-800 text-white"
             >
               {submitting ? "Posting..." : "Post Review"}
             </Button>

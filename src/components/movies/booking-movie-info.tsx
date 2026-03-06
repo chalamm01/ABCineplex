@@ -22,7 +22,7 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
         </h1>
         <div className="flex items-center gap-2 flex-wrap">
           {isUpcoming && (
-            <Badge className="bg-orange-600 text-white hover:bg-orange-700">
+            <Badge className="bg-violet-700 text-white hover:bg-violet-800">
               🎬 Coming Soon
             </Badge>
           )}
@@ -88,7 +88,7 @@ export function BookingMovieInfo({ movie }: BookingMovieInfoProps) {
       <div className="flex gap-3 sm:gap-4 pt-4">
         {movie.trailer_url && (
           <Button
-            className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-5 sm:py-6 rounded-lg sm:rounded-xl transition-all hover:scale-105"
+            className="flex-1 bg-violet-700 hover:bg-violet-800 text-white font-semibold py-5 sm:py-6 rounded-lg sm:rounded-xl transition-all hover:scale-105"
             onClick={() => window.open(movie.trailer_url, '_blank')}
           >
             <Play className="mr-2 h-5 w-5 fill-current" />

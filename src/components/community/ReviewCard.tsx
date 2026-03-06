@@ -44,7 +44,7 @@ export function ReviewCard({ review, isLiked, isAuthenticated, onLike, onMovieCl
           <ImageWithLoader
             src={posterUrl}
             alt={movieTitle}
-            className={`w-20 h-28 rounded shadow-sm ${canClickMovie ? "cursor-pointer hover:ring-2 hover:ring-orange-400 transition-all hover:shadow-md" : ""}`}
+            className={`w-20 h-28 rounded shadow-sm ${canClickMovie ? "cursor-pointer hover:ring-2 hover:ring-violet-400 transition-all hover:shadow-md" : ""}`}
             objectFit="cover"
             containerClassName=''
           />
@@ -56,7 +56,7 @@ export function ReviewCard({ review, isLiked, isAuthenticated, onLike, onMovieCl
           <div className="flex items-baseline gap-2">
             <h2
               onClick={() => canClickMovie && onMovieClick!(review.movie!.id)}
-              className={`text-lg font-bold text-neutral-900 ${canClickMovie ? "cursor-pointer hover:text-orange-600 hover:underline transition-colors" : ""}`}
+              className={`text-lg font-bold text-neutral-900 ${canClickMovie ? "cursor-pointer hover:text-violet-700 hover:underline transition-colors" : ""}`}
             >
               {movieTitle}
             </h2>
@@ -66,7 +66,7 @@ export function ReviewCard({ review, isLiked, isAuthenticated, onLike, onMovieCl
           {/* Author */}
           <div className="flex items-center gap-2">
             <Avatar className="w-6 h-6">
-              <AvatarFallback className="bg-orange-100 text-orange-700 text-xs font-semibold">
+              <AvatarFallback className="bg-violet-100 text-violet-700 text-xs font-semibold">
                 {displayName.slice(0, 1).toUpperCase()}
               </AvatarFallback>
             </Avatar>

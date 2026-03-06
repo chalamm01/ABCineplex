@@ -5,6 +5,7 @@ import { X, Star, Clock, Film, Heart } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { moviesApi, reviewApi } from "@/services/api"
 import type { MovieDetail, ReviewWithMovie } from "@/types/api"
+import { ImageWithLoader } from "@/components/ui/image-with-loader"
 interface MovieModalProps {
   movieId: number
   onClose: () => void
@@ -106,20 +107,25 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
             {/* Banner */}
             {movie.banner_url && (
               <div className="relative h-40 overflow-hidden rounded-t-2xl">
-                <img
+                <ImageWithLoader
                   src={movie.banner_url}
                   alt=""
-                  className="w-full h-40 object-cover"
+                  fill={true}
+                  objectFit="cover"
                 />
               </div>
             )}
 
             {/* Movie header */}
             <div className={`flex gap-5 px-6 ${movie.banner_url ? "-mt-16 relative z-10" : "pt-6"}`}>
-              <img
+              <ImageWithLoader
                 src={movie.poster_url || "/assets/images/placeholder.png"}
                 alt={movie.title}
-                className="rounded-xl shrink-0 shadow-lg border border-neutral-200 w-28 h-40 object-cover"
+                width={112}
+                height={160}
+                objectFit="cover"
+                containerClassName="shrink-0"
+                className="rounded-xl shadow-lg border border-neutral-200"
               />
               <div className="flex-1 pt-2">
                 <h2 className="text-xl font-bold leading-tight text-white">{movie.title}
@@ -159,8 +165,8 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
                   )}
                   {avgRating && (
                     <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-orange-600 text-orange-600" />
-                      <span className="text-orange-600 font-bold text-sm">{avgRating}</span>
+                      <Star className="w-4 h-4 fill-violet-700 text-violet-700" />
+                      <span className="text-violet-700 font-bold text-sm">{avgRating}</span>
                       <span className="text-neutral-500 text-xs">community avg</span>
                     </div>
                   )}
@@ -180,7 +186,7 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
 
                 <button
                   onClick={() => navigate(`/movie/${movieId}`)}
-                  className="mt-3 bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg text-xs hover:bg-orange-700 transition-colors"
+                  className="mt-3 bg-violet-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs hover:bg-violet-800 transition-colors"
                 >
                   Book Tickets →
                 </button>
@@ -209,7 +215,7 @@ export function MovieModal({ movieId, onClose }: MovieModalProps) {
                     <div key={r.id} className="bg-neutral-50 border border-neutral-200 rounded-xl p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-xs font-semibold text-orange-700">
+                          <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center text-xs font-semibold text-violet-700">
                             {(r.username ?? "A")[0].toUpperCase()}
                           </div>
                           <span className="text-neutral-900 font-medium text-sm">

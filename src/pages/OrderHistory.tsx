@@ -4,6 +4,7 @@ import { ordersApi, productsApi } from '@/services/api';
 import type { OrderResponse, Product } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import { ShoppingBag, Clock, CheckCircle, XCircle, ChefHat } from 'lucide-react';
+import { ImageWithLoader } from '@/components/ui/image-with-loader';
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
   pending:   { label: 'Pending',   className: 'bg-amber-100 text-amber-700',   icon: <Clock className="w-3.5 h-3.5" /> },
@@ -150,10 +151,14 @@ export default function OrderHistory() {
                         const image = product?.image_url ?? '/assets/images/placeholder.png';
                         return (
                           <div key={item.id} className="flex items-center gap-3">
-                            <img
+                            <ImageWithLoader
                               src={image}
                               alt={name}
-                              className="w-10 h-10 rounded-xl object-contain bg-violet-50 p-1 shrink-0"
+                              width={40}
+                              height={40}
+                              objectFit="contain"
+                              containerClassName="shrink-0"
+                              className="rounded-xl bg-violet-50 p-1"
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-gray-800 truncate">{name}</p>

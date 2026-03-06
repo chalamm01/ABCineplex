@@ -12,7 +12,7 @@ interface ShowtimeInfo {
 
 const _BADGE_COLORS: Record<string, string> = {
   selling_fast:    'bg-red-100 text-red-700 border-red-200',
-  filling_up:      'bg-orange-100 text-orange-700 border-orange-200',
+  filling_up:      'bg-violet-100 text-violet-700 border-violet-200',
   plenty_of_space: 'bg-green-100 text-green-700 border-green-200',
 };
 
@@ -95,7 +95,7 @@ export function DateTimeSelection({
               onClick={() => onDateChange(dateIndex)}
               className={`px-3 py-1.5 rounded-md font-semibold text-xs whitespace-nowrap transition-all shrink-0 ${
                 selectedDate === dateIndex
-                  ? 'bg-orange-600 text-white'
+                  ? 'bg-violet-700 text-white'
                   : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
               }`}
             >
@@ -112,7 +112,7 @@ export function DateTimeSelection({
           <div className="flex flex-wrap gap-2">
             {selectedDateGroup.showtimes.map((showtime) => {
               let btnClass = 'bg-neutral-100 text-neutral-400 cursor-not-allowed opacity-50';
-              if (showtime.status === 'selected') btnClass = 'bg-orange-600 text-white';
+              if (showtime.status === 'selected') btnClass = 'bg-violet-700 text-white';
               else if (showtime.status === 'available') btnClass = 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200';
               return (
                 <div key={`${selectedDate}-${showtime.time}`} className="flex flex-col items-start gap-1">

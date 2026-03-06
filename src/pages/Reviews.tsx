@@ -232,7 +232,7 @@ export default function Reviews() {
             {isAuthenticated && !isMyReviews && (
               <Button
                 onClick={openCreateDialog}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                className="bg-violet-700 hover:bg-violet-800 text-white"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Write Review
@@ -276,7 +276,7 @@ export default function Reviews() {
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div className="flex items-center gap-3 flex-1">
                       <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-orange-100 text-orange-700 font-semibold">
+                        <AvatarFallback className="bg-violet-100 text-violet-700 font-semibold">
                           {displayName[0]?.toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -307,10 +307,10 @@ export default function Reviews() {
                         <img
                           src={review.movie.poster_url}
                           alt={review.movie.title}
-                          className="w-7 h-10 rounded shadow-sm group-hover:ring-1 group-hover:ring-orange-400 transition object-cover"
+                          className="w-7 h-10 rounded shadow-sm group-hover:ring-1 group-hover:ring-violet-400 transition object-cover"
                         />
                       )}
-                      <span className="text-sm font-medium text-orange-600 group-hover:underline">
+                      <span className="text-sm font-medium text-violet-700 group-hover:underline">
                         {review.movie.title}
                       </span>
                     </button>
@@ -398,7 +398,7 @@ export default function Reviews() {
               <Button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                className="bg-violet-700 hover:bg-violet-800 text-white"
               >
                 {submitting ? "Saving..." : submitLabel}
               </Button>

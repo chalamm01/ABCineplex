@@ -195,11 +195,11 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            <div className="bg-orange-500/5 rounded-xl p-4 flex flex-col justify-center border border-orange-200">
-              <p className="text-xs text-orange-600 uppercase tracking-wider font-semibold">
+            <div className="bg-violet-500/5 rounded-xl p-4 flex flex-col justify-center border border-violet-200">
+              <p className="text-xs text-violet-700 uppercase tracking-wider font-semibold">
                 Attendance Streak
               </p>
-              <p className="text-3xl font-bold text-orange-600">
+              <p className="text-3xl font-bold text-violet-700">
                 {profile.attendance_streak} Days 🔥
               </p>
             </div>
