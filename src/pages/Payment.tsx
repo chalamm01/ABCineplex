@@ -178,15 +178,16 @@ export default function Payment() {
           setPaymentDeadline(new Date(booking.payment_deadline));
         }
         const seats: SeatInfo[] = booking.seats?.length
-          ? booking.seats
-          : (seatsParam?.split(',').map((seatStr: string, idx: number) => {
-              // fallback: try to parse seat string like "D4" to SeatInfo
-              return {
-                seat_id: idx + 1, // fallback id
-                row_label: seatStr.charAt(0),
-                seat_number: parseInt(seatStr.slice(1), 10),
-              };
-            }) ?? []);
+          ? booking.seats.map((s: string, idx: number) => ({
+              seat_id: idx + 1,
+              row_label: s.charAt(0),
+              seat_number: parseInt(s.slice(1), 10),
+            }))
+          : (seatsParam?.split(',').map((seatStr: string, idx: number) => ({
+              seat_id: idx + 1,
+              row_label: seatStr.charAt(0),
+              seat_number: parseInt(seatStr.slice(1), 10),
+            })) ?? []);
         const total = booking.total_amount || Number(totalParam) || 0;
         const start = booking.showtime_start ? new Date(booking.showtime_start) : null;
 

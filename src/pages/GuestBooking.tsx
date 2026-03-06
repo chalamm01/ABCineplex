@@ -56,7 +56,7 @@ export default function GuestBooking() {
     );
   }
 
-  const seatLabels = booking.seats?.map((s) => `${s.row_label}${s.seat_number}`).join(', ') ?? 'N/A';
+  const seatLabels = booking.seats?.join(', ') ?? 'N/A';
   const startTime = booking.showtime_start
     ? new Date(booking.showtime_start).toLocaleString('en-GB', {
         day: '2-digit', month: '2-digit', year: 'numeric',
@@ -73,7 +73,7 @@ export default function GuestBooking() {
               <CheckCircle className="w-12 h-12 text-green-600" />
             </div>
             <h2 className="text-3xl font-bold mb-2">Booking Confirmed!</h2>
-            <p className="text-slate-500 mb-1 font-mono text-xs">#{booking.id}</p>
+            <p className="text-slate-500 mb-1 font-mono text-xs">#{booking.booking_id}</p>
 
             <div className="mt-6 mb-6 text-left space-y-3 bg-slate-50 rounded-xl p-4">
               <div>

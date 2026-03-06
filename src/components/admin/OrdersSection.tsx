@@ -81,7 +81,7 @@ export default function OrdersSection() {
 
   return (
     <div>
-      <SectionHeader title="Snack Orders" count={orders.length} />
+      <SectionHeader title="Snack Orders" count={orders.length} onAdd={() => {}} addLabel="" />
 
       {orders.length === 0 ? (
         <p className="text-neutral-400 text-center py-16">No orders yet.</p>
