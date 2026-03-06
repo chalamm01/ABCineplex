@@ -11,6 +11,7 @@ import {
   UserPlus,
   Ticket,
   Star,
+  ShoppingBag,
 } from 'lucide-react';
 import { authApi } from '@/services/api';
 import type { UserProfile } from '@/types/api';
@@ -150,6 +151,9 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
                     </button>
                     <button onClick={() => { navigate('/reviews'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
                       <Star className="w-4 h-4" /> <span className="text-sm font-medium">My Reviews</span>
+                    </button>
+                    <button onClick={() => { navigate('/orders'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
+                      <ShoppingBag className="w-4 h-4" /> <span className="text-sm font-medium">My Orders</span>
                     </button>
                     <button onClick={handleSignOut} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors">
                       <LogOut className="w-4 h-4" /> <span className="text-sm font-medium">Sign Out</span>

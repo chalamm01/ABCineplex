@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { CartContext } from '@/providers/CartContextDef';
 
 export interface CartItem {
@@ -18,8 +18,21 @@ export interface CartContextType {
   decreaseQuantity: (name: string) => void;
 }
 
+const CART_STORAGE_KEY = 'abcineplex_cart';
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const stored = localStorage.getItem(CART_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  }, [cart]);
 
   function addToCart(item: CartItem) {
     setCart((prev) => {

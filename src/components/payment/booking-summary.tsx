@@ -13,6 +13,7 @@ export interface BookingDetails {
   showTime: string;
   endTime: string;
   seats: SeatInfo[];
+  displayItems?: string[];
   subtotal: number;
   discount: number;
   discountLabel?: string;
@@ -83,8 +84,11 @@ export function BookingSummary({ booking, countdown }: BookingSummaryProps) {
           <p className="text-lg font-bold">{booking.endTime}</p>
         </div>
         <div>
-          <p className="text-sm text-slate-400 font-bold uppercase">Seat(s)</p>
-          <p className="text-lg font-bold">{formatSeats(booking.seats)}</p>
+          <p className="text-sm text-slate-400 font-bold uppercase">{booking.displayItems ? 'Items' : 'Seat(s)'}</p>
+          {booking.displayItems
+            ? <ul className="space-y-0.5">{booking.displayItems.map((item, i) => <li key={i} className="text-base font-bold">{item}</li>)}</ul>
+            : <p className="text-lg font-bold">{formatSeats(booking.seats)}</p>
+          }
         </div>
       </div>
 

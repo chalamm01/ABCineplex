@@ -4,9 +4,10 @@ import type { HeroSlide } from "@/types/api";
 
 interface HeroCarouselProps {
   readonly slides: readonly HeroSlide[];
+  onSlideClick?: (id: string) => void;
 }
 
-export function HeroCarousel({ slides }: HeroCarouselProps) {
+export function HeroCarousel({ slides, onSlideClick }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const movies = slides || [];
@@ -32,7 +33,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
               key={movie.id}
               className="relative shrink-0 cursor-pointer transition-all duration-500 ease-in-out overflow-hidden"
               style={{ width: isActive ? `${ACTIVE_PCT}%` : `${inactivePct}%` }}
-              onClick={() => setCurrentIndex(index)}
+              onClick={() => { setCurrentIndex(index); onSlideClick?.(movie.id); }}
             >
               <img
                 src={movie.image_url}

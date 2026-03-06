@@ -14,6 +14,8 @@ import {
 import { useCountdown } from '@/hooks/useCountdown';
 import { bookingsApi, paymentsApi, showtimesApi, userApi, ordersApi } from '@/services/api';
 import type { CartItem } from '@/providers/CartContext';
+import { useContext } from 'react';
+import { CartContext } from '@/providers/CartContextDef';
 import { Zap, CheckCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner'
 
@@ -27,6 +29,7 @@ export default function Payment() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const cartContext = useContext(CartContext);
 
   // Snack-order mode: cart passed via router state
   const snackState = location.state as SnackPaymentState | null;
@@ -95,11 +98,8 @@ export default function Payment() {
         cinemaName: 'Counter Pickup',
         showTime: 'Pick up before show',
         endTime: 'N/A',
-        seats: cart.map((i) => ({
-          seat_id: i.id,
-          row_label: i.name.charAt(0),
-          seat_number: parseInt(i.name.slice(1), 10),
-        })),
+        seats: [],
+        displayItems: cart.map((i) => `${i.name} ×${i.quantity || 1}`),
         subtotal: total,
         discount: 0,
         discountLabel: undefined,
@@ -243,7 +243,9 @@ export default function Payment() {
           .filter((i) => i.id)
           .map((i) => ({ product_id: i.id as string, quantity: i.quantity || 1 }));
         const result = await ordersApi.createOrder(items);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         setSnackOrderId((result as unknown as { id: string }).id);
+        cartContext?.clearCart();
         setPaymentSuccess(true);
       } catch {
         alert('Order failed. Please try again.');
