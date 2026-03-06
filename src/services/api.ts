@@ -487,6 +487,9 @@ export const ordersApi = {
 
   getOrder: (orderId: string): Promise<OrderResponse> =>
     fetchAuth<OrderResponse>('GET', `/orders/${orderId}`),
+
+  updateOrderStatus: (orderId: string, status: string): Promise<OrderResponse> =>
+    fetchAuth<OrderResponse>('PATCH', `/orders/${orderId}/status/${status}`, {}),
 };
 
 export const snacksApi = {

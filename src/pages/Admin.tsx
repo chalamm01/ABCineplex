@@ -12,8 +12,9 @@ import HeroCarouselSection from '@/components/admin/HeroCarouselSection';
 import PromoEventsSection from '@/components/admin/PromoEventsSection';
 import UsersSection from '@/components/admin/UsersSection';
 import BookingsSection from '@/components/admin/BookingsSection';
+import OrdersSection from '@/components/admin/OrdersSection';
 
-type Tab = 'movies' | 'showtimes' | 'theatres' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings';
+type Tab = 'movies' | 'showtimes' | 'theatres' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings' | 'orders';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'movies',     label: 'Movies' },
@@ -25,6 +26,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'promos',     label: 'Promo Events' },
   { id: 'users',      label: 'Users' },
   { id: 'bookings',   label: 'Bookings' },
+  { id: 'orders',     label: 'Snack Orders' },
 ];
 
 export default function Admin() {
@@ -85,7 +87,7 @@ export default function Admin() {
                 onClick={() => setTab(t.id)}
                 className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   tab === t.id
-                    ? 'bg-red-600 text-white shadow-sm'
+                    ? 'bg-violet-700 text-white shadow-sm'
                     : 'text-neutral-500 hover:text-neutral-900 hover:bg-white/80'
                 }`}
               >
@@ -105,6 +107,7 @@ export default function Admin() {
             {tab === 'promos'     && <PromoEventsSection />}
             {tab === 'users'      && <UsersSection />}
             {tab === 'bookings'   && <BookingsSection />}
+            {tab === 'orders'     && <OrdersSection />}
           </div>
         </div>
       </div>
