@@ -62,7 +62,6 @@ import type {
   GuestBookingRequest,
   GuestBookingResponse,
   AdminReview,
-  AdminPointTransaction,
   AdminPointTransactionsResponse,
 } from '@/types/api';
 
