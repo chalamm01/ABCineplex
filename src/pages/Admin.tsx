@@ -13,8 +13,9 @@ import PromoEventsSection from '@/components/admin/PromoEventsSection';
 import UsersSection from '@/components/admin/UsersSection';
 import BookingsSection from '@/components/admin/BookingsSection';
 import OrdersSection from '@/components/admin/OrdersSection';
+import { ReviewsSection } from '@/components/admin/ReviewsSection';
 
-type Tab = 'movies' | 'showtimes' | 'theatres' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings' | 'orders';
+type Tab = 'movies' | 'showtimes' | 'theatres' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings' | 'orders' | 'reviews';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'movies',     label: 'Movies' },
@@ -27,6 +28,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'users',      label: 'Users' },
   { id: 'bookings',   label: 'Bookings' },
   { id: 'orders',     label: 'Snack Orders' },
+  { id: 'reviews',    label: 'Reviews' },
 ];
 
 export default function Admin() {
@@ -108,6 +110,7 @@ export default function Admin() {
             {tab === 'users'      && <UsersSection />}
             {tab === 'bookings'   && <BookingsSection />}
             {tab === 'orders'     && <OrdersSection />}
+            {tab === 'reviews'    && <ReviewsSection />}
           </div>
         </div>
       </div>

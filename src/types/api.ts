@@ -427,7 +427,8 @@ export interface CancelBookingResponse {
 // --- Payment types ---
 
 export interface InitiatePaymentRequest {
-  booking_id: string;
+  booking_id?: string;
+  order_id?: string;
   payment_method: 'mock_card' | 'mock_qr' | 'mock_cash';
   mock_should_succeed: boolean;
   guest_token?: string;
@@ -688,11 +689,24 @@ export interface AdminUserUpdate {
   full_name?: string;
   phone?: string;
   loyalty_points?: number;
+  points_adjustment_reason?: string;
   is_admin?: boolean;
   is_active?: boolean;
   is_student?: boolean;
   student_id_verified?: boolean;
   membership_tier?: string;
+}
+
+export interface AdminReview {
+  id: number;
+  user_id: string;
+  movie_id: number;
+  rating: number;
+  review_text?: string;
+  like_count: number;
+  created_at: string;
+  users?: { user_name: string; email: string };
+  movies?: { title: string };
 }
 
 export interface DashboardStats {

@@ -61,6 +61,7 @@ import type {
   TopPicksResponse,
   GuestBookingRequest,
   GuestBookingResponse,
+  AdminReview,
 } from '@/types/api';
 
 // --- Configuration ---
@@ -207,12 +208,13 @@ export const moviesApi = {
     page: number = 1,
     limit: number = 20,
     status?: string,
+    search?: string,
   ): Promise<MovieListResponse> => {
     const params = new URLSearchParams();
     if (status) params.append('release_status', status);
+    if (search) params.append('search', search);
     params.append('page', page.toString());
     params.append('limit', limit.toString());
-    console.log("/movies/?",params.toString())
     return fetchPublic<MovieListResponse>('GET', `/movies?${params.toString()}`);
   },
 
@@ -674,6 +676,18 @@ export const adminApi = {
 
   deletePromotion: (promoId: string): Promise<{ status: string }> =>
     fetchAuth<{ status: string }>('DELETE', `/admin/promo-events/${promoId}`),
+
+  // Reviews moderation
+  listReviews: (params?: { movie_id?: number; limit?: number; offset?: number }): Promise<{ reviews: AdminReview[]; total: number }> => {
+    const qs = new URLSearchParams();
+    if (params?.movie_id) qs.append('movie_id', String(params.movie_id));
+    if (params?.limit) qs.append('limit', String(params.limit));
+    if (params?.offset) qs.append('offset', String(params.offset));
+    return fetchAuth<{ reviews: AdminReview[]; total: number }>('GET', `/admin/reviews?${qs.toString()}`);
+  },
+
+  deleteReview: (reviewId: number): Promise<{ status: string; message: string }> =>
+    fetchAuth<{ status: string; message: string }>('DELETE', `/admin/reviews/${reviewId}`),
 };
 
 // ============================================================================

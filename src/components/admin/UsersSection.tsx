@@ -13,6 +13,7 @@ interface UserEditForm {
   is_student: boolean;
   student_id_verified: boolean;
   loyalty_points: number;
+  points_adjustment_reason: string;
   is_admin: boolean;
 }
 
@@ -37,7 +38,7 @@ export default function UsersSection() {
   const [form, setForm] = useState<UserEditForm>({
     full_name: '',
     membership_tier: 'free', is_student: false,
-    student_id_verified: false, loyalty_points: 0, is_admin: false,
+    student_id_verified: false, loyalty_points: 0, points_adjustment_reason: '', is_admin: false,
   });
   const [editUser, setEditUser] = useState<AdminUserResponse | null>(null);
   const [error, setError] = useState('');
@@ -75,6 +76,7 @@ export default function UsersSection() {
       is_student: u.is_student,
       student_id_verified: u.student_id_verified,
       loyalty_points: u.loyalty_points,
+      points_adjustment_reason: '',
       is_admin: u.is_admin,
     });
     setEditUser(u);
@@ -197,6 +199,15 @@ export default function UsersSection() {
             </Field>
             <Field label="Loyalty Points">
               <input className={inputCls} type="number" min="0" value={form.loyalty_points} onChange={e => f('loyalty_points', +e.target.value)} />
+            </Field>
+            <Field label="Reason for Points Adjustment">
+              <input
+                className={inputCls}
+                type="text"
+                placeholder="e.g. correction, compensation, promo"
+                value={form.points_adjustment_reason}
+                onChange={e => f('points_adjustment_reason', e.target.value)}
+              />
             </Field>
             <Field label="Is Student">
               <select className={inputCls} value={form.is_student ? '1' : '0'} onChange={e => f('is_student', e.target.value === '1')}>

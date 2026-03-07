@@ -256,9 +256,28 @@ export default function Payment() {
         const items = (snackState as SnackPaymentState).cart
           .filter((i) => i.id)
           .map((i) => ({ product_id: i.id as string, quantity: i.quantity || 1 }));
-        const result = await ordersApi.createOrder(items);
+
+        // Step 1: Create the snack order
+        const order = await ordersApi.createOrder(items);
+        const orderId = (order as unknown as { id: string }).id;
+
+        // Step 2: Initiate payment for the order
+        const mockMethod = paymentMethod === 'card' ? 'mock_card' : 'mock_qr';
+        const initiated = await paymentsApi.initiate({
+          order_id: orderId,
+          payment_method: mockMethod as 'mock_card' | 'mock_qr' | 'mock_cash',
+          mock_should_succeed: true,
+        });
+
         await new Promise((resolve) => setTimeout(resolve, 1500));
-        setSnackOrderId((result as unknown as { id: string }).id);
+
+        // Step 3: Confirm payment, applying any points redemption
+        const snackPointsDiscount = redeemPoints
+          ? Math.min(userPoints, Math.floor((bookingDetails?.subtotal ?? 0) * 0.5))
+          : 0;
+        await paymentsApi.confirm(initiated.payment_id, true, snackPointsDiscount);
+
+        setSnackOrderId(orderId);
         cartContext?.clearCart();
         setPaymentSuccess(true);
       } catch {
@@ -544,7 +563,7 @@ export default function Payment() {
               </div>
             )}
 
-            {/* EP-25: Redeem Loyalty Points */}
+            {/* EP-25: Redeem Loyalty Points — shown for both ticket bookings and snack orders */}
             {!isGuestMode && userPoints > 0 && bookingDetails && (() => {
               const maxDiscount = Math.min(userPoints, Math.floor(bookingDetails.subtotal * 0.5));
               return (
