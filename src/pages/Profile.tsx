@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { useEffect, useState } from "react"
 import { Spinner } from '@/components/ui/spinner'
 import { useApi, useApiMutation } from '@/hooks/useApi'
-import { userApi } from '@/services/api'
-import type { UserProfile, UserUpdate } from '@/types/api'
+import { userApi, reviewApi } from '@/services/api'
+import type { UserProfile, UserUpdate, ReviewWithMovie } from '@/types/api'
 
 export default function ProfilePage() {
   const { data: profile, loading, error: fetchError, execute: fetchProfile } = useApi<UserProfile>(null);
@@ -83,6 +83,32 @@ export default function ProfilePage() {
 
   const error = fetchError?.message || saveError?.message;
 
+  // My Reviews
+  const [myReviews, setMyReviews] = useState<ReviewWithMovie[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setReviewsLoading(true);
+    reviewApi.getMyReviews()
+      .then(res => setMyReviews(res.items ?? []))
+      .catch(() => setMyReviews([]))
+      .finally(() => setReviewsLoading(false));
+  }, []);
+
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!confirm('Delete this review? This cannot be undone.')) return;
+    setDeletingReviewId(reviewId);
+    try {
+      await reviewApi.deleteReview(reviewId);
+      setMyReviews(prev => prev.filter(r => r.id !== reviewId));
+    } catch {
+      alert('Failed to delete review.');
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
@@ -111,7 +137,7 @@ export default function ProfilePage() {
 
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen flex justify-center p-6 bg-white/70 backdrop-blur-md">
+      <div className="min-h-screen flex flex-col items-center gap-6 p-6 bg-white/70 backdrop-blur-md">
       <Card className="w-full max-w-3xl h-fit">
         <CardHeader className="flex flex-row items-center gap-6">
           <Avatar className="h-20 w-20">
@@ -237,6 +263,52 @@ export default function ProfilePage() {
               {saving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* My Reviews */}
+      <Card className="w-full max-w-3xl h-fit">
+        <CardHeader>
+          <CardTitle className="text-lg">My Reviews</CardTitle>
+        </CardHeader>
+        <Separator />
+        <CardContent className="pt-4">
+          {reviewsLoading ? (
+            <div className="flex justify-center py-8"><Spinner /></div>
+          ) : myReviews.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">You haven't written any reviews yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {myReviews.map(r => (
+                <div key={r.id} className="flex gap-4 border border-gray-100 rounded-xl p-4">
+                  {r.movie?.poster_url && (
+                    <img
+                      src={r.movie.poster_url}
+                      alt={r.movie.title ?? ''}
+                      className="w-12 h-16 object-cover rounded-lg shrink-0"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate">{r.movie?.title ?? `Movie #${r.movie_id}`}</p>
+                    <p className="text-yellow-500 text-xs">{'★'.repeat(Math.round(r.rating))} {r.rating.toFixed(1)}</p>
+                    {r.review_text && (
+                      <p className="text-sm text-gray-600 line-clamp-2 mt-1">{r.review_text}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">{new Date(r.created_at ?? '').toLocaleDateString()}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={deletingReviewId === r.id}
+                    onClick={() => handleDeleteReview(r.id)}
+                    className="shrink-0 self-start"
+                  >
+                    {deletingReviewId === r.id ? 'Deleting…' : 'Delete'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
       </div>

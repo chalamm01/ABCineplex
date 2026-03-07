@@ -709,6 +709,22 @@ export interface AdminReview {
   movies?: { title: string };
 }
 
+export interface AdminPointTransaction {
+  id: string | number;
+  user_id: string;
+  user_email: string;
+  user_full_name?: string;
+  points_delta: number;
+  reason: string;
+  reference_id?: string;
+  created_at?: string;
+}
+
+export interface AdminPointTransactionsResponse {
+  transactions: AdminPointTransaction[];
+  total: number;
+}
+
 export interface DashboardStats {
   total_bookings_today: number;
   revenue_today: number;

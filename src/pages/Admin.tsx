@@ -14,21 +14,23 @@ import UsersSection from '@/components/admin/UsersSection';
 import BookingsSection from '@/components/admin/BookingsSection';
 import OrdersSection from '@/components/admin/OrdersSection';
 import { ReviewsSection } from '@/components/admin/ReviewsSection';
+import { PointTransactionsSection } from '@/components/admin/PointTransactionsSection';
 
-type Tab = 'movies' | 'showtimes' | 'theatres' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings' | 'orders' | 'reviews';
+type Tab = 'movies' | 'showtimes' | 'theatres' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings' | 'orders' | 'reviews' | 'point-transactions';
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'movies',     label: 'Movies' },
-  { id: 'showtimes',  label: 'Showtimes' },
-  { id: 'theatres',   label: 'Theatres' },
-  { id: 'categories', label: 'Categories' },
-  { id: 'products',   label: 'Products' },
-  { id: 'hero',       label: 'Hero Carousel' },
-  { id: 'promos',     label: 'Promo Events' },
-  { id: 'users',      label: 'Users' },
-  { id: 'bookings',   label: 'Bookings' },
-  { id: 'orders',     label: 'Snack Orders' },
-  { id: 'reviews',    label: 'Reviews' },
+  { id: 'movies',             label: 'Movies' },
+  { id: 'showtimes',          label: 'Showtimes' },
+  { id: 'theatres',           label: 'Theatres' },
+  { id: 'categories',         label: 'Categories' },
+  { id: 'products',           label: 'Products' },
+  { id: 'hero',               label: 'Hero Carousel' },
+  { id: 'promos',             label: 'Promo Events' },
+  { id: 'users',              label: 'Users' },
+  { id: 'bookings',           label: 'Bookings' },
+  { id: 'orders',             label: 'Snack Orders' },
+  { id: 'reviews',            label: 'Reviews' },
+  { id: 'point-transactions', label: 'Point Transactions' },
 ];
 
 export default function Admin() {
@@ -110,7 +112,8 @@ export default function Admin() {
             {tab === 'users'      && <UsersSection />}
             {tab === 'bookings'   && <BookingsSection />}
             {tab === 'orders'     && <OrdersSection />}
-            {tab === 'reviews'    && <ReviewsSection />}
+            {tab === 'reviews'            && <ReviewsSection />}
+            {tab === 'point-transactions' && <PointTransactionsSection />}
           </div>
         </div>
       </div>
