@@ -15,10 +15,12 @@ import BookingsSection from '@/components/admin/BookingsSection';
 import OrdersSection from '@/components/admin/OrdersSection';
 import { ReviewsSection } from '@/components/admin/ReviewsSection';
 import { PointTransactionsSection } from '@/components/admin/PointTransactionsSection';
+import DashboardSection from '@/components/admin/DashboardSection';
 
-type Tab = 'movies' | 'showtimes' | 'theatres' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings' | 'orders' | 'reviews' | 'point-transactions';
+type Tab = 'dashboard' | 'movies' | 'showtimes' | 'theatres' | 'categories' | 'products' | 'hero' | 'promos' | 'users' | 'bookings' | 'orders' | 'reviews' | 'point-transactions';
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'dashboard',          label: 'Dashboard' },
   { id: 'movies',             label: 'Movies' },
   { id: 'showtimes',          label: 'Showtimes' },
   { id: 'theatres',           label: 'Theatres' },
@@ -34,7 +36,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function Admin() {
-  const [tab, setTab] = useState<Tab>('movies');
+  const [tab, setTab] = useState<Tab>('dashboard');
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -102,6 +104,7 @@ export default function Admin() {
 
           {/* Content panel */}
           <div className="bg-white/80 rounded-xl p-6 border border-neutral-200 shadow-sm">
+            {tab === 'dashboard'  && <DashboardSection />}
             {tab === 'movies'     && <MoviesSection />}
             {tab === 'showtimes'  && <ShowtimesSection />}
             {tab === 'theatres'   && <TheatresSection />}

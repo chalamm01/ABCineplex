@@ -725,6 +725,13 @@ export interface AdminPointTransactionsResponse {
   total: number;
 }
 
+export interface DashboardRecentBooking {
+  id: string;
+  movie_title?: string;
+  total_amount: number;
+  created_at?: string;
+}
+
 export interface DashboardStats {
   total_bookings_today: number;
   revenue_today: number;
@@ -732,6 +739,12 @@ export interface DashboardStats {
   upcoming_movies: number;
   total_users: number;
   seats_filled_percent: number;
+  total_confirmed_bookings: number;
+  total_revenue_alltime: number;
+  pending_bookings: number;
+  snack_orders_today: number;
+  snack_revenue_today: number;
+  recent_bookings: DashboardRecentBooking[];
 }
 
 // --- Type aliases & convenience types ---
