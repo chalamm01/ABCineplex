@@ -77,7 +77,10 @@ export function ReviewsSection() {
               {reviews.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{r.movies?.title ?? `Movie #${r.movie_id}`}</td>
-                  <td className="px-4 py-3 text-gray-600">{r.users?.user_name ?? r.user_id.slice(0, 8)}</td>
+                  <td className="px-4 py-3 text-xs text-gray-700">
+                    <div className="font-medium">{r.users?.user_name ?? r.user_id.slice(0, 8)}</div>
+                    {r.users?.email && <div className="text-gray-400">{r.users.email}</div>}
+                  </td>
                   <td className="px-4 py-3">{'★'.repeat(Math.round(r.rating))} {r.rating.toFixed(1)}</td>
                   <td className="px-4 py-3 max-w-xs">
                     <span className="line-clamp-2 text-gray-700">{r.review_text || <em className="text-gray-400">No text</em>}</span>

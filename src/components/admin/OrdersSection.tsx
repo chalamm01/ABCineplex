@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ordersApi, productsApi } from '@/services/api';
-import type { OrderResponse, Product } from '@/types/api';
+import { adminApi, productsApi } from '@/services/api';
+import type { AdminOrderResponse, Product } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import { SectionHeader, fmtDT, AdminTable } from './AdminShared';
 
@@ -33,7 +33,7 @@ function StatusBadge({ status }: Readonly<{ status: string }>) {
 }
 
 export default function OrdersSection() {
-  const [orders, setOrders] = useState<OrderResponse[]>([]);
+  const [orders, setOrders] = useState<AdminOrderResponse[]>([]);
   const [productMap, setProductMap] = useState<Record<string, Product>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,10 +42,11 @@ export default function OrdersSection() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [allOrders, products] = await Promise.all([
-        ordersApi.getOrders(),
+      const [res, products] = await Promise.all([
+        adminApi.listOrders(200, 0),
         productsApi.getAllProducts(200),
       ]);
+      const allOrders = res.orders;
       const sorted = [...allOrders].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
@@ -103,7 +104,10 @@ export default function OrdersSection() {
             return (
               <tr key={order.id} className="border-b border-neutral-100 hover:bg-neutral-50">
                 <td className="px-4 py-3 font-mono text-xs text-neutral-500">#{shortId}</td>
-                <td className="px-4 py-3 font-mono text-xs text-neutral-500">…{userId}</td>
+                <td className="px-4 py-3 text-xs text-neutral-700">
+                  <div className="font-medium">{order.user_full_name ?? <span className="text-neutral-400">—</span>}</div>
+                  <div className="text-neutral-400">{order.user_email ?? `…${userId}`}</div>
+                </td>
                 <td className="px-4 py-3 text-xs text-neutral-500 whitespace-nowrap">{fmtDT(order.created_at)}</td>
                 <td className="px-4 py-3 text-xs text-neutral-700 max-w-xs truncate" title={itemsSummary}>{itemsSummary || '—'}</td>
                 <td className="px-4 py-3 text-sm font-semibold whitespace-nowrap">

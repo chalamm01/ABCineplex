@@ -576,6 +576,11 @@ export interface OrderResponse {
   created_at: string;
 }
 
+export interface AdminOrderResponse extends OrderResponse {
+  user_email?: string;
+  user_full_name?: string;
+}
+
 export interface Product {
   id: string;
   category_id: string;

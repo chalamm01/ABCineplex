@@ -63,6 +63,7 @@ import type {
   GuestBookingResponse,
   AdminReview,
   AdminPointTransactionsResponse,
+  AdminOrderResponse,
 } from '@/types/api';
 
 // --- Configuration ---
@@ -689,6 +690,12 @@ export const adminApi = {
 
   deleteReview: (reviewId: number): Promise<{ status: string; message: string }> =>
     fetchAuth<{ status: string; message: string }>('DELETE', `/admin/reviews/${reviewId}`),
+
+  listOrders: (limit: number = 100, offset: number = 0, status?: string): Promise<{ orders: AdminOrderResponse[]; count: number }> => {
+    const qs = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    if (status) qs.append('order_status', status);
+    return fetchAuth<{ orders: AdminOrderResponse[]; count: number }>('GET', `/admin/orders?${qs.toString()}`);
+  },
 
   listPointTransactions: (params?: { limit?: number; offset?: number; user_id?: string; reason?: string }): Promise<AdminPointTransactionsResponse> => {
     const qs = new URLSearchParams();
