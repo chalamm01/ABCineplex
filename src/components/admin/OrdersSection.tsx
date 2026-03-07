@@ -1,33 +1,54 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminApi, productsApi } from '@/services/api';
+import { adminApi, ordersApi, productsApi } from '@/services/api';
 import type { AdminOrderResponse, Product } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import { SectionHeader, fmtDT, AdminTable } from './AdminShared';
 
-const STATUS_BADGE: Record<string, string> = {
-  pending:   'bg-amber-100 text-amber-700',
-  preparing: 'bg-blue-100 text-blue-700',
-  ready:     'bg-green-100 text-green-700',
-  completed: 'bg-slate-100 text-slate-600',
-  cancelled: 'bg-red-100 text-red-600',
-};
-
 const NEXT_STATUS: Record<string, string> = {
-  pending:   'preparing',
+  confirmed: 'preparing',
   preparing: 'ready',
   ready:     'completed',
 };
 
 const NEXT_LABEL: Record<string, string> = {
-  pending:   'Start Preparing',
+  confirmed: 'Start Preparing',
   preparing: 'Mark Ready',
   ready:     'Complete',
 };
 
-function StatusBadge({ status }: Readonly<{ status: string }>) {
+// Payment badge: unpaid vs paid
+function PaymentBadge({ status }: Readonly<{ status: string }>) {
+  if (status === 'cancelled') return null;
+  const paid = status !== 'pending';
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full capitalize font-medium ${STATUS_BADGE[status] ?? 'bg-neutral-100 text-neutral-600'}`}>
-      {status}
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${paid ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+      {paid ? '✓ Paid' : '⏳ Unpaid'}
+    </span>
+  );
+}
+
+// Fulfillment badge: kitchen workflow stage
+const FULFILLMENT_STYLE: Record<string, string> = {
+  pending:   'bg-neutral-100 text-neutral-500',
+  confirmed: 'bg-sky-100 text-sky-700',
+  preparing: 'bg-blue-100 text-blue-700',
+  ready:     'bg-violet-100 text-violet-700',
+  completed: 'bg-slate-100 text-slate-500',
+  cancelled: 'bg-red-100 text-red-600',
+};
+const FULFILLMENT_LABEL: Record<string, string> = {
+  pending:   'Awaiting Payment',
+  confirmed: 'Queued',
+  preparing: 'Preparing',
+  ready:     'Ready for Pickup',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
+function FulfillmentBadge({ status }: Readonly<{ status: string }>) {
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${FULFILLMENT_STYLE[status] ?? 'bg-neutral-100 text-neutral-600'}`}>
+      {FULFILLMENT_LABEL[status] ?? status}
     </span>
   );
 }
@@ -87,7 +108,7 @@ export default function OrdersSection() {
       {orders.length === 0 ? (
         <p className="text-neutral-400 text-center py-16">No orders yet.</p>
       ) : (
-        <AdminTable cols={['Order', 'Customer', 'Date', 'Items', 'Total', 'Status', 'Actions']}>
+        <AdminTable cols={['Order', 'Customer', 'Date', 'Items', 'Total', 'Payment', 'Fulfillment', 'Actions']}>
           {orders.map((order) => {
             const shortId = order.id.slice(-8).toUpperCase();
             const userId = order.user_id?.slice(-8) ?? '—';
@@ -113,7 +134,8 @@ export default function OrdersSection() {
                 <td className="px-4 py-3 text-sm font-semibold whitespace-nowrap">
                   {Number(order.total_amount).toLocaleString()} THB
                 </td>
-                <td className="px-4 py-3"><StatusBadge status={order.status} /></td>
+                <td className="px-4 py-3"><PaymentBadge status={order.status} /></td>
+                <td className="px-4 py-3"><FulfillmentBadge status={order.status} /></td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     {nextStatus && (

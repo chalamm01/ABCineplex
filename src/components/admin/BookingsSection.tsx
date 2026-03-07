@@ -97,9 +97,7 @@ export default function BookingsSection() {
       (b.user_id ?? '').toLowerCase().includes(q)
     );
   });
-  console.log(filtered)
   const { sorted, sort, toggle } = useSort(filtered);
-
   return (
     <div>
       <SectionHeader title="Bookings" count={bookings.length} onAdd={() => {}} addLabel="" />
