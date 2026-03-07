@@ -178,11 +178,24 @@ export default function Payment() {
           setPaymentDeadline(new Date(booking.payment_deadline));
         }
         const seats: SeatInfo[] = booking.seats?.length
-          ? booking.seats.map((s: string, idx: number) => ({
-              seat_id: idx + 1,
-              row_label: s.charAt(0),
-              seat_number: parseInt(s.slice(1), 10),
-            }))
+          ? booking.seats.map((s: unknown, idx: number) => {
+              // Backend returns seats as dicts: {row_label, seat_number, seat_id, ...}
+              if (typeof s === 'object' && s !== null) {
+                const seat = s as { row_label?: string; seat_number?: number; seat_id?: number };
+                return {
+                  seat_id: seat.seat_id ?? idx + 1,
+                  row_label: seat.row_label ?? '',
+                  seat_number: seat.seat_number ?? idx + 1,
+                };
+              }
+              // Fallback: string like "D6"
+              const str = String(s);
+              return {
+                seat_id: idx + 1,
+                row_label: str.charAt(0),
+                seat_number: parseInt(str.slice(1), 10),
+              };
+            })
           : (seatsParam?.split(',').map((seatStr: string, idx: number) => ({
               seat_id: idx + 1,
               row_label: seatStr.charAt(0),
