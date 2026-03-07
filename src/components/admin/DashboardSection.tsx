@@ -44,7 +44,6 @@ export default function DashboardSection() {
 
   if (loading) return <div className="flex justify-center py-16"><Spinner /></div>;
   if (error || !stats) return <p className="text-red-500 text-sm py-8">{error ?? 'No data.'}</p>;
-
   return (
     <div className="space-y-8">
       <div>
