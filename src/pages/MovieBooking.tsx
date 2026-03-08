@@ -290,7 +290,7 @@ export default function MovieBooking() {
   if (movieLoading) {
     return (
       <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-        <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
+        <div className="min-h-screen px-4 sm:px-8 md:px-16 lg:px-32 py-6 bg-white/70 backdrop-blur-md">
           <div className="flex justify-center items-center py-20">
             <Spinner />
           </div>
@@ -302,7 +302,7 @@ export default function MovieBooking() {
   if (movieError || !movie) {
     return (
       <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-        <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
+        <div className="min-h-screen px-4 sm:px-8 md:px-16 lg:px-32 py-6 bg-white/70 backdrop-blur-md">
           <div className="flex justify-center items-center py-20">
             <p className="text-lg text-red-600">{movieError || 'Movie not found'}</p>
           </div>
@@ -316,7 +316,7 @@ export default function MovieBooking() {
   return (
     <>
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
+      <div className="min-h-screen px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 py-6 bg-white/70 backdrop-blur-md">
         <section className="px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-[300px_1fr] gap-8 lg:gap-12 items-start">
@@ -368,7 +368,7 @@ export default function MovieBooking() {
               <>
 
 
-                <div className="flex justify-between gap-8">
+                <div className="flex flex-col xl:flex-row justify-between gap-8">
                   <div className="w-full">
                 <DateTimeSelection
                   dates={bookingDates}
@@ -396,7 +396,7 @@ export default function MovieBooking() {
                   {seats.length > 0 ? (
                     <SeatMap seats={seats} onSeatToggle={toggleSeat} />
                   ) : (
-                    <div className="flex items-center justify-center bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-1/2">
+                    <div className="flex items-center justify-center bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-full xl:w-1/2">
                       <Spinner />
                     </div>
                   )}

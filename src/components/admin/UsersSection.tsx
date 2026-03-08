@@ -87,8 +87,22 @@ export default function UsersSection() {
   async function handleSubmit() {
     if (!editUser) return;
     setError('');
+
+    const pointsChanged = form.loyalty_points !== editUser.loyalty_points;
+    if (pointsChanged && !form.points_adjustment_reason.trim()) {
+      setError('A reason is required when adjusting loyalty points.');
+      return;
+    }
+
+    // Only include loyalty_points in payload if it actually changed
+    const payload: Partial<typeof form> = { ...form };
+    if (!pointsChanged) {
+      delete payload.loyalty_points;
+      delete payload.points_adjustment_reason;
+    }
+
     try {
-      await adminApi.updateUser(editUser.user_id, form);
+      await adminApi.updateUser(editUser.user_id, payload);
       setModal(false);
       refresh();
     } catch (e: unknown) {

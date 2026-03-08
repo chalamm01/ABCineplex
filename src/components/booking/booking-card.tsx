@@ -1,20 +1,11 @@
-// Helper functions for date/time formatting
-function formatDate(iso?: string) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-}
-function formatTime(iso?: string) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-}
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { QRCodeSVG } from 'qrcode.react';
-import { Ticket, Star } from "lucide-react";
+import { Ticket, Star, CalendarClock } from "lucide-react";
 import { MovieTicketModal } from "./ticket-modal";
 import { WriteReviewModal } from "@/components/community/WriteReviewModal";
+import { formatDate, formatTime } from "@/lib/format";
 import type { BookingDetail } from "@/types/api";
 
 interface BookingCardProps {
@@ -74,50 +65,45 @@ export function BookingCard({
 
             <Separator className="my-3" />
 
-            <div className="flex justify-between">
-              <div className="flex-col content-between">
-                <div className="mb-4">
-                  <p className="text-lg font-medium uppercase text-gray-400">Seat</p>
-                  <p className="text-xl font-bold text-gray-900">{Array.isArray(booking.seats) ? booking.seats.join(', ') : booking.seats}</p>
-                </div>
+            <div>
+              <p className="text-lg font-medium uppercase text-gray-400">Seat</p>
+              <p className="text-xl font-bold text-gray-900 mb-4">
+                {Array.isArray(booking.seats) ? booking.seats.join(', ') : booking.seats}
+              </p>
 
-                <div className="flex w-full justify-start gap-2">
+              <div className="flex w-full justify-start gap-2 flex-wrap">
+                <Button
+                  className="rounded-2xl bg-gray-900 text-white hover:bg-gray-700"
+                  size="sm"
+                  onClick={() => setTicketOpen(true)}
+                >
+                  <Ticket className="mr-2 h-4 w-4" />
+                  View Ticket
+                </Button>
+
+                {onChangeShowtime && (
                   <Button
-                    className="rounded-2xl bg-gray-900 text-white hover:bg-gray-700"
+                    variant="outline"
+                    className="rounded-2xl border-blue-300 text-blue-600 hover:bg-blue-50"
                     size="sm"
-                    onClick={() => setTicketOpen(true)}
+                    onClick={onChangeShowtime}
                   >
-                    <Ticket className="mr-2 h-4 w-4" />
-                    View Ticket
+                    <CalendarClock className="mr-2 h-4 w-4" />
+                    Change Showtime
                   </Button>
+                )}
 
-                  {onChangeShowtime && booking.booking_status === 'confirmed' && (
-                    <Button
-                      variant="outline"
-                      className="rounded-2xl border-blue-300 text-blue-600 hover:bg-blue-50"
-                      size="sm"
-                      onClick={onChangeShowtime}
-                    >
-                      Change Showtime
-                    </Button>
-                  )}
-
-                  {canReview && movieId && bookingId && (
-                    <Button
-                      variant="outline"
-                      className="rounded-2xl border-amber-300 text-amber-600 hover:bg-amber-50"
-                      size="sm"
-                      onClick={() => setReviewOpen(true)}
-                    >
-                      <Star className="mr-2 h-4 w-4" />
-                      Write a Review
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className="w-32 h-32">
-                <QRCodeSVG value={String(booking.booking_id)} size={128} level="H" includeMargin={true} />
+                {canReview && movieId && bookingId && (
+                  <Button
+                    variant="outline"
+                    className="rounded-2xl border-amber-300 text-amber-600 hover:bg-amber-50"
+                    size="sm"
+                    onClick={() => setReviewOpen(true)}
+                  >
+                    <Star className="mr-2 h-4 w-4" />
+                    Write a Review
+                  </Button>
+                )}
               </div>
             </div>
           </div>

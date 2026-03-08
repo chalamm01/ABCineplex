@@ -2,27 +2,19 @@ import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Ticket } from "lucide-react";
-// Helper functions for date/time formatting
-function formatDate(iso?: string) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-}
-function formatTime(iso?: string) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-}
 import { QRCodeSVG } from "qrcode.react";
+import { formatDate, formatTime } from "@/lib/format";
 import type { BookingDetail } from "@/types/api";
 
 interface MovieTicketModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  booking: BookingDetail;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly booking: BookingDetail;
 }
 
 function DashedStrip() {
   return (
-    <div className="bg-green-500 px-4 py-[7px] flex items-center overflow-hidden">
+    <div className="bg-green-500 px-4 py-1.75 flex items-center overflow-hidden">
       <div className="w-3.5 h-3.5 rounded-full bg-white/30 shrink-0" />
       <div className="flex-1 border-t-[3px] border-dashed border-white/50 mx-1" />
       <div className="w-3.5 h-3.5 rounded-full bg-white/30 shrink-0" />
@@ -40,7 +32,7 @@ function TearLine() {
   );
 }
 
-function InfoCell({ label, value }: { label: string; value: string }) {
+function InfoCell({ label, value }: { readonly label: string; readonly value: string }) {
   return (
     <div className="flex flex-col gap-0.5 min-w-0">
       <span className="text-[10px] font-bold tracking-[.15em] text-gray-400 uppercase">
@@ -60,7 +52,7 @@ export function MovieTicketModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogOverlay className="bg-black/75 backdrop-blur-sm" />
 
-      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[640px] w-[calc(100%-2rem)]">
+      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-160 w-[calc(100%-2rem)]">
         <div className="relative bg-white rounded-2xl overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.55)]">
 
           <DashedStrip />
@@ -69,7 +61,7 @@ export function MovieTicketModal({
             <div className="flex gap-5">
 
               {/* Poster */}
-              <div className="shrink-0 w-[116px] h-[162px] rounded-xl overflow-hidden shadow-md border border-gray-100">
+              <div className="shrink-0 w-29 h-40.5 rounded-xl overflow-hidden shadow-md border border-gray-100">
                 <img
                   src={booking.poster_url || '/assets/images/placeholder.png'}
                   alt={booking.movie_title}
@@ -88,7 +80,7 @@ export function MovieTicketModal({
                     </h2>
                   </div>
                   <div className="shrink-0 rounded-md border border-gray-200 overflow-hidden">
-                    <QRCodeSVG value={String(booking.booking_id)} size={64} level="H" includeMargin={false} />
+                    <QRCodeSVG value={String(booking.booking_id)} size={64} level="H" />
                   </div>
                 </div>
 
@@ -132,7 +124,7 @@ export function MovieTicketModal({
 
           {/* Watermark */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
-            <span className="text-5xl font-black text-green-500/[0.055] tracking-widest rotate-[-12deg] whitespace-nowrap">
+            <span className="text-5xl font-black text-green-500/5.5 tracking-widest -rotate-12 whitespace-nowrap">
               ©ABCINEPLEX
             </span>
           </div>

@@ -12,6 +12,8 @@ import {
   Ticket,
   Star,
   ShoppingBag,
+  Menu,
+  X,
 } from 'lucide-react';
 import { authApi } from '@/services/api';
 import type { UserProfile } from '@/types/api';
@@ -22,6 +24,7 @@ interface HeaderProps {
 
 export function Header({ activeNav = 'home' }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -52,7 +55,6 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
 
   useEffect(() => {
     syncAuth();
-    // Listen for local changes and custom events from AuthCallback
     window.addEventListener('storage', syncAuth);
     window.addEventListener('auth-change', syncAuth);
     return () => {
@@ -95,13 +97,14 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-neutral-200">
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-xl font-bold tracking-tighter no-underline text-black">
             CINEPLEX
           </Link>
 
-          <div className="flex items-center gap-8">
+          {/* Desktop nav links — hidden on mobile */}
+          <div className="hidden md:flex items-center gap-8">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -119,61 +122,96 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
             })}
           </div>
 
-          {/* User Profile */}
-          <div className="relative justify-end" ref={dropdownRef}>
+          <div className="flex items-center gap-2">
+            {/* Hamburger — visible only on mobile */}
             <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-3 p-1 rounded-full hover:bg-neutral-50 transition-all group"
+              className="md:hidden p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+              onClick={() => setIsMobileMenuOpen(prev => !prev)}
+              aria-label="Toggle menu"
             >
-              {isAuthenticated && user && (
-                <div className="hidden md:flex flex-col items-end mr-1">
-                  <span className="text-sm font-bold text-black leading-none">{getDisplayName()}</span>
-                  <span className="text-[11px] text-neutral-400 leading-tight mt-1">{user.email}</span>
-                </div>
-              )}
-
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                isAuthenticated ? 'bg-black text-white shadow-md' : 'bg-neutral-100 text-neutral-600'
-              }`}>
-                {isAuthenticated ? <span className="text-xs font-bold">{getInitials()}</span> : <User className="w-5 h-5" />}
-              </div>
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-neutral-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                {isAuthenticated ? (
-                  <>
-                    <button onClick={() => { navigate('/profile'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                      <User className="w-4 h-4" /> <span className="text-sm font-medium">My Profile</span>
-                    </button>
-                    <button onClick={() => { navigate('/bookings'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                      <Ticket className="w-4 h-4" /> <span className="text-sm font-medium">My Bookings</span>
-                    </button>
-                    <button onClick={() => { navigate('/reviews'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                      <Star className="w-4 h-4" /> <span className="text-sm font-medium">My Reviews</span>
-                    </button>
-                    <button onClick={() => { navigate('/orders'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                      <ShoppingBag className="w-4 h-4" /> <span className="text-sm font-medium">My Orders</span>
-                    </button>
-                    <button onClick={handleSignOut} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors">
-                      <LogOut className="w-4 h-4" /> <span className="text-sm font-medium">Sign Out</span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => { navigate('/login'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                      <LogIn className="w-4 h-4" /> <span className="text-sm font-medium">Sign In</span>
-                    </button>
-                    <button onClick={() => { navigate('/register'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 text-neutral-700">
-                      <UserPlus className="w-4 h-4" /> <span className="text-sm font-medium">Register</span>
-                    </button>
-                  </>
+            {/* User Profile */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-3 p-1 rounded-full hover:bg-neutral-50 transition-all group"
+              >
+                {isAuthenticated && user && (
+                  <div className="hidden md:flex flex-col items-end mr-1">
+                    <span className="text-sm font-bold text-black leading-none">{getDisplayName()}</span>
+                    <span className="text-[11px] text-neutral-400 leading-tight mt-1">{user.email}</span>
+                  </div>
                 )}
-              </div>
-            )}
+
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                  isAuthenticated ? 'bg-black text-white shadow-md' : 'bg-neutral-100 text-neutral-600'
+                }`}>
+                  {isAuthenticated ? <span className="text-xs font-bold">{getInitials()}</span> : <User className="w-5 h-5" />}
+                </div>
+              </button>
+
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-neutral-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                  {isAuthenticated ? (
+                    <>
+                      <button onClick={() => { navigate('/profile'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
+                        <User className="w-4 h-4" /> <span className="text-sm font-medium">My Profile</span>
+                      </button>
+                      <button onClick={() => { navigate('/bookings'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
+                        <Ticket className="w-4 h-4" /> <span className="text-sm font-medium">My Bookings</span>
+                      </button>
+                      <button onClick={() => { navigate('/reviews'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
+                        <Star className="w-4 h-4" /> <span className="text-sm font-medium">My Reviews</span>
+                      </button>
+                      <button onClick={() => { navigate('/orders'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
+                        <ShoppingBag className="w-4 h-4" /> <span className="text-sm font-medium">My Orders</span>
+                      </button>
+                      <button onClick={handleSignOut} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors">
+                        <LogOut className="w-4 h-4" /> <span className="text-sm font-medium">Sign Out</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => { navigate('/login'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
+                        <LogIn className="w-4 h-4" /> <span className="text-sm font-medium">Sign In</span>
+                      </button>
+                      <button onClick={() => { navigate('/register'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 text-neutral-700">
+                        <UserPlus className="w-4 h-4" /> <span className="text-sm font-medium">Register</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile menu panel */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t border-neutral-100 py-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.id}
+                to={`/${item.id}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors no-underline ${
+                  activeNav === item.id
+                    ? 'text-black bg-neutral-50'
+                    : 'text-neutral-600 hover:text-black hover:bg-neutral-50'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 }

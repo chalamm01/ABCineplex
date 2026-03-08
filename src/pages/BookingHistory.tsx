@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BookingCard } from "@/components/booking/booking-card";
 import { bookingsApi, showtimesApi, moviesApi, reviewApi } from "@/services/api";
 import { Spinner } from "@/components/ui/spinner";
+import { SeatMap } from "@/components/movies/seat-map";
 import type { BookingSummary, ShowtimeCard, ReviewStatus, SeatInMap } from "@/types/api";
 
 // Format seats for display - handles both string and object formats
@@ -94,7 +95,7 @@ export default function BookingHistoryPage() {
     setSelectedSeatIds([]);
     try {
       const res = await showtimesApi.getSeats(selectedNewShowtimeId);
-      setAvailableSeats((res.seats ?? []).filter(s => s.status === 'available'));
+      setAvailableSeats(res.seats ?? []);
     } catch {
       setAvailableSeats([]);
     } finally {
@@ -102,11 +103,14 @@ export default function BookingHistoryPage() {
     }
   };
 
-  const toggleSeat = (seatId: number) => {
+  const toggleSeat = (row: string, col: number) => {
+    const seat = availableSeats.find(s => s.row_label === row && s.seat_number === col);
+    if (!seat) return;
+    const seatId = seat.seat_id;
     const needed = changingBooking?.seats?.length ?? 1;
     setSelectedSeatIds(prev => {
       if (prev.includes(seatId)) return prev.filter(id => id !== seatId);
-      if (prev.length >= needed) return prev; // can't pick more than original count
+      if (prev.length >= needed) return prev;
       return [...prev, seatId];
     });
   };
@@ -131,25 +135,15 @@ export default function BookingHistoryPage() {
     }
   };
 
-  /** True if the booking was created within the last 30 minutes. */
-  const isWithin30Min = (b: BookingSummary) => {
-    if (!b.created_at) return true; // unknown — allow and let backend enforce
-    return Date.now() - new Date(b.created_at).getTime() < 30 * 60 * 1000;
-  };
-
-  /** Booking can be cancelled only if confirmed and still within the 30-min window. */
-  // const canCancel = (b: BookingSummary) =>
-  //   b.booking_status === "confirmed" && isWithin30Min(b);
-
-  /** Booking can have its showtime changed only once, and within the 30-min window. */
+  /** Booking can have its showtime changed only once, and more than 30 min before showtime. */
   const canChange = (b: BookingSummary) =>
     b.booking_status === "confirmed" &&
-    isWithin30Min(b) &&
-    (b.change_count ?? 0) < 1;
+    (b.change_count ?? 0) < 1 &&
+    !!b.showtime_start && new Date(b.showtime_start).getTime() - Date.now() > 30 * 60 * 1000;
 
   return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <main className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
+      <main className="min-h-screen px-4 sm:px-8 md:px-16 lg:px-32 py-6 bg-white/70 backdrop-blur-md">
         <h1 className="mb-8 border-b-2 border-black pb-2 text-3xl font-extrabold uppercase tracking-tight text-black">
           Booking History
         </h1>
@@ -195,7 +189,7 @@ export default function BookingHistoryPage() {
       {/* Change Showtime Dialog */}
       {changingBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl space-y-4">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-4xl shadow-2xl space-y-4 overflow-y-auto max-h-[90vh]">
             <h2 className="text-xl font-bold">
               Change Showtime {changeStep === 2 && '— Pick Seats'}
             </h2>
@@ -238,24 +232,16 @@ export default function BookingHistoryPage() {
                   <p className="text-xs text-gray-400">
                     {selectedSeatIds.length} / {changingBooking.seats?.length ?? 1} selected
                   </p>
-                  <div className="grid grid-cols-6 gap-1.5 max-h-48 overflow-y-auto">
-                    {availableSeats.map(s => {
-                      const selected = selectedSeatIds.includes(s.seat_id);
-                      return (
-                        <button
-                          key={s.seat_id}
-                          onClick={() => toggleSeat(s.seat_id)}
-                          className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${
-                            selected
-                              ? 'bg-black text-white border-black'
-                              : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'
-                          }`}
-                        >
-                          {s.row_label}{s.seat_number}
-                        </button>
-                      );
+                  <SeatMap
+                    seats={availableSeats.map(s => {
+                      let status: 'available' | 'reserved' | 'selected' | 'locked' = 'reserved';
+                      if (selectedSeatIds.includes(s.seat_id)) status = 'selected';
+                      else if (s.status === 'available') status = 'available';
+                      else if (s.status === 'held') status = 'locked';
+                      return { id: s.seat_id, row: s.row_label, col: s.seat_number, status };
                     })}
-                  </div>
+                    onSeatToggle={toggleSeat}
+                  />
                 </div>
               )
             )}

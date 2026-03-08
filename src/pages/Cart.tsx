@@ -33,8 +33,8 @@ function Cart() {
   // ── Main cart ──────────────────────────────────────────────────────────────
   return (
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
-      <div className="min-h-screen px-32 py-6 bg-white/70 backdrop-blur-md">
-        <div className="relative flex gap-16">
+      <div className="min-h-screen px-4 sm:px-8 md:px-16 lg:px-32 py-6 bg-white/70 backdrop-blur-md">
+        <div className="relative flex flex-col lg:flex-row gap-8 lg:gap-16">
           {/* LEFT SIDE */}
           <div className="flex-1">
             <h1 className="text-3xl font-bold mb-8">YOUR CART</h1>
@@ -101,7 +101,7 @@ function Cart() {
 
           {/* RIGHT SIDE - SUMMARY */}
           {cart.length > 0 && (
-            <div className="w-80 bg-white p-6 shadow-md rounded-lg h-fit mt-17">
+            <div className="w-full lg:w-80 shrink-0 bg-white p-6 shadow-md rounded-lg h-fit mt-4 lg:mt-0">
               <h2 className="text-xl font-bold mb-6">SUMMARY</h2>
 
               {cart.map((item) => (

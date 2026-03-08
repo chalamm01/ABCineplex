@@ -19,7 +19,6 @@ interface SeatMapProps {
   readonly badgeLabel?: string | null;
 }
 
-/** Cinema seat SVG icon matching the screenshot style */
 function SeatIcon({ status }: { status: SeatStatus }) {
   const isReserved = status === 'reserved' || status === 'locked';
   const isSelected = status === 'selected';
@@ -30,7 +29,6 @@ function SeatIcon({ status }: { status: SeatStatus }) {
 
   return (
     <svg viewBox="0 0 40 46" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" aria-hidden="true">
-      {/* Seat back */}
       <rect x="3" y="2" width="30" height="30" rx="4" fill={seatColor} stroke={borderColor} strokeWidth={borderWidth} />
     </svg>
   );
@@ -45,15 +43,16 @@ function SeatButton({ seat, onToggle }: { seat: Seat | undefined; onToggle: () =
     <button
       onClick={onToggle}
       disabled={isDisabled}
+      // aspect-ratio keeps seats proportional as they scale with the grid
       className={[
-        'relative w-7 h-8 sm:w-10 sm:h-11 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded',
+        'relative w-full aspect-[10/11] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded',
         isDisabled ? 'cursor-not-allowed opacity-80' : 'hover:scale-110 cursor-pointer',
         isSelected ? 'scale-110' : '',
       ].join(' ')}
     >
       <SeatIcon status={status} />
       {isSelected && (
-        <span className="absolute inset-0 flex items-center justify-center pb-2 pointer-events-none">
+        <span className="absolute inset-0 flex items-center justify-center pb-[20%] pointer-events-none">
           <Check className="text-white" style={{ width: '45%', height: '45%', strokeWidth: 3 }} />
         </span>
       )}
@@ -77,55 +76,55 @@ export function SeatMap({ seats, onSeatToggle, demandBadge, badgeLabel }: SeatMa
 
   if (seats.length === 0) {
     return (
-      <div className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-1/2">
+      <div className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-full">
         <p className="text-neutral-600 text-center">No seats available for this showtime.</p>
       </div>
     );
   }
 
+  // CSS grid: label | left seats (1fr each) | aisle | right seats (1fr each) | label
+  // Label columns are fixed at 1.25rem; aisle is 0.5rem; seats share remaining space equally.
+  const gridCols = `1.25rem repeat(${leftColumns.length}, 1fr) 0.5rem repeat(${rightColumns.length}, 1fr) 1.25rem`;
+
   return (
-    <div className="bg-neutral-50 rounded-xl p-6 sm:p-8 border border-neutral-200 w-1/2">
+    <div className="bg-neutral-50 rounded-xl p-4 sm:p-8 border border-neutral-200 w-full min-w-0">
       {/* Screen */}
-      <div className="mb-8 sm:mb-12">
-        <div className="w-full h-1.5 bg-gradient-to-r from-neutral-700 via-neutral-700 to-neutral-700 rounded-full mb-2" />
+      <div className="mb-6 sm:mb-10">
+        <div className="w-full h-1.5 bg-neutral-700 rounded-full mb-2" />
         <div className="flex items-center justify-center gap-2">
           <p className="text-center text-neutral-500 text-xs font-semibold tracking-widest uppercase">Screen</p>
           <DemandBadge badge={demandBadge} label={badgeLabel} />
         </div>
       </div>
 
-      {/* Seats Grid */}
-      <div className="space-y-1.5 sm:space-y-2 mb-6 sm:mb-8">
+      {/* Seat rows — grid fills full width, seats scale automatically */}
+      <div className="space-y-1 mb-4 sm:mb-6">
         {rows.map(row => (
-          <div key={row} className="flex items-center gap-1 sm:gap-1.5">
-            <div className="w-6 sm:w-8 text-neutral-500 font-semibold text-center text-xs sm:text-sm">{row}</div>
-            <div className="flex-1 flex justify-center gap-1 sm:gap-1.5">
-              {leftColumns.map(col => (
-                <SeatButton key={col} seat={getSeat(row, col)} onToggle={() => onSeatToggle(row, col)} />
-              ))}
-              {rightColumns.length > 0 && <div className="w-4 sm:w-8" />}
-              {rightColumns.map(col => (
-                <SeatButton key={col} seat={getSeat(row, col)} onToggle={() => onSeatToggle(row, col)} />
-              ))}
-            </div>
-            <div className="w-6 sm:w-8 text-neutral-500 font-semibold text-center text-xs sm:text-sm">{row}</div>
+          <div key={row} className="grid items-center gap-x-0.5" style={{ gridTemplateColumns: gridCols }}>
+            <div className="text-neutral-500 font-semibold text-center text-[0.6rem] leading-none">{row}</div>
+            {leftColumns.map(col => (
+              <SeatButton key={col} seat={getSeat(row, col)} onToggle={() => onSeatToggle(row, col)} />
+            ))}
+            <div /> {/* aisle */}
+            {rightColumns.map(col => (
+              <SeatButton key={col} seat={getSeat(row, col)} onToggle={() => onSeatToggle(row, col)} />
+            ))}
+            <div className="text-neutral-500 font-semibold text-center text-[0.6rem] leading-none">{row}</div>
           </div>
         ))}
       </div>
 
-      {/* Seat Numbers */}
-      <div className="flex items-center gap-1 sm:gap-1.5 mb-6 sm:mb-8">
-        <div className="w-6 sm:w-8" />
-        <div className="flex-1 flex justify-center gap-1 sm:gap-1.5">
-          {leftColumns.map(col => (
-            <div key={col} className="w-7 sm:w-10 text-center text-neutral-400 text-xs font-medium">{col}</div>
-          ))}
-          {rightColumns.length > 0 && <div className="w-4 sm:w-8" />}
-          {rightColumns.map(col => (
-            <div key={col} className="w-7 sm:w-10 text-center text-neutral-400 text-xs font-medium">{col}</div>
-          ))}
-        </div>
-        <div className="w-6 sm:w-8" />
+      {/* Column numbers row */}
+      <div className="grid items-center gap-x-0.5 mb-6 sm:mb-8" style={{ gridTemplateColumns: gridCols }}>
+        <div />
+        {leftColumns.map(col => (
+          <div key={col} className="text-center text-neutral-400 text-[0.55rem] font-medium leading-none">{col}</div>
+        ))}
+        <div />
+        {rightColumns.map(col => (
+          <div key={col} className="text-center text-neutral-400 text-[0.55rem] font-medium leading-none">{col}</div>
+        ))}
+        <div />
       </div>
 
       {/* Legend */}
