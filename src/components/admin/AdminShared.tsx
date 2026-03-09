@@ -103,6 +103,20 @@ export function DeactivateButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+export function ActivateButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className="h-6 px-2 text-xs text-green-600 border-green-300 hover:bg-green-50"
+      onClick={onClick}
+    >
+      Activate
+    </Button>
+  );
+}
+
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 interface ModalProps {

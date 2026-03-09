@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +49,13 @@ export function WriteReviewModal({
   const [reviewText, setReviewText] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Prevent background scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
@@ -68,13 +76,14 @@ export function WriteReviewModal({
     }
   };
 
-  return (
+  // Render via portal so backdrop-blur on parent doesn't break fixed positioning
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/55"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 relative"
+        className="bg-white w-full sm:max-w-md sm:mx-4 sm:rounded-2xl rounded-t-2xl shadow-2xl p-5 sm:p-6 relative max-h-[90dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -84,7 +93,7 @@ export function WriteReviewModal({
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-xl font-bold mb-1">{movieTitle ?? "Write a Review"}</h2>
+        <h2 className="text-lg sm:text-xl font-bold mb-1 pr-8">{movieTitle ?? "Write a Review"}</h2>
         {showtimeLabel && (
           <p className="text-sm text-gray-500 mb-4">You watched: {showtimeLabel}</p>
         )}
@@ -105,12 +114,13 @@ export function WriteReviewModal({
           <Button
             onClick={handleSubmit}
             disabled={submitting || rating < 1}
-            className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 rounded-full"
+            className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 rounded-full w-full sm:w-auto"
           >
             {submitting ? "Submitting…" : "Submit Review"}
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

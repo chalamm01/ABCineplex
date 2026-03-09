@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { BookingCard } from "@/components/booking/booking-card";
 import { bookingsApi, showtimesApi, moviesApi, reviewApi } from "@/services/api";
 import { Spinner } from "@/components/ui/spinner";
@@ -66,6 +67,14 @@ export default function BookingHistoryPage() {
   //     alert(err instanceof Error ? err.message : "Failed to cancel booking.");
   //   }
   // };
+
+  // Scroll lock when change-showtime dialog is open
+  useEffect(() => {
+    if (changingBooking) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [changingBooking]);
 
   const openChangeShowtime = async (b: BookingSummary) => {
     setChangingBooking(b);
@@ -192,10 +201,10 @@ export default function BookingHistoryPage() {
         )}
       </main>
 
-      {/* Change Showtime Dialog */}
-      {changingBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-4xl shadow-2xl space-y-4 overflow-y-auto max-h-[90vh]">
+      {/* Change Showtime Dialog — rendered via portal so backdrop-blur parent doesn't break fixed positioning */}
+      {changingBooking && createPortal(
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60">
+          <div className="bg-white w-full sm:max-w-2xl sm:mx-4 sm:rounded-2xl rounded-t-2xl p-5 sm:p-8 shadow-2xl space-y-4 overflow-y-auto max-h-[90dvh]">
             <h2 className="text-xl font-bold">
               Change Showtime {changeStep === 2 && '— Pick Seats'}
             </h2>
@@ -317,7 +326,7 @@ export default function BookingHistoryPage() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }

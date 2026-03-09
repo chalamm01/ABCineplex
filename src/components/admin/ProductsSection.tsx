@@ -3,9 +3,9 @@ import { productsApi } from '@/services/api';
 import type { Product, ProductCategory } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
 import {
-  Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
+  Modal, Field, ModalActions, SectionHeader, ActiveIcon,
   inputCls,
-  EditButton, DeactivateButton,
+  EditButton, DeactivateButton, ActivateButton,
 } from './AdminShared';
 
 const emptyProduct: Omit<Product, 'id'> = {
@@ -13,6 +13,8 @@ const emptyProduct: Omit<Product, 'id'> = {
 };
 
 type ModalMode = 'add' | 'edit' | null;
+type SortKey = 'name' | 'price' | 'category';
+type SortDir = 'asc' | 'desc';
 
 export default function ProductsSection() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -24,11 +26,15 @@ export default function ProductsSection() {
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
   const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
 
   useEffect(() => {
     setLoading(true);
-    // Admin fetches ALL products (including out-of-stock)
     Promise.all([productsApi.getAllProducts(), productsApi.getCategories()])
       .then(([prods, cats]) => { setProducts(prods); setCategories(cats); })
       .catch(() => {})
@@ -57,10 +63,11 @@ export default function ProductsSection() {
     setError('');
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Deactivate this product? It will be hidden from the store.')) return;
+  async function handleToggleActive(p: Product) {
+    const action = p.is_active ? 'Deactivate' : 'Activate';
+    if (!confirm(`${action} "${p.name}"?`)) return;
     try {
-      await productsApi.deleteProduct(id);
+      await productsApi.updateProduct(p.id, { is_active: !p.is_active });
       refresh();
     } catch (e: unknown) {
       alert(String(e));
@@ -86,22 +93,96 @@ export default function ProductsSection() {
   const catName = (id: string) => categories.find(c => c.id === id)?.name ?? id;
   const f = (field: keyof Omit<Product, 'id'>, value: unknown) => setForm(prev => ({ ...prev, [field]: value }));
 
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  }
+
+  const displayed = products
+    .filter(p => {
+      if (filterCategory && p.category_id !== filterCategory) return false;
+      if (filterStatus === 'active' && !p.is_active) return false;
+      if (filterStatus === 'inactive' && p.is_active) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'name') cmp = a.name.localeCompare(b.name);
+      else if (sortKey === 'price') cmp = Number(a.price) - Number(b.price);
+      else if (sortKey === 'category') cmp = catName(a.category_id).localeCompare(catName(b.category_id));
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+  function SortHeader({ label, sk }: { label: string; sk: SortKey }) {
+    const active = sortKey === sk;
+    return (
+      <button
+        type="button"
+        onClick={() => toggleSort(sk)}
+        className={`flex items-center gap-1 font-semibold uppercase tracking-wide text-xs hover:text-neutral-900 transition-colors ${active ? 'text-neutral-900' : 'text-neutral-500'}`}
+      >
+        {label}
+        <span className="text-[10px]">{active ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}</span>
+      </button>
+    );
+  }
+
   return (
     <div>
-      <SectionHeader title="Products" count={products.length} onAdd={openAdd} addLabel="+ Add Product" />
+      <SectionHeader title="Products" count={displayed.length} onAdd={openAdd} addLabel="+ Add Product" />
+
+      {/* Filters */}
+      <div className="flex items-center flex-wrap gap-2 mb-3">
+        <select
+          className="border border-neutral-200 rounded-lg px-2 py-1.5 text-xs text-neutral-700 bg-white focus:outline-none focus:border-red-400"
+          value={filterCategory}
+          onChange={e => setFilterCategory(e.target.value)}
+        >
+          <option value="">All Categories</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+
+        <select
+          className="border border-neutral-200 rounded-lg px-2 py-1.5 text-xs text-neutral-700 bg-white focus:outline-none focus:border-red-400"
+          value={filterStatus}
+          onChange={e => setFilterStatus(e.target.value as typeof filterStatus)}
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active only</option>
+          <option value="inactive">Inactive only</option>
+        </select>
+
+        {(filterCategory || filterStatus !== 'all') && (
+          <button
+            type="button"
+            className="text-xs text-neutral-400 hover:text-neutral-700 underline"
+            onClick={() => { setFilterCategory(''); setFilterStatus('all'); }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       {loading ? (
         <div className="flex justify-center py-8"><Spinner className="text-neutral-400 w-6 h-6" /></div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-neutral-200">
           <table className="w-full text-sm text-left">
-            <TableHead cols={['Name', 'Category', 'Price (฿)', 'In Stock', 'Actions']} />
+            <thead className="bg-neutral-50 text-neutral-500">
+              <tr>
+                <th className="px-3 py-2.5"><SortHeader label="Name" sk="name" /></th>
+                <th className="px-3 py-2.5"><SortHeader label="Category" sk="category" /></th>
+                <th className="px-3 py-2.5"><SortHeader label="Price (฿)" sk="price" /></th>
+                <th className="px-3 py-2.5 font-semibold uppercase tracking-wide text-xs">Active</th>
+                <th className="px-3 py-2.5 font-semibold uppercase tracking-wide text-xs">Actions</th>
+              </tr>
+            </thead>
             <tbody>
-              {products.length === 0 && (
+              {displayed.length === 0 && (
                 <tr><td colSpan={5} className="px-3 py-6 text-neutral-400 text-center">No products found.</td></tr>
               )}
-              {products.map(p => (
-                <tr key={p.id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
+              {displayed.map(p => (
+                <tr key={p.id} className={`border-t border-neutral-100 hover:bg-neutral-50 transition-colors ${!p.is_active ? 'opacity-60' : ''}`}>
                   <td className="px-3 py-2.5 text-neutral-900 font-medium">{p.name}</td>
                   <td className="px-3 py-2.5 text-neutral-600">{catName(p.category_id)}</td>
                   <td className="px-3 py-2.5 text-neutral-600">฿{p.price}</td>
@@ -109,7 +190,10 @@ export default function ProductsSection() {
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">
                       <EditButton onClick={() => openEdit(p)} />
-                      <DeactivateButton onClick={() => handleDelete(p.id)} />
+                      {p.is_active
+                        ? <DeactivateButton onClick={() => handleToggleActive(p)} />
+                        : <ActivateButton onClick={() => handleToggleActive(p)} />
+                      }
                     </div>
                   </td>
                 </tr>

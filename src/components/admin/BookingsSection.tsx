@@ -2,7 +2,20 @@ import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '@/services/api';
 import type { Movie } from '@/types/api';
 import { Spinner } from '@/components/ui/spinner';
-import { SectionHeader, inputCls, fmtDT, useSort, SortableTableHead } from './AdminShared';
+import { SectionHeader, inputCls, useSort, SortableTableHead } from './AdminShared';
+
+function splitDT(raw?: string | null): { date: string; time: string } {
+  if (!raw) return { date: '—', time: '' };
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) {
+    const parts = raw.replace('T', ' ').slice(0, 16).split(' ');
+    return { date: parts[0] ?? '—', time: parts[1] ?? '' };
+  }
+  return {
+    date: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    time: d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
+  };
+}
 
 // Format seats for display - handles both string and object formats
 const formatSeats = (seats?: Array<{ seat_id?: number; row_label?: string; seat_number?: number } | string>) => {
@@ -181,11 +194,18 @@ export default function BookingsSection() {
                   <td className="px-3 py-2.5 text-neutral-600 text-xs">
                     {b.phone ?? <span className="text-neutral-400">—</span>}
                   </td>
-                  <td className="px-3 py-2.5 text-neutral-900 font-medium">
-                    {b.movie_title ?? <span className="text-neutral-400">—</span>}
+                  <td className="px-3 py-2.5 max-w-40">
+                    <p className="text-neutral-900 font-medium text-xs truncate" title={b.movie_title ?? undefined}>
+                      {b.movie_title ?? <span className="text-neutral-400">—</span>}
+                    </p>
                   </td>
-                  <td className="px-3 py-2.5 text-neutral-600 whitespace-nowrap text-xs">
-                    {b.showtime_start && b.showtime_end ? `${fmtDT(b.showtime_start)} - ${fmtDT(b.showtime_end)}` : '—'}
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    {(() => { const { date, time } = splitDT(b.showtime_start); return (
+                      <>
+                        <p className="text-neutral-900 text-xs font-medium">{date}</p>
+                        <p className="text-neutral-500 text-xs">{time}</p>
+                      </>
+                    ); })()}
                   </td>
                   <td className="px-3 py-2.5 text-neutral-600 text-xs">
                     {b.screen_name ?? <span className="text-neutral-400">—</span>}
@@ -203,8 +223,13 @@ export default function BookingsSection() {
                   <td className="px-3 py-2.5 text-neutral-500 text-xs capitalize">
                     {b.payment_method?.replace('mock_', '') ?? '—'}
                   </td>
-                  <td className="px-3 py-2.5 text-neutral-500 whitespace-nowrap text-xs">
-                    {fmtDT(b.paid_at)}
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    {(() => { const { date, time } = splitDT(b.paid_at); return (
+                      <>
+                        <p className="text-neutral-500 text-xs">{date}</p>
+                        <p className="text-neutral-400 text-xs">{time}</p>
+                      </>
+                    ); })()}
                   </td>
                 </tr>
               ))}

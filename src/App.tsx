@@ -1,4 +1,5 @@
 import "./App.css";
+import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
@@ -20,33 +21,46 @@ import SetPassword from "./pages/SetPassword.tsx";
 import GuestBooking from "./pages/GuestBooking.tsx";
 import OrderHistory from "./pages/OrderHistory.tsx";
 
-function App() {
+function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <div className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/homepage" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/snacks" element={<Snacks />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/movies" element={<Movies />} />
-          <Route path="/movie/:id" element={<MovieBooking />} />
-          <Route path="/payment" element={<Payment />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/reviews" element={<Reviews />} />
-          <Route path="/bookings" element={<BookingHistoryPage />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/setup-password" element={<SetPassword />} />
-          <Route path="/booking/guest" element={<GuestBooking />} />
-          <Route path="/orders" element={<OrderHistory />} />
-        </Routes>
-      </div>
+      <div className="flex-1">{children}</div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      {/* Admin — full-screen, no public navbar */}
+      <Route path="/admin" element={<Admin />} />
+
+      {/* Public site — with navbar */}
+      <Route path="*" element={
+        <PublicLayout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/homepage" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/snacks" element={<Snacks />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/movies" element={<Movies />} />
+            <Route path="/movie/:id" element={<MovieBooking />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/reviews" element={<Reviews />} />
+            <Route path="/bookings" element={<BookingHistoryPage />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/setup-password" element={<SetPassword />} />
+            <Route path="/booking/guest" element={<GuestBooking />} />
+            <Route path="/orders" element={<OrderHistory />} />
+          </Routes>
+        </PublicLayout>
+      } />
+    </Routes>
   );
 }
 

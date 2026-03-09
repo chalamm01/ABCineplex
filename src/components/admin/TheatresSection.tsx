@@ -177,7 +177,6 @@ export default function TheatresSection() {
                   <td className="px-3 py-2.5 text-neutral-600">{t.total_seats}</td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
-                      <EditButton onClick={() => openEdit(t)} />
                       <button
                         className="text-xs px-2 py-1 rounded font-medium transition-colors border bg-neutral-50 text-neutral-700 hover:bg-neutral-100 border-neutral-200"
                         onClick={() => openSeatMap(t)}

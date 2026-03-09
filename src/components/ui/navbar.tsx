@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
-  Home,
   Film,
   Popcorn,
   Users,
@@ -18,36 +17,29 @@ import {
 import { authApi } from '@/services/api';
 import type { UserProfile } from '@/types/api';
 
-interface HeaderProps {
-  readonly activeNav?: string;
-}
-
-export function Header({ activeNav = 'home' }: HeaderProps) {
+export function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const navItems = [
-    { id: 'homepage', label: 'Home', icon: Home },
-    { id: 'movies', label: 'Movies', icon: Film },
-    { id: 'snacks', label: 'Snacks', icon: Popcorn },
-    { id: 'community', label: 'Community', icon: Users },
+    { path: '/',          label: 'Home',      icon: null },
+    { path: '/movies',    label: 'Movies',    icon: Film },
+    { path: '/snacks',    label: 'Snacks',    icon: Popcorn },
+    { path: '/community', label: 'Community', icon: Users },
   ];
 
-  // Logic to sync auth state across the app without refresh
   const syncAuth = () => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     setIsAuthenticated(!!token);
     if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (err) {
-        console.error('Failed to parse user:', err);
-      }
+      try { setUser(JSON.parse(storedUser)); }
+      catch { setUser(null); }
     } else {
       setUser(null);
     }
@@ -73,19 +65,22 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => { setIsMobileMenuOpen(false); }, [pathname]);
+
   const getDisplayName = () => {
     if (user?.user_name) return user.user_name;
     if (user?.email) return user.email.split('@')[0];
     return 'User';
   };
 
-  const getInitials = () => {
-    const name = getDisplayName();
-    return name.slice(0, 2).toUpperCase();
-  };
+  const getInitials = () => getDisplayName().slice(0, 2).toUpperCase();
+
+  const isActive = (path: string) =>
+    path === '/' ? pathname === '/' || pathname === '/homepage' : pathname.startsWith(path);
 
   const handleSignOut = async () => {
-    try { await authApi.logout(); } catch (err) { console.error(err); }
+    try { await authApi.logout(); } catch { /* ignore */ }
     finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -96,34 +91,39 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-neutral-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold tracking-tighter no-underline text-black">
-            CINEPLEX
+    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-neutral-200 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-14">
+
+          {/* Brand */}
+          <Link to="/" className="flex items-center gap-0.5 no-underline select-none">
+            <span className="text-lg font-black tracking-tighter text-red-600">ABC</span>
+            <span className="text-lg font-black tracking-tighter text-neutral-900">INEPLEX</span>
           </Link>
 
-          {/* Desktop nav links — hidden on mobile */}
-          <div className="hidden md:flex items-center gap-8">
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const active = isActive(item.path);
               return (
                 <Link
-                  key={item.id}
-                  to={`/${item.id}`}
-                  className={`flex items-center gap-2 no-underline transition-colors ${
-                    activeNav === item.id ? 'text-black font-semibold' : 'text-neutral-500 hover:text-black'
+                  key={item.path}
+                  to={item.path}
+                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium no-underline transition-colors ${
+                    active ? 'text-neutral-900 bg-neutral-100' : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{item.label}</span>
+                  {Icon && <Icon className="w-3.5 h-3.5" />}
+                  {item.label}
                 </Link>
               );
             })}
           </div>
 
+          {/* Right side */}
           <div className="flex items-center gap-2">
-            {/* Hamburger — visible only on mobile */}
+            {/* Hamburger */}
             <button
               className="md:hidden p-2 rounded-lg hover:bg-neutral-100 transition-colors"
               onClick={() => setIsMobileMenuOpen(prev => !prev)}
@@ -132,53 +132,72 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            {/* User Profile */}
+            {/* User menu */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-3 p-1 rounded-full hover:bg-neutral-50 transition-all group"
+                className="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-full hover:bg-neutral-100 transition-colors"
               >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                  isAuthenticated ? 'bg-neutral-900 text-white' : 'bg-neutral-200 text-neutral-500'
+                }`}>
+                  {isAuthenticated ? getInitials() : <User className="w-4 h-4" />}
+                </div>
                 {isAuthenticated && user && (
-                  <div className="hidden md:flex flex-col items-end mr-1">
-                    <span className="text-sm font-bold text-black leading-none">{getDisplayName()}</span>
-                    <span className="text-[11px] text-neutral-400 leading-tight mt-1">{user.email}</span>
+                  <div className="hidden md:block text-left leading-none">
+                    <p className="text-xs font-semibold text-neutral-900">{getDisplayName()}</p>
+                    {(user.loyalty_points ?? 0) > 0 && (
+                      <p className="text-[10px] text-amber-600 font-medium mt-0.5">{user.loyalty_points} pts</p>
+                    )}
                   </div>
                 )}
-
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                  isAuthenticated ? 'bg-black text-white shadow-md' : 'bg-neutral-100 text-neutral-600'
-                }`}>
-                  {isAuthenticated ? <span className="text-xs font-bold">{getInitials()}</span> : <User className="w-5 h-5" />}
-                </div>
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-neutral-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-neutral-100 z-50 overflow-hidden">
                   {isAuthenticated ? (
                     <>
-                      <button onClick={() => { navigate('/profile'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                        <User className="w-4 h-4" /> <span className="text-sm font-medium">My Profile</span>
-                      </button>
-                      <button onClick={() => { navigate('/bookings'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                        <Ticket className="w-4 h-4" /> <span className="text-sm font-medium">My Bookings</span>
-                      </button>
-                      <button onClick={() => { navigate('/reviews'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                        <Star className="w-4 h-4" /> <span className="text-sm font-medium">My Reviews</span>
-                      </button>
-                      <button onClick={() => { navigate('/orders'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                        <ShoppingBag className="w-4 h-4" /> <span className="text-sm font-medium">My Orders</span>
-                      </button>
-                      <button onClick={handleSignOut} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors">
-                        <LogOut className="w-4 h-4" /> <span className="text-sm font-medium">Sign Out</span>
-                      </button>
+                      {user && (
+                        <div className="px-4 py-3 border-b border-neutral-100">
+                          <p className="text-xs font-semibold text-neutral-900 truncate">{getDisplayName()}</p>
+                          <p className="text-[11px] text-neutral-400 truncate">{user.email}</p>
+                          {(user.loyalty_points ?? 0) > 0 && (
+                            <p className="text-[11px] text-amber-600 font-medium mt-1">{user.loyalty_points} loyalty pts</p>
+                          )}
+                        </div>
+                      )}
+                      {[
+                        { icon: User,        label: 'My Profile',  path: '/profile' },
+                        { icon: Ticket,      label: 'My Bookings', path: '/bookings' },
+                        { icon: Star,        label: 'My Reviews',  path: '/reviews' },
+                        { icon: ShoppingBag, label: 'My Orders',   path: '/orders' },
+                      ].map(({ icon: Icon, label, path }) => (
+                        <button
+                          key={path}
+                          onClick={() => { navigate(path); setIsDropdownOpen(false); }}
+                          className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-neutral-50 text-neutral-700 text-sm"
+                        >
+                          <Icon className="w-4 h-4 text-neutral-400" />
+                          {label}
+                        </button>
+                      ))}
+                      <div className="border-t border-neutral-100">
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-red-50 text-red-600 text-sm"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => { navigate('/login'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 border-b border-neutral-100 text-neutral-700">
-                        <LogIn className="w-4 h-4" /> <span className="text-sm font-medium">Sign In</span>
+                      <button onClick={() => { navigate('/login'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 text-neutral-700 text-sm border-b border-neutral-100">
+                        <LogIn className="w-4 h-4 text-neutral-400" /> Sign In
                       </button>
-                      <button onClick={() => { navigate('/register'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 text-neutral-700">
-                        <UserPlus className="w-4 h-4" /> <span className="text-sm font-medium">Register</span>
+                      <button onClick={() => { navigate('/register'); setIsDropdownOpen(false); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-neutral-50 text-neutral-700 text-sm">
+                        <UserPlus className="w-4 h-4 text-neutral-400" /> Register
                       </button>
                     </>
                   )}
@@ -189,27 +208,46 @@ export function Header({ activeNav = 'home' }: HeaderProps) {
         </div>
       </div>
 
-      {/* Mobile menu panel */}
+      {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-neutral-100 py-2">
+        <div className="md:hidden border-t border-neutral-100 bg-white">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const active = isActive(item.path);
             return (
               <Link
-                key={item.id}
-                to={`/${item.id}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors no-underline ${
-                  activeNav === item.id
-                    ? 'text-black bg-neutral-50'
-                    : 'text-neutral-600 hover:text-black hover:bg-neutral-50'
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-3 px-5 py-3 text-sm font-medium no-underline transition-colors ${
+                  active ? 'text-neutral-900 bg-neutral-50' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                {Icon && <Icon className="w-4 h-4" />}
                 {item.label}
               </Link>
             );
           })}
+          {isAuthenticated ? (
+            <div className="border-t border-neutral-100 px-5 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-neutral-900">{getDisplayName()}</p>
+                {(user?.loyalty_points ?? 0) > 0 && (
+                  <p className="text-xs text-amber-600">{user?.loyalty_points} pts</p>
+                )}
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="text-sm text-red-500 font-medium flex items-center gap-1.5"
+              >
+                <LogOut className="w-4 h-4" /> Sign out
+              </button>
+            </div>
+          ) : (
+            <div className="border-t border-neutral-100 px-5 py-3 flex gap-3">
+              <button onClick={() => navigate('/login')} className="text-sm font-medium text-neutral-700">Sign In</button>
+              <button onClick={() => navigate('/register')} className="text-sm font-semibold text-white bg-neutral-900 px-4 py-1.5 rounded-full">Register</button>
+            </div>
+          )}
         </div>
       )}
     </nav>

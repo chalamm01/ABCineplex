@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Ticket, Star, CalendarClock } from "lucide-react";
 import { MovieTicketModal } from "./ticket-modal";
 import { WriteReviewModal } from "@/components/community/WriteReviewModal";
@@ -32,83 +30,83 @@ export function BookingCard({
 
   return (
     <>
-      <Card className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="flex gap-4 content-between">
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md hover:shadow-lg transition-shadow flex">
+        {/* Poster */}
+        <div className="relative w-28 sm:w-36 shrink-0 overflow-hidden">
+          <img
+            src={booking.poster_url || '/assets/images/placeholder.png'}
+            alt={booking.movie_title}
+            className="h-full w-full object-cover"
+          />
+          {/* gradient overlay at bottom of poster */}
+          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent" />
+        </div>
 
-          {/* Poster */}
-          <div className="relative aspect-2/3 max-h-75 max-w-50 shrink-0 overflow-hidden rounded-xl">
-            <img
-              src={booking.poster_url || '/assets/images/placeholder.png'}
-              alt={booking.movie_title}
-              className="h-full w-full object-cover"
-            />
+        {/* Content */}
+        <div className="flex flex-col justify-between flex-1 min-w-0 p-4 sm:p-5">
+          {/* Title + venue */}
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-xl font-extrabold leading-tight text-gray-900 line-clamp-2 tracking-tight">
+              {booking.movie_title}
+            </h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-gray-400 font-medium truncate">{booking.screen_name}</p>
           </div>
 
-          <div className="flex flex-col content-between w-full">
+          {/* Date / Time / Seat row */}
+          <div className="mt-3 grid grid-cols-3 gap-1 text-center bg-gray-50 rounded-xl px-2 py-2.5">
             <div>
-              <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-gray-900 truncate">
-                {booking.movie_title}
-              </h1>
-              <p className="mt-0.5 text-lg font-medium text-gray-400">{booking.screen_name}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Date</p>
+              <p className="text-xs sm:text-sm font-bold text-gray-800 mt-0.5">{formatDate(booking.showtime_start)}</p>
             </div>
-
-            <div className="mt-4 flex justify-between">
-              <div>
-                <p className="text-lg font-medium uppercase text-gray-400">Date</p>
-                <p className="text-xl font-bold text-gray-900">{formatDate(booking.showtime_start)}</p>
-              </div>
-              <div>
-                <p className="text-lg font-medium uppercase text-gray-400">Show Time</p>
-                <p className="text-xl font-bold text-gray-900">{formatTime(booking.showtime_start)}</p>
-              </div>
+            <div className="border-x border-gray-200">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Time</p>
+              <p className="text-xs sm:text-sm font-bold text-gray-800 mt-0.5">{formatTime(booking.showtime_start)}</p>
             </div>
-
-            <Separator className="my-3" />
-
             <div>
-              <p className="text-lg font-medium uppercase text-gray-400">Seat</p>
-              <p className="text-xl font-bold text-gray-900 mb-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Seat</p>
+              <p className="text-xs sm:text-sm font-bold text-gray-800 mt-0.5 truncate px-1">
                 {Array.isArray(booking.seats) ? booking.seats.join(', ') : booking.seats}
               </p>
-
-              <div className="flex w-full justify-start gap-2 flex-wrap">
-                <Button
-                  className="rounded-2xl bg-gray-900 text-white hover:bg-gray-700"
-                  size="sm"
-                  onClick={() => setTicketOpen(true)}
-                >
-                  <Ticket className="mr-2 h-4 w-4" />
-                  View Ticket
-                </Button>
-
-                {onChangeShowtime && (
-                  <Button
-                    variant="outline"
-                    className="rounded-2xl border-blue-300 text-blue-600 hover:bg-blue-50"
-                    size="sm"
-                    onClick={onChangeShowtime}
-                  >
-                    <CalendarClock className="mr-2 h-4 w-4" />
-                    Change Showtime
-                  </Button>
-                )}
-
-                {canReview && movieId && bookingId && (
-                  <Button
-                    variant="outline"
-                    className="rounded-2xl border-amber-300 text-amber-600 hover:bg-amber-50"
-                    size="sm"
-                    onClick={() => setReviewOpen(true)}
-                  >
-                    <Star className="mr-2 h-4 w-4" />
-                    Write a Review
-                  </Button>
-                )}
-              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Actions */}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              className="rounded-full bg-gray-900 text-white hover:bg-gray-700 text-xs h-8 px-4"
+              size="sm"
+              onClick={() => setTicketOpen(true)}
+            >
+              <Ticket className="mr-1.5 h-3 w-3" />
+              View Ticket
+            </Button>
+
+            {onChangeShowtime && (
+              <Button
+                variant="outline"
+                className="rounded-full border-blue-200 text-blue-600 hover:bg-blue-50 text-xs h-8 px-4"
+                size="sm"
+                onClick={onChangeShowtime}
+              >
+                <CalendarClock className="mr-1.5 h-3 w-3" />
+                Change
+              </Button>
+            )}
+
+            {canReview && movieId && bookingId && (
+              <Button
+                variant="outline"
+                className="rounded-full border-amber-200 text-amber-600 hover:bg-amber-50 text-xs h-8 px-4"
+                size="sm"
+                onClick={() => setReviewOpen(true)}
+              >
+                <Star className="mr-1.5 h-3 w-3" />
+                Review
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
 
       <MovieTicketModal
         open={ticketOpen}

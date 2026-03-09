@@ -17,12 +17,25 @@ const emptyShowtime: ShowtimeCreate = {
 
 type ModalMode = 'add' | 'edit' | null;
 
+/** Returns { date: "1 Mar 2026", time: "14:00" } */
+function splitDT(raw?: string | null): { date: string; time: string } {
+  if (!raw) return { date: '—', time: '' };
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) {
+    const parts = raw.replace('T', ' ').slice(0, 16).split(' ');
+    return { date: parts[0] ?? '—', time: parts[1] ?? '' };
+  }
+  return {
+    date: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    time: d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
+  };
+}
+
 function fmtTime(dt?: string) {
   if (!dt) return '—';
-  try {
-    const d = new Date(dt);
-    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-  } catch { return dt; }
+  const d = new Date(dt);
+  if (isNaN(d.getTime())) return dt.replace('T', ' ').slice(11, 16);
+  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 export default function ShowtimesSection() {
@@ -226,39 +239,52 @@ export default function ShowtimesSection() {
               <SortableTableHead
                 sort={sort} onSort={toggle}
                 cols={[
-                  { label: 'ID',          key: 'id' },
-                  { label: 'Movie',       key: 'movie_id' },
-                  { label: 'Theatre',     key: 'theatre_id' },
-                  { label: 'Start',       key: 'start_time' },
-                  { label: 'End',         key: 'end_time' },
-                  { label: 'Audio',       key: 'audio_language' },
-                  { label: 'Subtitles',   key: 'subtitle_language' },
-                  { label: 'Base (฿)',    key: 'base_price' },
-                  { label: 'Student -฿', key: 'student_discount_baht' },
-                  { label: 'Member -฿',  key: 'member_discount_baht' },
-                  { label: 'Actions',    key: '' },
+                  { label: 'Movie',      key: 'movie_id' },
+                  { label: 'Theatre',    key: 'theatre_id' },
+                  { label: 'Start',      key: 'start_time' },
+                  { label: 'End',        key: 'end_time' },
+                  { label: 'Languages',  key: 'audio_language' },
+                  { label: 'Price (฿)',  key: 'base_price' },
+                  { label: 'Discounts',  key: 'student_discount_baht' },
+                  { label: 'Actions',   key: '' },
                 ]}
               />
               <tbody>
                 {sortedShowtimes.length === 0 && (
                   <tr>
-                    <td colSpan={12} className="px-3 py-6 text-neutral-400 text-center">
+                    <td colSpan={8} className="px-3 py-6 text-neutral-400 text-center">
                       No showtimes found.
                     </td>
                   </tr>
                 )}
-                {sortedShowtimes.map(s => (
+                {sortedShowtimes.map(s => {
+                  const start = splitDT(s.start_time);
+                  const movieTitle = movies.find(m => m.id === s.movie_id)?.title ?? `Movie ${s.movie_id}`;
+                  const theatreName = theatres.find(t => t.id === s.theatre_id)?.name ?? `Theatre ${s.theatre_id}`;
+                  return (
                   <tr key={s.id} className="border-t border-neutral-100 hover:bg-neutral-50 transition-colors">
-                    <td className="px-3 py-2.5 text-neutral-400">{s.id}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{movies.find(m => m.id === s.movie_id)?.title ?? `Movie ${s.movie_id}`}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{theatres.find(t => t.id === s.theatre_id)?.name ?? `Theatre ${s.theatre_id}`}</td>
-                    <td className="px-3 py-2.5 text-neutral-900 font-medium">{fmtDT(s.start_time)}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{fmtTime(s.end_time)}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{s.audio_language ?? '—'}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{s.subtitle_language ?? '—'}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{s.base_price}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{s.student_discount_baht == null ? '—' : `-฿${s.student_discount_baht}`}</td>
-                    <td className="px-3 py-2.5 text-neutral-600">{s.member_discount_baht == null ? '—' : `-฿${s.member_discount_baht}`}</td>
+                    <td className="px-3 py-2.5 max-w-[180px]">
+                      <p className="text-neutral-900 font-medium truncate" title={movieTitle}>{movieTitle}</p>
+                    </td>
+                    <td className="px-3 py-2.5 max-w-[140px]">
+                      <p className="text-neutral-600 truncate" title={theatreName}>{theatreName}</p>
+                    </td>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <p className="text-neutral-900 font-medium text-xs">{start.date}</p>
+                      <p className="text-neutral-500 text-xs">{start.time}</p>
+                    </td>
+                    <td className="px-3 py-2.5 text-neutral-500 text-xs whitespace-nowrap">{fmtTime(s.end_time)}</td>
+                    <td className="px-3 py-2.5">
+                      <p className="text-neutral-600 text-xs">{s.audio_language || '—'}</p>
+                      {s.subtitle_language && (
+                        <p className="text-neutral-400 text-xs">sub: {s.subtitle_language}</p>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-neutral-700 font-medium text-xs">฿{s.base_price}</td>
+                    <td className="px-3 py-2.5">
+                      <p className="text-neutral-500 text-xs">Stu: {s.student_discount_baht == null ? '—' : `-฿${s.student_discount_baht}`}</p>
+                      <p className="text-neutral-500 text-xs">Mem: {s.member_discount_baht == null ? '—' : `-฿${s.member_discount_baht}`}</p>
+                    </td>
                     <td className="px-3 py-2">
                       <div className="flex gap-1">
                         <EditButton onClick={() => openEdit(s)} />
@@ -267,7 +293,8 @@ export default function ShowtimesSection() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
