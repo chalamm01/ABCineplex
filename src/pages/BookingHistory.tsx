@@ -146,7 +146,7 @@ export default function BookingHistoryPage() {
     b.booking_status === "confirmed" &&
     (b.change_count ?? 0) < 1 &&
     !!b.showtime_start && new Date(b.showtime_start).getTime() - Date.now() > 30 * 60 * 1000;
- sd
+
   return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <main className="min-h-screen px-4 sm:px-8 md:px-16 lg:px-32 py-6 bg-white/70 backdrop-blur-md">
