@@ -468,7 +468,7 @@ export const productsApi = {
     fetchPublic<Product[]>('GET', `/products?${categoryId ? `category_id=${categoryId}&` : ''}limit=${limit}&offset=${offset}`),
 
   getAllProducts: (limit: number = 50, offset: number = 0): Promise<Product[]> =>
-    productsApi.listProducts(undefined, limit, offset),
+    fetchAuth<Product[]>('GET', `/products?limit=${limit}&offset=${offset}&include_inactive=true`),
 
   getProduct: (productId: string): Promise<Product> =>
     fetchPublic<Product>('GET', `/products/${productId}`),

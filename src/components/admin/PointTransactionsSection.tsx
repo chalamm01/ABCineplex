@@ -13,17 +13,16 @@ export function PointTransactionsSection() {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterUserId, setFilterUserId] = useState('');
+  const [filterUser, setFilterUser] = useState('');
   const [filterReason, setFilterReason] = useState('');
 
-  const fetchTransactions = useCallback(async (offset: number, userId: string, reason: string) => {
+  const fetchTransactions = useCallback(async (offset: number, reason: string) => {
     try {
       setLoading(true);
       setError(null);
       const res = await adminApi.listPointTransactions({
         limit: PAGE_SIZE,
         offset,
-        user_id: userId || undefined,
         reason: reason || undefined,
       });
       setTransactions(res.transactions);
@@ -36,14 +35,22 @@ export function PointTransactionsSection() {
   }, []);
 
   useEffect(() => {
-    fetchTransactions(page * PAGE_SIZE, filterUserId, filterReason);
-  }, [page, fetchTransactions, filterUserId, filterReason]);
+    fetchTransactions(page * PAGE_SIZE, filterReason);
+  }, [page, fetchTransactions, filterReason]);
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(0);
-    fetchTransactions(0, filterUserId, filterReason);
+    fetchTransactions(0, filterReason);
   };
+
+  const userQuery = filterUser.toLowerCase();
+  const displayed = userQuery
+    ? transactions.filter(t =>
+        t.user_email?.toLowerCase().includes(userQuery) ||
+        t.user_full_name?.toLowerCase().includes(userQuery)
+      )
+    : transactions;
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -58,9 +65,9 @@ export function PointTransactionsSection() {
       <form onSubmit={handleFilterSubmit} className="flex gap-3 flex-wrap">
         <input
           type="text"
-          placeholder="Filter by user ID…"
-          value={filterUserId}
-          onChange={e => setFilterUserId(e.target.value)}
+          placeholder="Search by email or name…"
+          value={filterUser}
+          onChange={e => setFilterUser(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-64"
         />
         <input
@@ -75,7 +82,7 @@ export function PointTransactionsSection() {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => { setFilterUserId(''); setFilterReason(''); setPage(0); }}
+          onClick={() => { setFilterUser(''); setFilterReason(''); setPage(0); }}
         >
           Clear
         </Button>
@@ -98,7 +105,7 @@ export function PointTransactionsSection() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {transactions.map((t) => (
+              {displayed.map((t) => (
                 <tr key={t.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <p className="font-medium">{t.user_email}</p>
@@ -120,7 +127,7 @@ export function PointTransactionsSection() {
                   </td>
                 </tr>
               ))}
-              {transactions.length === 0 && (
+              {displayed.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-gray-400 italic">
                     No transactions found.
