@@ -244,7 +244,7 @@ export default function ProfilePage() {
                   Copy
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Share this code. You’ll both earn 50 bonus points when they register.</p>
+              <p className="text-xs text-gray-500 mt-1">Share this code. You’ll earn 50 bonus points when they confirm their first booking.</p>
             </div>
           </div>
 

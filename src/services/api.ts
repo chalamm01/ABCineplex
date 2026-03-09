@@ -6,6 +6,7 @@
 import type {
   LoginRequest,
   LoginResponse,
+  RefreshResponse,
   RegisterRequest,
   RegisterResponse,
   SetPasswordRequest,
@@ -153,8 +154,8 @@ export const authApi = {
   logout: (): Promise<{ message: string }> =>
     fetchAuth<{ message: string }>('POST', '/auth/logout'),
 
-  refresh: (refreshToken: string): Promise<LoginResponse> =>
-    fetchPublic<LoginResponse>('POST', '/auth/refresh', { refresh_token: refreshToken }),
+  refresh: (refreshToken: string): Promise<RefreshResponse> =>
+    fetchPublic<RefreshResponse>('POST', '/auth/refresh', { refresh_token: refreshToken }),
 
   getGoogleOAuthUrl: (): Promise<{ url: string }> =>
     fetchPublic<{ url: string }>('GET', '/auth/google'),

@@ -79,7 +79,13 @@ export default function BookingHistoryPage() {
       const movieId = (detail as unknown as Record<string, number>).movie_id ?? (detail.movie as unknown as Record<string, number>)?.id;
       if (!movieId) return;
       const data = await moviesApi.getMovieShowtimes(Number(movieId));
-      const all: ShowtimeCard[] = Object.values(data.showtimes_by_date ?? {}).flat();
+      console.log(data);
+      const all: ShowtimeCard[] = Object.entries(data.showtimes_by_date ?? {}).flatMap(
+        ([date, showtimes]) => showtimes.map(s => ({
+          ...s,
+          start_time: s.start_time ? `${date}T${s.start_time}` : s.start_time,
+        }))
+      );
       setAvailableShowtimes(all.filter(s => s.showtime_id !== b.showtime_id));
     } catch {
       setAvailableShowtimes([]);
@@ -140,7 +146,7 @@ export default function BookingHistoryPage() {
     b.booking_status === "confirmed" &&
     (b.change_count ?? 0) < 1 &&
     !!b.showtime_start && new Date(b.showtime_start).getTime() - Date.now() > 30 * 60 * 1000;
-
+ sd
   return(
     <div className="bg-[url('/assets/background/bg.png')] bg-cover bg-center min-h-screen">
       <main className="min-h-screen px-4 sm:px-8 md:px-16 lg:px-32 py-6 bg-white/70 backdrop-blur-md">
@@ -206,19 +212,54 @@ export default function BookingHistoryPage() {
               ) : availableShowtimes.length === 0 ? (
                 <p className="text-sm text-gray-500">No other showtimes available.</p>
               ) : (
-                <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                  value={selectedNewShowtimeId ?? ''}
-                  onChange={e => setSelectedNewShowtimeId(Number(e.target.value))}
-                >
-                  <option value="">— Select new showtime —</option>
-                  {availableShowtimes.map(s => (
-                    <option key={s.showtime_id} value={s.showtime_id}>
-                      {s.start_time ?? `Showtime #${s.showtime_id}`}
-                      {s.base_price ? ` · ฿${s.base_price}` : ''}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
+                  {availableShowtimes.map(s => {
+                    const isSelected = selectedNewShowtimeId === s.showtime_id;
+                    const startDate = s.start_time ? new Date(s.start_time.replace(' ', 'T')) : null;
+                    const dateStr = startDate
+                      ? startDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+                      : `Showtime #${s.showtime_id}`;
+                    const timeStr = startDate
+                      ? startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                      : null;
+                    return (
+                      <button
+                        key={s.showtime_id}
+                        onClick={() => setSelectedNewShowtimeId(s.showtime_id)}
+                        className={`text-left p-4 rounded-xl border-2 transition-all ${
+                          isSelected
+                            ? 'border-black bg-black text-white'
+                            : 'border-gray-200 bg-white hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="font-semibold text-sm">{dateStr}</div>
+                        {timeStr && (
+                          <div className={`text-2xl font-bold mt-1 ${isSelected ? 'text-white' : 'text-black'}`}>
+                            {timeStr}
+                          </div>
+                        )}
+                        <div className={`text-xs mt-2 space-y-0.5 ${isSelected ? 'text-gray-300' : 'text-gray-500'}`}>
+                          {s.theatre_name && <div>{s.theatre_name}</div>}
+                          <div className="flex items-center gap-2">
+                            <span className={`font-semibold ${isSelected ? 'text-white' : 'text-black'}`}>
+                              ฿{s.base_price}
+                            </span>
+                            {s.available_seats !== undefined && (
+                              <span>{s.available_seats} seats left</span>
+                            )}
+                          </div>
+                          {s.badge_label && (
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                              isSelected ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {s.badge_label}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               )
             )}
 

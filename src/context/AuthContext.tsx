@@ -68,8 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.refresh_token) {
           localStorage.setItem('refresh_token', response.refresh_token);
         }
-        localStorage.setItem('user', JSON.stringify(response.user));
-        setUser(response.user);
+        // Tokens refreshed — user data unchanged, no need to update it
         window.dispatchEvent(new Event('auth-change'));
       } catch (err) {
         console.error('Token refresh failed, logging out:', err);

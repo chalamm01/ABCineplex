@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@/lib/supabase/client';
 import { userApi } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ── Token extraction helpers ──────────────────────────────────────────────────
@@ -40,6 +41,7 @@ async function extractTokensImplicit(
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,12 +74,14 @@ export default function AuthCallback() {
           return;
         }
 
+        // Store tokens so the profile fetch can authenticate
         localStorage.setItem('token', accessToken);
         if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
 
         try {
           const profile = await userApi.getProfile();
-          localStorage.setItem('user', JSON.stringify(profile));
+          // Use login() so AuthContext React state is updated immediately
+          login(profile, accessToken, refreshToken ?? undefined);
 
           if (profile.has_password === false) {
             navigate('/setup-password', { replace: true });

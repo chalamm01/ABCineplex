@@ -43,6 +43,11 @@ export interface RegisterResponse {
   requires_confirmation?: boolean;
 }
 
+export interface RefreshResponse {
+  token: string;
+  refresh_token: string;
+}
+
 export interface SetPasswordRequest {
   password: string;
 }
