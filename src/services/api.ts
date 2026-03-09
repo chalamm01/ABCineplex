@@ -637,8 +637,8 @@ export const adminApi = {
     fetchAuth<any>('PATCH', `/admin/showtime-seats/${showtimeSeatId}`, { is_available: isAvailable }),
 
   // Bookings
-  listBookings: (_userId?: string, _showtimeId?: number, _status?: string, limit: number = 100, offset: number = 0) =>
-    fetchAuth<{ bookings: BookingDetail[] }>('GET', `/admin/bookings?limit=${limit}&offset=${offset}`, undefined),
+  listBookings: (_userId?: string, _showtimeId?: number, status?: string, limit: number = 100, offset: number = 0) =>
+    fetchAuth<{ bookings: BookingDetail[] }>('GET', `/admin/bookings?limit=${limit}&offset=${offset}${status ? `&booking_status=${status}` : ''}`, undefined),
 
   updateBooking: (bookingId: number, newShowtimeId?: number, newSeatIds?: number[], adminNote?: string) =>
     fetchAuth<BookingDetail>('PATCH', `/admin/bookings/${bookingId}`, {

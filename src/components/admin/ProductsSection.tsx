@@ -5,7 +5,7 @@ import { Spinner } from '@/components/ui/spinner';
 import {
   Modal, Field, ModalActions, SectionHeader, TableHead, ActiveIcon,
   inputCls,
-  EditButton, DeleteButton,
+  EditButton, DeactivateButton,
 } from './AdminShared';
 
 const emptyProduct: Omit<Product, 'id'> = {
@@ -58,7 +58,7 @@ export default function ProductsSection() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Delete this product? This cannot be undone.')) return;
+    if (!confirm('Deactivate this product? It will be hidden from the store.')) return;
     try {
       await productsApi.deleteProduct(id);
       refresh();
@@ -109,7 +109,7 @@ export default function ProductsSection() {
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">
                       <EditButton onClick={() => openEdit(p)} />
-                      <DeleteButton onClick={() => handleDelete(p.id)} />
+                      <DeactivateButton onClick={() => handleDelete(p.id)} />
                     </div>
                   </td>
                 </tr>

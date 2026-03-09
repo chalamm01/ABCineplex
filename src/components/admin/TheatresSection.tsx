@@ -5,7 +5,7 @@ import { SeatMapModal } from './SeatMapModal';
 import {
   Modal, Field, ModalActions, SectionHeader,
   inputCls, useSort, SortableTableHead,
-  EditButton, DeleteButton,
+  EditButton, DeactivateButton,
 } from './AdminShared';
 
 type ModalMode = 'add' | 'edit' | 'seats' | null;
@@ -82,7 +82,7 @@ export default function TheatresSection() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('Delete this theatre? This will also delete all associated seats.')) return;
+    if (!confirm('Deactivate this theatre? It will be hidden from the system.')) return;
     try {
       await adminApi.deleteTheatre(id);
       loadTheatres();
@@ -184,7 +184,7 @@ export default function TheatresSection() {
                       >
                         Seats
                       </button>
-                      <DeleteButton onClick={() => handleDelete(t.id)} />
+                      <DeactivateButton onClick={() => handleDelete(t.id)} />
                     </div>
                   </td>
                 </tr>
