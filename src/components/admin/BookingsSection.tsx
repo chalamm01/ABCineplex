@@ -76,6 +76,7 @@ function StatusBadge({ status }: Readonly<{ status: string }>) {
 }
 
 const STATUS_OPTIONS = ['', 'confirmed', 'pending', 'cancelled', 'changed'];
+const PAGE_SIZE = 100;
 
 export default function BookingsSection() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -85,7 +86,6 @@ export default function BookingsSection() {
   const [movieFilter, setMovieFilter] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
-
   const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
 
   useEffect(() => {
@@ -94,8 +94,11 @@ export default function BookingsSection() {
 
   useEffect(() => {
     setLoading(true);
-    adminApi.listBookings(undefined, undefined, statusFilter || undefined, 200, 0)
-      .then(res => setBookings((res.bookings ?? []) as unknown as AdminBookingRow[]))
+    adminApi.listBookings(undefined, undefined, statusFilter || undefined, PAGE_SIZE, 0)
+      .then(res => {
+        const rows = (res.bookings ?? []) as unknown as AdminBookingRow[];
+        setBookings(rows);
+      })
       .catch(() => setBookings([]))
       .finally(() => setLoading(false));
   }, [refreshKey, statusFilter]);

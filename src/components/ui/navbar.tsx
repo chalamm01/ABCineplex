@@ -146,8 +146,8 @@ export function Header() {
                 {isAuthenticated && user && (
                   <div className="hidden md:block text-left leading-none">
                     <p className="text-xs font-semibold text-neutral-900">{getDisplayName()}</p>
-                    {(user.loyalty_points ?? 0) > 0 && (
-                      <p className="text-[10px] text-amber-600 font-medium mt-0.5">{user.loyalty_points} pts</p>
+                    {(user.reward_points ?? 0) > 0 && (
+                      <p className="text-[10px] text-amber-600 font-medium mt-0.5">{user.reward_points} pts</p>
                     )}
                   </div>
                 )}
@@ -161,8 +161,8 @@ export function Header() {
                         <div className="px-4 py-3 border-b border-neutral-100">
                           <p className="text-xs font-semibold text-neutral-900 truncate">{getDisplayName()}</p>
                           <p className="text-[11px] text-neutral-400 truncate">{user.email}</p>
-                          {(user.loyalty_points ?? 0) > 0 && (
-                            <p className="text-[11px] text-amber-600 font-medium mt-1">{user.loyalty_points} loyalty pts</p>
+                          {(user.reward_points ?? 0) > 0 && (
+                            <p className="text-[11px] text-amber-600 font-medium mt-1">{user.reward_points} loyalty pts</p>
                           )}
                         </div>
                       )}
@@ -231,8 +231,8 @@ export function Header() {
             <div className="border-t border-neutral-100 px-5 py-3 flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-neutral-900">{getDisplayName()}</p>
-                {(user?.loyalty_points ?? 0) > 0 && (
-                  <p className="text-xs text-amber-600">{user?.loyalty_points} pts</p>
+                {(user?.reward_points ?? 0) > 0 && (
+                  <p className="text-xs text-amber-600">{user?.reward_points} pts</p>
                 )}
               </div>
               <button

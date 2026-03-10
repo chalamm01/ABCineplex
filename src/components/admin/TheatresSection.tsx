@@ -5,7 +5,7 @@ import { SeatMapModal } from './SeatMapModal';
 import {
   Modal, Field, ModalActions, SectionHeader,
   inputCls, useSort, SortableTableHead,
-  EditButton, DeactivateButton,
+  DeactivateButton,
 } from './AdminShared';
 
 type ModalMode = 'add' | 'edit' | 'seats' | null;
@@ -57,21 +57,6 @@ export default function TheatresSection() {
     setForm(emptyTheatre);
     setEditId(null);
     setModal('add');
-    setError('');
-  }
-
-  function openEdit(t: Theatre) {
-    // Calculate rows and columns from total_seats
-    // Default to 15 columns, then calculate rows
-    const defaultColumns = 15;
-    const calculatedRows = Math.ceil(t.total_seats / defaultColumns);
-    setForm({
-      name: t.name,
-      columns: defaultColumns,
-      rows: calculatedRows,
-    });
-    setEditId(t.id);
-    setModal('edit');
     setError('');
   }
 

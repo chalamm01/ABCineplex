@@ -5,7 +5,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { SeatMapModal } from './SeatMapModal';
 import {
   Modal, Field, ModalActions, SectionHeader,
-  inputCls, fmtDT, useSort, SortableTableHead,
+  inputCls, useSort, SortableTableHead,
   EditButton, DeleteButton,
 } from './AdminShared';
 

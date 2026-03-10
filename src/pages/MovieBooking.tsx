@@ -205,14 +205,18 @@ export default function MovieBooking() {
     fetchSeats();
   }, [selectedTime, selectedDate, bookingDates, showtimesByDate]);
 
+  const MAX_SEATS = 10;
+
   const toggleSeat = (row: string, col: number) => {
-    setSeats((prev) =>
-      prev.map((seat) => {
+    setSeats((prev) => {
+      const currentlySelected = prev.filter((s) => s.status === 'selected').length;
+      return prev.map((seat) => {
         if (seat.row !== row || seat.col !== col) return seat;
         if (seat.status === 'reserved') return seat;
+        if (seat.status === 'available' && currentlySelected >= MAX_SEATS) return seat;
         return { ...seat, status: seat.status === 'available' ? 'selected' : 'available' };
-      })
-    );
+      });
+    });
   };
 
   const handleBooking = async () => {
@@ -394,7 +398,10 @@ export default function MovieBooking() {
 />
 </div>
                   {seats.length > 0 ? (
-                    <SeatMap seats={seats} onSeatToggle={toggleSeat} />
+                    <>
+                      <p className="text-sm text-neutral-500 mb-2">Select up to {MAX_SEATS} seats</p>
+                      <SeatMap seats={seats} onSeatToggle={toggleSeat} />
+                    </>
                   ) : (
                     <div className="flex items-center justify-center bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-full xl:w-1/2">
                       <Spinner />
