@@ -129,7 +129,7 @@ export default function OrderHistory() {
               {orders.map((order) => {
                 const date = new Date(order.created_at);
                 const dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
                 const shortId = order.id.slice(-8).toUpperCase();
 
                 return (

@@ -229,7 +229,7 @@ export default function BookingHistoryPage() {
                       ? startDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
                       : `Showtime #${s.showtime_id}`;
                     const timeStr = startDate
-                      ? startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                      ? startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
                       : null;
                     return (
                       <button

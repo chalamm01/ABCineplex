@@ -27,7 +27,7 @@ function ItemModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Image area */}
-        <div className="bg-gradient-to-br from-violet-50 to-purple-100 flex justify-center py-8 px-4">
+        <div className="bg-linear-to-br from-violet-50 to-purple-100 flex justify-center py-8 px-4">
           <img
             src={item.image_url ?? '/assets/images/placeholder.png'}
             alt={item.name}
@@ -92,7 +92,7 @@ function ProductCard({ item, onSelect }: { item: Product; onSelect: () => void }
       className="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-100 overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 flex flex-col"
     >
       {/* Image */}
-      <div className="bg-gradient-to-br from-violet-50 to-purple-50 flex items-center justify-center h-44 p-4 overflow-hidden">
+      <div className="bg-gradient-tlinearm-violet-50 to-purple-50 flex items-center justify-center h-44 p-4 overflow-hidden">
         <img
           src={item.image_url ?? '/assets/images/placeholder.png'}
           alt={item.name}
@@ -193,7 +193,7 @@ function Snacks() {
       <div className="min-h-screen bg-white/75 backdrop-blur-md">
 
         {/* ── Hero Banner ── */}
-        <div className="relative bg-gradient-to-br from-violet-900 via-purple-800 to-indigo-900 text-white overflow-hidden">
+        <div className="relative bg-linear-to-br from-violet-900 via-purple-800 to-indigo-900 text-white overflow-hidden">
           <div className="absolute inset-0 bg-[url('/assets/background/bg_snackbar.png')] bg-cover bg-center opacity-20" />
           <div className="relative max-w-5xl mx-auto px-6 py-14 text-center">
             <p className="text-violet-300 text-sm font-semibold uppercase tracking-widest mb-2">ABCineplex</p>

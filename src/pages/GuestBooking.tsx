@@ -60,7 +60,7 @@ export default function GuestBooking() {
   const startTime = booking.showtime_start
     ? new Date(booking.showtime_start).toLocaleString('en-GB', {
         day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false,
       })
     : 'N/A';
 

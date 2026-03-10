@@ -135,10 +135,10 @@ export default function Payment() {
             posterUrl: '',
             cinemaName: (st as unknown as { theatre?: { name?: string } }).theatre?.name ?? 'ABCineplex',
             showTime: start
-              ? start.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+              ? start.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
               : 'N/A',
             endTime: endIso
-              ? new Date(endIso).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+              ? new Date(endIso).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
               : 'N/A',
             seats,
             subtotal: total,
@@ -213,7 +213,7 @@ export default function Payment() {
             if (endIso) {
               endTimeStr = new Date(endIso).toLocaleString('en-GB', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit',
+                hour: '2-digit', minute: '2-digit', hour12: false,
               });
             }
           } catch {
@@ -226,7 +226,7 @@ export default function Payment() {
           posterUrl: booking.poster_url || '',
           cinemaName: booking.screen_name || 'ABCineplex',
           showTime: start
-            ? start.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            ? start.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
             : 'N/A',
           endTime: endTimeStr,
           seats,
