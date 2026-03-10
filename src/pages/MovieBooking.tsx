@@ -399,8 +399,7 @@ export default function MovieBooking() {
 </div>
                   {seats.length > 0 ? (
                     <>
-                      <p className="text-sm text-neutral-500 mb-2">Select up to {MAX_SEATS} seats</p>
-                      <SeatMap seats={seats} onSeatToggle={toggleSeat} />
+                      <SeatMap seats={seats} onSeatToggle={toggleSeat} maxSeats={MAX_SEATS}/>
                     </>
                   ) : (
                     <div className="flex items-center justify-center bg-white rounded-xl p-6 sm:p-8 border border-neutral-300 w-full xl:w-1/2">

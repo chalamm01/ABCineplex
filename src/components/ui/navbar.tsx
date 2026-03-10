@@ -96,9 +96,13 @@ export function Header() {
         <div className="flex items-center justify-between h-14">
 
           {/* Brand */}
-          <Link to="/" className="flex items-center gap-0.5 no-underline select-none">
-            <span className="text-lg font-black tracking-tighter text-red-600">ABC</span>
-            <span className="text-lg font-black tracking-tighter text-neutral-900">INEPLEX</span>
+          <Link to="/" className="flex items-center gap-2 no-underline select-none">
+            <img
+              src="/assets/icons/abcineplex_logo.png"
+              alt="ABCineplex Logo"
+              className="h-8 w-auto object-contain"
+              style={{ maxHeight: '2rem' }}
+            />
           </Link>
 
           {/* Desktop nav */}

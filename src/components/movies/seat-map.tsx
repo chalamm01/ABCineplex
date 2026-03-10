@@ -17,14 +17,31 @@ interface SeatMapProps {
   readonly onSeatToggle: (row: string, col: number) => void;
   readonly demandBadge?: string;
   readonly badgeLabel?: string | null;
+  readonly maxSeats?: number;
 }
 
-function SeatIcon({ status }: { status: SeatStatus }) {
+function SeatIcon({ status }: Readonly<{ status: SeatStatus }>) {
   const isReserved = status === 'reserved' || status === 'locked';
   const isSelected = status === 'selected';
 
-  const seatColor = isReserved ? '#1a1a1a' : isSelected ? '#4b5563' : 'none';
-  const borderColor = isReserved ? '#1a1a1a' : isSelected ? '#4b5563' : '#6b7280';
+  let seatColor: string;
+  if (isReserved) {
+    seatColor = '#1a1a1a';
+  } else if (isSelected) {
+    seatColor = '#4b5563';
+  } else {
+    seatColor = 'none';
+  }
+
+  let borderColor: string;
+  if (isReserved) {
+    borderColor = '#1a1a1a';
+  } else if (isSelected) {
+    borderColor = '#4b5563';
+  } else {
+    borderColor = '#6b7280';
+  }
+
   const borderWidth = isReserved || isSelected ? 0 : 2.5;
 
   return (
@@ -34,7 +51,7 @@ function SeatIcon({ status }: { status: SeatStatus }) {
   );
 }
 
-function SeatButton({ seat, onToggle }: { seat: Seat | undefined; onToggle: () => void }) {
+function SeatButton({ seat, onToggle }: Readonly<{ seat: Seat | undefined; onToggle: () => void }>) {
   const status = seat?.status ?? 'available';
   const isDisabled = status === 'reserved' || status === 'locked';
   const isSelected = status === 'selected';
@@ -45,7 +62,7 @@ function SeatButton({ seat, onToggle }: { seat: Seat | undefined; onToggle: () =
       disabled={isDisabled}
       // aspect-ratio keeps seats proportional as they scale with the grid
       className={[
-        'relative w-full aspect-[10/11] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded',
+        'relative w-full aspect-10/11 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded',
         isDisabled ? 'cursor-not-allowed opacity-80' : 'hover:scale-110 cursor-pointer',
         isSelected ? 'scale-110' : '',
       ].join(' ')}
@@ -60,7 +77,8 @@ function SeatButton({ seat, onToggle }: { seat: Seat | undefined; onToggle: () =
   );
 }
 
-export function SeatMap({ seats, onSeatToggle, demandBadge, badgeLabel }: SeatMapProps) {
+export function SeatMap({ seats, onSeatToggle, demandBadge, badgeLabel, maxSeats }: SeatMapProps) {
+  const maxSeatsDisplay = typeof maxSeats === 'number' ? maxSeats : 8;
   const { rows, leftColumns, rightColumns } = useMemo(() => {
     const uniqueRows = [...new Set(seats.map(s => s.row))].sort((a, b) => a.localeCompare(b));
     const uniqueCols = [...new Set(seats.map(s => s.col))].sort((a, b) => a - b);
@@ -147,6 +165,8 @@ export function SeatMap({ seats, onSeatToggle, demandBadge, badgeLabel }: SeatMa
           <span className="text-neutral-600 text-xs font-semibold tracking-wider uppercase">Selected</span>
         </div>
       </div>
+      <p className="text-sm text-neutral-500 mb-2">Select up to {maxSeatsDisplay} seats</p>
+
     </div>
   );
 }
